@@ -1,43 +1,38 @@
-version: '3'
-
 services:
-  payload:
-    image: node:20-alpine
+  db:
+    image: postgres:16
+    container_name: realestate-db
+    restart: always
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: secret
+      POSTGRES_DB: realestate
+      TZ: Asia/Ho_Chi_Minh
+    command: postgres -c timezone=Asia/Ho_Chi_Minh
     ports:
-      - '3000:3000'
+      - "5433:5432"
     volumes:
-      - .:/home/node/app
-      - node_modules:/home/node/app/node_modules
-    working_dir: /home/node/app/
-    command: sh -c "corepack enable && corepack prepare pnpm@latest --activate && pnpm install && pnpm dev"
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d realestate"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: realestate-app
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: postgres://admin:secret@db:5432/realestate
+      PAYLOAD_SECRET: mot-chuoi-bi-mat-bat-ky-dai-32-ky-tu
     depends_on:
-      - mongo
-      # - postgres
-    env_file:
-      - .env
-
-  # Ensure your DATABASE_URL uses 'mongo' as the hostname ie. mongodb://mongo/my-db-name
-  mongo:
-    image: mongo:latest
-    ports:
-      - '27017:27017'
-    command:
-      - --storageEngine=wiredTiger
-    volumes:
-      - data:/data/db
-    logging:
-      driver: none
-
-  # Uncomment the following to use postgres
-  # postgres:
-  #   restart: always
-  #   image: postgres:latest
-  #   volumes:
-  #     - pgdata:/var/lib/postgresql/data
-  #   ports:
-  #     - "5432:5432"
+      db:
+        condition: service_healthy
 
 volumes:
-  data:
-  # pgdata:
-  node_modules:
+  pg_data:

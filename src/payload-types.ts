@@ -68,7 +68,23 @@ export interface Config {
   blocks: {};
   collections: {
     users: User;
+    listings: Listing;
+    projects: Project;
     media: Media;
+    investors: Investor;
+    articles: Article;
+    'article-categories': ArticleCategory;
+    banners: Banner;
+    contacts: Contact;
+    reports: Report;
+    packages: Package;
+    'posting-prices': PostingPrice;
+    vouchers: Voucher;
+    orders: Order;
+    notifications: Notification;
+    'saved-listings': SavedListing;
+    'view-history': ViewHistory;
+    'spam-blacklist': SpamBlacklist;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -77,18 +93,38 @@ export interface Config {
   collectionsJoins: {};
   collectionsSelect: {
     users: UsersSelect<false> | UsersSelect<true>;
+    listings: ListingsSelect<false> | ListingsSelect<true>;
+    projects: ProjectsSelect<false> | ProjectsSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
+    investors: InvestorsSelect<false> | InvestorsSelect<true>;
+    articles: ArticlesSelect<false> | ArticlesSelect<true>;
+    'article-categories': ArticleCategoriesSelect<false> | ArticleCategoriesSelect<true>;
+    banners: BannersSelect<false> | BannersSelect<true>;
+    contacts: ContactsSelect<false> | ContactsSelect<true>;
+    reports: ReportsSelect<false> | ReportsSelect<true>;
+    packages: PackagesSelect<false> | PackagesSelect<true>;
+    'posting-prices': PostingPricesSelect<false> | PostingPricesSelect<true>;
+    vouchers: VouchersSelect<false> | VouchersSelect<true>;
+    orders: OrdersSelect<false> | OrdersSelect<true>;
+    notifications: NotificationsSelect<false> | NotificationsSelect<true>;
+    'saved-listings': SavedListingsSelect<false> | SavedListingsSelect<true>;
+    'view-history': ViewHistorySelect<false> | ViewHistorySelect<true>;
+    'spam-blacklist': SpamBlacklistSelect<false> | SpamBlacklistSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
     'payload-migrations': PayloadMigrationsSelect<false> | PayloadMigrationsSelect<true>;
   };
   db: {
-    defaultIDType: string;
+    defaultIDType: number;
   };
   fallbackLocale: null;
-  globals: {};
-  globalsSelect: {};
+  globals: {
+    settings: Setting;
+  };
+  globalsSelect: {
+    settings: SettingsSelect<false> | SettingsSelect<true>;
+  };
   locale: null;
   widgets: {
     collections: CollectionsWidget;
@@ -122,7 +158,24 @@ export interface UserAuthOperations {
  * via the `definition` "users".
  */
 export interface User {
-  id: string;
+  id: number;
+  fullName: string;
+  phone?: string | null;
+  avatar?: (number | null) | Media;
+  role: 'admin' | 'moderator' | 'agent' | 'user';
+  /**
+   * Số dư tài khoản (VNĐ)
+   */
+  balance?: number | null;
+  isVerified?: boolean | null;
+  isActive?: boolean | null;
+  verificationToken?: string | null;
+  resetToken?: string | null;
+  resetTokenExp?: string | null;
+  /**
+   * Lần đăng nhập cuối
+   */
+  lastLoginAt?: string | null;
   updatedAt: string;
   createdAt: string;
   email: string;
@@ -147,7 +200,7 @@ export interface User {
  * via the `definition` "media".
  */
 export interface Media {
-  id: string;
+  id: number;
   alt: string;
   updatedAt: string;
   createdAt: string;
@@ -163,10 +216,605 @@ export interface Media {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "listings".
+ */
+export interface Listing {
+  id: number;
+  title: string;
+  /**
+   * Tự sinh từ title nếu để trống
+   */
+  slug?: string | null;
+  description: string;
+  listingType: 'sale' | 'rent';
+  postType?: ('normal' | 'vip') | null;
+  price: number;
+  priceUnit?: ('total' | 'per_m2' | 'per_month' | 'negotiable') | null;
+  propertyType:
+    | 'house'
+    | 'apartment'
+    | 'land'
+    | 'villa'
+    | 'townhouse'
+    | 'shophouse'
+    | 'penthouse'
+    | 'condotel'
+    | 'warehouse'
+    | 'commercial';
+  /**
+   * m²
+   */
+  area?: number | null;
+  bedrooms?: number | null;
+  bathrooms?: number | null;
+  /**
+   * Đường rộng (m)
+   */
+  roadWidth?: number | null;
+  /**
+   * Mặt tiền (m)
+   */
+  facadeWidth?: number | null;
+  direction?: ('east' | 'west' | 'south' | 'north' | 'northeast' | 'southeast' | 'northwest' | 'southwest') | null;
+  legalStatus?: ('red_book' | 'sale_contract' | 'pending' | 'other') | null;
+  furnitureStatus?: ('luxury' | 'full' | 'basic' | 'none') | null;
+  provinceCode?: string | null;
+  districtCode?: string | null;
+  wardCode?: string | null;
+  street?: string | null;
+  /**
+   * Địa chỉ đầy đủ hiển thị
+   */
+  address?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  /**
+   * Tối đa 20 ảnh
+   */
+  images?:
+    | {
+        image: number | Media;
+        sort?: number | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Link YouTube hoặc video
+   */
+  videoUrl?: string | null;
+  status: 'draft' | 'pending' | 'active' | 'expired' | 'sold' | 'rejected';
+  label?: ('normal' | 'vip' | 'hot' | 'premium') | null;
+  /**
+   * Tin đã xác thực
+   */
+  isVerified?: boolean | null;
+  /**
+   * Người duyệt tin
+   */
+  verifiedBy?: (number | null) | User;
+  verifiedAt?: string | null;
+  /**
+   * Lý do từ chối
+   */
+  rejectionReason?: string | null;
+  seoTitle?: string | null;
+  seoDescription?: string | null;
+  seoKeywords?: string | null;
+  /**
+   * Người đăng tin
+   */
+  user: number | User;
+  /**
+   * Thuộc dự án (nếu có)
+   */
+  project?: (number | null) | Project;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "projects".
+ */
+export interface Project {
+  id: number;
+  name: string;
+  slug?: string | null;
+  description?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  /**
+   * Chủ đầu tư
+   */
+  investor?: (number | null) | Investor;
+  /**
+   * Tổng diện tích (ha)
+   */
+  totalArea?: number | null;
+  /**
+   * Tổng số căn/lô
+   */
+  totalUnits?: number | null;
+  /**
+   * Giá từ (triệu)
+   */
+  priceFrom?: number | null;
+  /**
+   * Giá đến (triệu)
+   */
+  priceTo?: number | null;
+  /**
+   * Loại hình BĐS trong dự án
+   */
+  propertyTypes?: ('house' | 'apartment' | 'land' | 'villa' | 'shophouse' | 'condotel')[] | null;
+  /**
+   * Ngày khởi công
+   */
+  startDate?: string | null;
+  /**
+   * Ngày dự kiến bàn giao
+   */
+  completionDate?: string | null;
+  provinceCode?: string | null;
+  districtCode?: string | null;
+  wardCode?: string | null;
+  address?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  /**
+   * Danh sách phân khu trong dự án
+   */
+  zones?:
+    | {
+        /**
+         * Tên phân khu (VD: Zone A, Khu Hồng)
+         */
+        name: string;
+        description?: string | null;
+        totalUnits?: number | null;
+        status?: ('upcoming' | 'selling' | 'sold_out') | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Ảnh đại diện dự án
+   */
+  thumbnail?: (number | null) | Media;
+  images?:
+    | {
+        image: number | Media;
+        caption?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Ảnh mặt bằng tổng thể
+   */
+  masterPlan?: (number | null) | Media;
+  /**
+   * Link YouTube
+   */
+  videoUrl?: string | null;
+  status: 'draft' | 'active' | 'hidden';
+  /**
+   * Hiển thị ở trang chủ
+   */
+  isFeatured?: boolean | null;
+  seoTitle?: string | null;
+  seoDescription?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "investors".
+ */
+export interface Investor {
+  id: number;
+  name: string;
+  logo?: (number | null) | Media;
+  description?: string | null;
+  website?: string | null;
+  phone?: string | null;
+  email?: string | null;
+  address?: string | null;
+  isActive?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "articles".
+ */
+export interface Article {
+  id: number;
+  title: string;
+  slug?: string | null;
+  /**
+   * Mô tả ngắn hiển thị ở danh sách
+   */
+  excerpt?: string | null;
+  content: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  };
+  /**
+   * Ảnh đại diện bài viết
+   */
+  thumbnail?: (number | null) | Media;
+  category: number | ArticleCategory;
+  /**
+   * Nhập tags cách nhau bởi dấu phẩy
+   */
+  tags?: string | null;
+  /**
+   * Bài viết nổi bật
+   */
+  isFeatured?: boolean | null;
+  seoTitle?: string | null;
+  seoDescription?: string | null;
+  seoKeywords?: string | null;
+  /**
+   * Người viết
+   */
+  author: number | User;
+  status: 'draft' | 'published' | 'hidden';
+  /**
+   * Ngày xuất bản
+   */
+  publishedAt?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "article-categories".
+ */
+export interface ArticleCategory {
+  id: number;
+  name: string;
+  slug?: string | null;
+  description?: string | null;
+  thumbnail?: (number | null) | Media;
+  isActive?: boolean | null;
+  /**
+   * Thứ tự hiển thị (nhỏ → trước)
+   */
+  sort?: number | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "banners".
+ */
+export interface Banner {
+  id: number;
+  /**
+   * Tên nội bộ để phân biệt (không hiển thị ngoài)
+   */
+  name: string;
+  image: number | Media;
+  /**
+   * URL khi click vào banner
+   */
+  link?: string | null;
+  position: 'home_hero' | 'home_middle' | 'sidebar' | 'listing_list' | 'listing_detail' | 'popup';
+  /**
+   * Bắt đầu hiển thị
+   */
+  startDate?: string | null;
+  /**
+   * Kết thúc hiển thị
+   */
+  endDate?: string | null;
+  /**
+   * Thứ tự (nhỏ → trước)
+   */
+  sort?: number | null;
+  isActive?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "contacts".
+ */
+export interface Contact {
+  id: number;
+  fullName: string;
+  email?: string | null;
+  phone: string;
+  subject?: string | null;
+  message: string;
+  status?: ('new' | 'read' | 'replied') | null;
+  /**
+   * Ghi chú nội bộ
+   */
+  adminNote?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "reports".
+ */
+export interface Report {
+  id: number;
+  /**
+   * Tin bị báo cáo
+   */
+  listing: number | Listing;
+  /**
+   * Người báo cáo
+   */
+  reporter: number | User;
+  reason: 'scam' | 'wrong_info' | 'duplicate' | 'wrong_image' | 'sold_not_removed' | 'other';
+  /**
+   * Chi tiết bổ sung
+   */
+  detail?: string | null;
+  status?: ('pending' | 'reviewing' | 'resolved' | 'dismissed') | null;
+  /**
+   * Ghi chú xử lý
+   */
+  adminNote?: string | null;
+  /**
+   * Người xử lý
+   */
+  resolvedBy?: (number | null) | User;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "packages".
+ */
+export interface Package {
+  id: number;
+  /**
+   * VD: Gói Cơ bản, Gói VIP, Gói Premium
+   */
+  name: string;
+  description?: string | null;
+  /**
+   * Giá gói (VNĐ)
+   */
+  price: number;
+  /**
+   * Giá gốc (hiển thị gạch ngang)
+   */
+  originalPrice?: number | null;
+  /**
+   * Số lượt đăng tin
+   */
+  totalListings: number;
+  /**
+   * Thời hạn gói (ngày)
+   */
+  durationDays: number;
+  /**
+   * Mỗi tin đăng hiển thị bao nhiêu ngày
+   */
+  listingDurationDays: number;
+  /**
+   * Số voucher tặng kèm khi mua gói
+   */
+  bonusVouchers?: number | null;
+  /**
+   * Danh sách tính năng gói
+   */
+  features?:
+    | {
+        feature: string;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Loại tin được đăng từ gói này
+   */
+  postType?: ('normal' | 'vip') | null;
+  sort?: number | null;
+  isActive?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "posting-prices".
+ */
+export interface PostingPrice {
+  id: number;
+  /**
+   * VD: Tin thường 7 ngày, Tin VIP 30 ngày
+   */
+  name: string;
+  postType: 'normal' | 'vip';
+  /**
+   * Số ngày hiển thị
+   */
+  durationDays: number;
+  /**
+   * Giá (VNĐ)
+   */
+  price: number;
+  sort?: number | null;
+  isActive?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "vouchers".
+ */
+export interface Voucher {
+  id: number;
+  /**
+   * Mã voucher (VD: VIP2024ABC)
+   */
+  code: string;
+  /**
+   * Thuộc về user nào
+   */
+  user: number | User;
+  discountType: 'fixed' | 'percent' | 'free_post';
+  /**
+   * Số tiền giảm hoặc % giảm
+   */
+  discountValue?: number | null;
+  /**
+   * Giảm tối đa (VNĐ) — chỉ dùng cho giảm %
+   */
+  maxDiscount?: number | null;
+  status: 'active' | 'used' | 'expired';
+  /**
+   * Ngày hết hạn
+   */
+  expiresAt: string;
+  usedAt?: string | null;
+  /**
+   * Nguồn gốc voucher
+   */
+  source?: ('package' | 'promotion' | 'admin') | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "orders".
+ */
+export interface Order {
+  id: number;
+  /**
+   * Tự sinh khi tạo order
+   */
+  orderCode: string;
+  user: number | User;
+  orderType: 'package' | 'single_post' | 'top_up';
+  package?: (number | null) | Package;
+  postingPrice?: (number | null) | PostingPrice;
+  /**
+   * Tin đăng liên quan (nếu đăng tin lẻ)
+   */
+  listing?: (number | null) | Listing;
+  /**
+   * Voucher đã áp dụng (nếu có)
+   */
+  voucher?: (number | null) | Voucher;
+  /**
+   * Giá gốc (VNĐ)
+   */
+  originalAmount: number;
+  /**
+   * Giảm giá (VNĐ)
+   */
+  discountAmount?: number | null;
+  /**
+   * Thành tiền (VNĐ)
+   */
+  totalAmount: number;
+  paymentMethod?: ('balance' | 'bank_transfer' | 'momo' | 'vnpay' | 'zalopay') | null;
+  /**
+   * Mã giao dịch từ cổng thanh toán
+   */
+  paymentRef?: string | null;
+  status: 'pending' | 'paid' | 'cancelled' | 'refunded';
+  paidAt?: string | null;
+  /**
+   * Ghi chú nội bộ
+   */
+  adminNote?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "notifications".
+ */
+export interface Notification {
+  id: number;
+  user: number | User;
+  title: string;
+  message: string;
+  type: 'system' | 'listing' | 'payment' | 'promotion' | 'verification';
+  /**
+   * Loại đối tượng liên quan
+   */
+  referenceType?: ('listing' | 'order' | 'voucher' | 'article') | null;
+  /**
+   * ID đối tượng liên quan
+   */
+  referenceId?: number | null;
+  isRead?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "saved-listings".
+ */
+export interface SavedListing {
+  id: number;
+  user: number | User;
+  listing: number | Listing;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "view-history".
+ */
+export interface ViewHistory {
+  id: number;
+  user: number | User;
+  listing: number | Listing;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "spam-blacklist".
+ */
+export interface SpamBlacklist {
+  id: number;
+  type: 'phone' | 'email' | 'ip' | 'keyword';
+  /**
+   * Giá trị bị chặn
+   */
+  value: string;
+  reason?: string | null;
+  isActive?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
 export interface PayloadKv {
-  id: string;
+  id: number;
   key: string;
   data:
     | {
@@ -183,20 +831,84 @@ export interface PayloadKv {
  * via the `definition` "payload-locked-documents".
  */
 export interface PayloadLockedDocument {
-  id: string;
+  id: number;
   document?:
     | ({
         relationTo: 'users';
-        value: string | User;
+        value: number | User;
+      } | null)
+    | ({
+        relationTo: 'listings';
+        value: number | Listing;
+      } | null)
+    | ({
+        relationTo: 'projects';
+        value: number | Project;
       } | null)
     | ({
         relationTo: 'media';
-        value: string | Media;
+        value: number | Media;
+      } | null)
+    | ({
+        relationTo: 'investors';
+        value: number | Investor;
+      } | null)
+    | ({
+        relationTo: 'articles';
+        value: number | Article;
+      } | null)
+    | ({
+        relationTo: 'article-categories';
+        value: number | ArticleCategory;
+      } | null)
+    | ({
+        relationTo: 'banners';
+        value: number | Banner;
+      } | null)
+    | ({
+        relationTo: 'contacts';
+        value: number | Contact;
+      } | null)
+    | ({
+        relationTo: 'reports';
+        value: number | Report;
+      } | null)
+    | ({
+        relationTo: 'packages';
+        value: number | Package;
+      } | null)
+    | ({
+        relationTo: 'posting-prices';
+        value: number | PostingPrice;
+      } | null)
+    | ({
+        relationTo: 'vouchers';
+        value: number | Voucher;
+      } | null)
+    | ({
+        relationTo: 'orders';
+        value: number | Order;
+      } | null)
+    | ({
+        relationTo: 'notifications';
+        value: number | Notification;
+      } | null)
+    | ({
+        relationTo: 'saved-listings';
+        value: number | SavedListing;
+      } | null)
+    | ({
+        relationTo: 'view-history';
+        value: number | ViewHistory;
+      } | null)
+    | ({
+        relationTo: 'spam-blacklist';
+        value: number | SpamBlacklist;
       } | null);
   globalSlug?: string | null;
   user: {
     relationTo: 'users';
-    value: string | User;
+    value: number | User;
   };
   updatedAt: string;
   createdAt: string;
@@ -206,10 +918,10 @@ export interface PayloadLockedDocument {
  * via the `definition` "payload-preferences".
  */
 export interface PayloadPreference {
-  id: string;
+  id: number;
   user: {
     relationTo: 'users';
-    value: string | User;
+    value: number | User;
   };
   key?: string | null;
   value?:
@@ -229,7 +941,7 @@ export interface PayloadPreference {
  * via the `definition` "payload-migrations".
  */
 export interface PayloadMigration {
-  id: string;
+  id: number;
   name?: string | null;
   batch?: number | null;
   updatedAt: string;
@@ -240,6 +952,17 @@ export interface PayloadMigration {
  * via the `definition` "users_select".
  */
 export interface UsersSelect<T extends boolean = true> {
+  fullName?: T;
+  phone?: T;
+  avatar?: T;
+  role?: T;
+  balance?: T;
+  isVerified?: T;
+  isActive?: T;
+  verificationToken?: T;
+  resetToken?: T;
+  resetTokenExp?: T;
+  lastLoginAt?: T;
   updatedAt?: T;
   createdAt?: T;
   email?: T;
@@ -259,6 +982,104 @@ export interface UsersSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "listings_select".
+ */
+export interface ListingsSelect<T extends boolean = true> {
+  title?: T;
+  slug?: T;
+  description?: T;
+  listingType?: T;
+  postType?: T;
+  price?: T;
+  priceUnit?: T;
+  propertyType?: T;
+  area?: T;
+  bedrooms?: T;
+  bathrooms?: T;
+  roadWidth?: T;
+  facadeWidth?: T;
+  direction?: T;
+  legalStatus?: T;
+  furnitureStatus?: T;
+  provinceCode?: T;
+  districtCode?: T;
+  wardCode?: T;
+  street?: T;
+  address?: T;
+  latitude?: T;
+  longitude?: T;
+  images?:
+    | T
+    | {
+        image?: T;
+        sort?: T;
+        id?: T;
+      };
+  videoUrl?: T;
+  status?: T;
+  label?: T;
+  isVerified?: T;
+  verifiedBy?: T;
+  verifiedAt?: T;
+  rejectionReason?: T;
+  seoTitle?: T;
+  seoDescription?: T;
+  seoKeywords?: T;
+  user?: T;
+  project?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "projects_select".
+ */
+export interface ProjectsSelect<T extends boolean = true> {
+  name?: T;
+  slug?: T;
+  description?: T;
+  investor?: T;
+  totalArea?: T;
+  totalUnits?: T;
+  priceFrom?: T;
+  priceTo?: T;
+  propertyTypes?: T;
+  startDate?: T;
+  completionDate?: T;
+  provinceCode?: T;
+  districtCode?: T;
+  wardCode?: T;
+  address?: T;
+  latitude?: T;
+  longitude?: T;
+  zones?:
+    | T
+    | {
+        name?: T;
+        description?: T;
+        totalUnits?: T;
+        status?: T;
+        id?: T;
+      };
+  thumbnail?: T;
+  images?:
+    | T
+    | {
+        image?: T;
+        caption?: T;
+        id?: T;
+      };
+  masterPlan?: T;
+  videoUrl?: T;
+  status?: T;
+  isFeatured?: T;
+  seoTitle?: T;
+  seoDescription?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "media_select".
  */
 export interface MediaSelect<T extends boolean = true> {
@@ -274,6 +1095,230 @@ export interface MediaSelect<T extends boolean = true> {
   height?: T;
   focalX?: T;
   focalY?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "investors_select".
+ */
+export interface InvestorsSelect<T extends boolean = true> {
+  name?: T;
+  logo?: T;
+  description?: T;
+  website?: T;
+  phone?: T;
+  email?: T;
+  address?: T;
+  isActive?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "articles_select".
+ */
+export interface ArticlesSelect<T extends boolean = true> {
+  title?: T;
+  slug?: T;
+  excerpt?: T;
+  content?: T;
+  thumbnail?: T;
+  category?: T;
+  tags?: T;
+  isFeatured?: T;
+  seoTitle?: T;
+  seoDescription?: T;
+  seoKeywords?: T;
+  author?: T;
+  status?: T;
+  publishedAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "article-categories_select".
+ */
+export interface ArticleCategoriesSelect<T extends boolean = true> {
+  name?: T;
+  slug?: T;
+  description?: T;
+  thumbnail?: T;
+  isActive?: T;
+  sort?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "banners_select".
+ */
+export interface BannersSelect<T extends boolean = true> {
+  name?: T;
+  image?: T;
+  link?: T;
+  position?: T;
+  startDate?: T;
+  endDate?: T;
+  sort?: T;
+  isActive?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "contacts_select".
+ */
+export interface ContactsSelect<T extends boolean = true> {
+  fullName?: T;
+  email?: T;
+  phone?: T;
+  subject?: T;
+  message?: T;
+  status?: T;
+  adminNote?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "reports_select".
+ */
+export interface ReportsSelect<T extends boolean = true> {
+  listing?: T;
+  reporter?: T;
+  reason?: T;
+  detail?: T;
+  status?: T;
+  adminNote?: T;
+  resolvedBy?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "packages_select".
+ */
+export interface PackagesSelect<T extends boolean = true> {
+  name?: T;
+  description?: T;
+  price?: T;
+  originalPrice?: T;
+  totalListings?: T;
+  durationDays?: T;
+  listingDurationDays?: T;
+  bonusVouchers?: T;
+  features?:
+    | T
+    | {
+        feature?: T;
+        id?: T;
+      };
+  postType?: T;
+  sort?: T;
+  isActive?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "posting-prices_select".
+ */
+export interface PostingPricesSelect<T extends boolean = true> {
+  name?: T;
+  postType?: T;
+  durationDays?: T;
+  price?: T;
+  sort?: T;
+  isActive?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "vouchers_select".
+ */
+export interface VouchersSelect<T extends boolean = true> {
+  code?: T;
+  user?: T;
+  discountType?: T;
+  discountValue?: T;
+  maxDiscount?: T;
+  status?: T;
+  expiresAt?: T;
+  usedAt?: T;
+  source?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "orders_select".
+ */
+export interface OrdersSelect<T extends boolean = true> {
+  orderCode?: T;
+  user?: T;
+  orderType?: T;
+  package?: T;
+  postingPrice?: T;
+  listing?: T;
+  voucher?: T;
+  originalAmount?: T;
+  discountAmount?: T;
+  totalAmount?: T;
+  paymentMethod?: T;
+  paymentRef?: T;
+  status?: T;
+  paidAt?: T;
+  adminNote?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "notifications_select".
+ */
+export interface NotificationsSelect<T extends boolean = true> {
+  user?: T;
+  title?: T;
+  message?: T;
+  type?: T;
+  referenceType?: T;
+  referenceId?: T;
+  isRead?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "saved-listings_select".
+ */
+export interface SavedListingsSelect<T extends boolean = true> {
+  user?: T;
+  listing?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "view-history_select".
+ */
+export interface ViewHistorySelect<T extends boolean = true> {
+  user?: T;
+  listing?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "spam-blacklist_select".
+ */
+export interface SpamBlacklistSelect<T extends boolean = true> {
+  type?: T;
+  value?: T;
+  reason?: T;
+  isActive?: T;
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -314,6 +1359,52 @@ export interface PayloadMigrationsSelect<T extends boolean = true> {
   batch?: T;
   updatedAt?: T;
   createdAt?: T;
+}
+/**
+ * Cấu hình chung của hệ thống
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "settings".
+ */
+export interface Setting {
+  id: number;
+  siteName?: string | null;
+  siteDescription?: string | null;
+  logo?: (number | null) | Media;
+  contactEmail?: string | null;
+  contactPhone?: string | null;
+  address?: string | null;
+  facebook?: string | null;
+  youtube?: string | null;
+  zalo?: string | null;
+  tiktok?: string | null;
+  defaultSeoTitle?: string | null;
+  defaultSeoDescription?: string | null;
+  defaultOgImage?: (number | null) | Media;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "settings_select".
+ */
+export interface SettingsSelect<T extends boolean = true> {
+  siteName?: T;
+  siteDescription?: T;
+  logo?: T;
+  contactEmail?: T;
+  contactPhone?: T;
+  address?: T;
+  facebook?: T;
+  youtube?: T;
+  zalo?: T;
+  tiktok?: T;
+  defaultSeoTitle?: T;
+  defaultSeoDescription?: T;
+  defaultOgImage?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
