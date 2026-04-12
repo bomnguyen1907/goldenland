@@ -6,6 +6,12 @@ export const Projects: CollectionConfig = {
         useAsTitle: 'name',
         defaultColumns: ['name', 'investor', 'status', 'createdAt'],
     },
+    access: {
+        read: () => true,
+        create: () => true,
+        update: () => true,
+        delete: () => true,
+    },
     fields: [
         {
             type: 'tabs',
