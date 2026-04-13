@@ -13,6 +13,7 @@ export const Projects: CollectionConfig = {
         read: statusOrAdmin('status', 'active'),
         update: adminOnly,
         delete: adminOnly,
+
     },
     fields: [
         {

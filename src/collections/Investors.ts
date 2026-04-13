@@ -12,6 +12,7 @@ export const Investors: CollectionConfig = {
     read: activeOrAdmin('isActive'),
     update: adminOnly,
     delete: adminOnly,
+
   },
   fields: [
     {

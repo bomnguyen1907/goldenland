@@ -4,13 +4,14 @@ import { getPayload } from 'payload'
 
 import config from '@/payload.config'
 
+
 import './styles.css'
 import Footer from './_components/Footer'
 import TopAppBar from './_components/TopAppBar'
 
 export const metadata = {
-  description: 'A blank template using Payload in a Next.js app.',
-  title: 'Payload Blank Template',
+  title: 'Golden Land - Bất động sản',
+  description: 'Nền tảng bất động sản hàng đầu Việt Nam',
 }
 
 export default async function RootLayout(props: { children: React.ReactNode }) {
@@ -49,6 +50,7 @@ export default async function RootLayout(props: { children: React.ReactNode }) {
       <body className="bg-background text-on-surface font-body">
         <TopAppBar user={currentUser} />
         <main>{children}</main>
+
         <Footer />
       </body>
     </html>
