@@ -6,8 +6,8 @@ import config from '@/payload.config'
 
 
 import './styles.css'
-import Footer from './_components/Footer'
-import TopAppBar from './_components/TopAppBar'
+import Footer from './components/Footer'
+import TopAppBar from './components/Header'
 
 export const metadata = {
   title: 'Golden Land - Bất động sản',

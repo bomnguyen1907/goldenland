@@ -1,153 +1,76 @@
-'use client'
-
-import React, { useEffect, useState } from 'react'
-import Link from 'next/link'
-import { usePathname, useRouter } from 'next/navigation'
-
-type User = {
-    id: number
-    email: string
-    fullName?: string
+type TopAppBarUser = {
+  email?: string | null
+  id?: number | string
+  name?: string | null
 }
 
-export default function Header() {
-    const pathname = usePathname()
-    const router = useRouter()
-    const [user, setUser] = useState<User | null>(null)
-    const [loading, setLoading] = useState(true)
+const navLinks = [
+  { href: '#', label: 'Nhà đất bán' },
+  { href: '#', label: 'Nhà đất cho thuê' },
+  { href: '/projects', label: 'Dự án' },
+  { href: '#', label: 'Tin tức' },
+  { href: '#', label: 'Yêu thích' },
+]
 
-    useEffect(() => {
-        const fetchUser = async () => {
-            try {
-                const res = await fetch('/api/users/me', { credentials: 'include' })
-                const data = await res.json()
-                setUser(data.user || null)
-            } catch {
-                setUser(null)
-            }
-            setLoading(false)
-        }
-        fetchUser()
-    }, [pathname])
+export default function TopAppBar({ user }: { user?: TopAppBarUser | null }) {
+  const isLoggedIn = Boolean(user?.id)
 
-    const handleLogout = async () => {
-        await fetch('/api/users/logout', { method: 'POST', credentials: 'include' })
-        setUser(null)
-        router.push('/login')
-    }
-
-    const navItems = [
-        { label: 'Trang chủ', href: '/' },
-        { label: 'Nhà đất bán', href: '/listings?type=sale' },
-        { label: 'Nhà đất cho thuê', href: '/listings?type=rent' },
-        { label: 'Dự án', href: '/projects' },
-        { label: 'Tin tức', href: '/articles' },
-    ]
-
-    const s = {
-        header: {
-            borderBottom: '1px solid #000',
-            background: '#fff',
-            position: 'sticky' as const,
-            top: 0,
-            zIndex: 100,
-        },
-        container: {
-            maxWidth: 1100,
-            margin: '0 auto',
-            padding: '0 20px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            height: 64,
-        } as React.CSSProperties,
-        logo: {
-            fontSize: 20,
-            fontWeight: 800,
-            color: '#000',
-            textDecoration: 'none',
-            letterSpacing: -0.5,
-        } as React.CSSProperties,
-        nav: {
-            display: 'flex',
-            gap: 24,
-            alignItems: 'center',
-        } as React.CSSProperties,
-        navLink: (active: boolean) =>
-            ({
-                color: '#000',
-                textDecoration: 'none',
-                fontSize: 14,
-                fontWeight: active ? 700 : 500,
-                borderBottom: active ? '2px solid #000' : '2px solid transparent',
-                paddingBottom: 4,
-            }) as React.CSSProperties,
-        right: { display: 'flex', gap: 8, alignItems: 'center' } as React.CSSProperties,
-        btn: {
-            padding: '8px 14px',
-            border: '1px solid #000',
-            background: '#000',
-            color: '#fff',
-            textDecoration: 'none',
-            fontSize: 13,
-            fontWeight: 600,
-            cursor: 'pointer',
-        } as React.CSSProperties,
-        btnOutline: {
-            padding: '8px 14px',
-            border: '1px solid #000',
-            background: '#fff',
-            color: '#000',
-            textDecoration: 'none',
-            fontSize: 13,
-            fontWeight: 600,
-            cursor: 'pointer',
-        } as React.CSSProperties,
-        userName: { fontSize: 13, fontWeight: 600 } as React.CSSProperties,
-    }
-
-    const isActive = (href: string) => {
-        if (href === '/') return pathname === '/'
-        return pathname.startsWith(href.split('?')[0])
-    }
-
-    return (
-        <header style={s.header}>
-            <div style={s.container}>
-                <Link href="/" style={s.logo}>
-                    GOLDEN LAND
-                </Link>
-
-                <nav style={s.nav}>
-                    {navItems.map((item) => (
-                        <Link key={item.href} href={item.href} style={s.navLink(isActive(item.href))}>
-                            {item.label}
-                        </Link>
-                    ))}
-                </nav>
-
-                <div style={s.right}>
-                    {loading ? null : user ? (
-                        <>
-                            <Link href="/dashboard" style={s.userName}>
-                                {user.fullName || user.email}
-                            </Link>
-                            <button onClick={handleLogout} style={s.btnOutline}>
-                                Đăng xuất
-                            </button>
-                        </>
-                    ) : (
-                        <>
-                            <Link href="/login" style={s.btnOutline}>
-                                Đăng nhập
-                            </Link>
-                            <Link href="/login" style={s.btn}>
-                                Đăng tin
-                            </Link>
-                        </>
-                    )}
-                </div>
-            </div>
-        </header>
-    )
+  return (
+    <header className="fixed top-0 z-50 w-full bg-white/80 shadow-[0px_12px_32px_rgba(27,28,28,0.06)] backdrop-blur-xl">
+      <div className="mx-auto flex max-w-screen-2xl items-center justify-between px-4 py-4 font-headline tracking-tighter md:px-8">
+        <div className="flex items-center gap-4 md:gap-8">
+          <span className="text-sm font-bold uppercase tracking-widest text-zinc-900 sm:text-base lg:text-xl">
+            <a href="/">
+            GOLDENLAND
+            </a>
+          </span>
+          <nav className="hidden items-center gap-6 md:flex">
+            {navLinks.map((link, index) => (
+              <a
+                key={link.label}
+                className={
+                  index === 0
+                    ? 'scale-95 border-b-2 border-red-700 pb-1 font-semibold text-red-700 transition-all duration-300 active:scale-100'
+                    : 'scale-95 text-zinc-600 transition-all duration-300 active:scale-100 hover:text-zinc-900'
+                }
+                href={link.href}
+              >
+                {link.label}
+              </a>
+            ))}
+          </nav>
+        </div>
+        <div className="flex items-center gap-4">
+          {isLoggedIn ? (
+            <>
+              <a
+                className="scale-95 text-sm font-semibold text-zinc-700 transition-all duration-300 active:scale-100 hover:text-zinc-900"
+                href="#"
+              >
+                Profile
+              </a>
+            </>
+          ) : (
+            <>
+              <a
+                className="scale-95 text-sm font-semibold text-zinc-700 transition-all duration-300 active:scale-100 hover:text-zinc-900"
+                href="#"
+              >
+                Đăng nhập
+              </a>
+              <a
+                className="scale-95 rounded-md border border-zinc-200 px-4 py-2 text-sm font-semibold text-zinc-700 transition-all duration-300 active:scale-100 hover:border-zinc-400 hover:text-zinc-900"
+                href="#"
+              >
+                Đăng ký
+              </a>
+            </>
+          )}
+          <button className="editorial-gradient scale-95 rounded-md px-4 py-2 text-sm font-semibold text-white transition-transform active:scale-100 sm:px-6">
+                Đăng tin
+          </button>
+        </div>
+      </div>
+    </header>
+  )
 }
