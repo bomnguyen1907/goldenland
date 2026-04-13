@@ -1,10 +1,18 @@
 import type { CollectionConfig } from 'payload'
 
+import { authenticated, ownerOrAdmin, adminOnly } from '@/access'
+
 export const Reports: CollectionConfig = {
     slug: 'reports',
     admin: {
         useAsTitle: 'reason',
         defaultColumns: ['reason', 'listing', 'reporter', 'status', 'createdAt'],
+    },
+    access: {
+        create: authenticated,
+        read: ownerOrAdmin('reporter'),
+        update: adminOnly,
+        delete: adminOnly,
     },
     fields: [
         {

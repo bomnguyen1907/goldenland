@@ -68,6 +68,7 @@ export interface Config {
   blocks: {};
   collections: {
     users: User;
+    profiles: Profile;
     listings: Listing;
     projects: Project;
     media: Media;
@@ -93,6 +94,7 @@ export interface Config {
   collectionsJoins: {};
   collectionsSelect: {
     users: UsersSelect<false> | UsersSelect<true>;
+    profiles: ProfilesSelect<false> | ProfilesSelect<true>;
     listings: ListingsSelect<false> | ListingsSelect<true>;
     projects: ProjectsSelect<false> | ProjectsSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
@@ -162,7 +164,7 @@ export interface User {
   fullName: string;
   phone?: string | null;
   avatar?: (number | null) | Media;
-  role: 'admin' | 'moderator' | 'agent' | 'user';
+  role: 'admin' | 'user';
   /**
    * Số dư tài khoản (VNĐ)
    */
@@ -213,6 +215,27 @@ export interface Media {
   height?: number | null;
   focalX?: number | null;
   focalY?: number | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "profiles".
+ */
+export interface Profile {
+  id: number;
+  /**
+   * One-to-one owner of this profile
+   */
+  user: number | User;
+  displayName?: string | null;
+  dateOfBirth?: string | null;
+  gender?: ('male' | 'female' | 'other') | null;
+  bio?: string | null;
+  address?: string | null;
+  provinceCode?: string | null;
+  districtCode?: string | null;
+  wardCode?: string | null;
+  updatedAt: string;
+  createdAt: string;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -838,6 +861,10 @@ export interface PayloadLockedDocument {
         value: number | User;
       } | null)
     | ({
+        relationTo: 'profiles';
+        value: number | Profile;
+      } | null)
+    | ({
         relationTo: 'listings';
         value: number | Listing;
       } | null)
@@ -979,6 +1006,23 @@ export interface UsersSelect<T extends boolean = true> {
         createdAt?: T;
         expiresAt?: T;
       };
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "profiles_select".
+ */
+export interface ProfilesSelect<T extends boolean = true> {
+  user?: T;
+  displayName?: T;
+  dateOfBirth?: T;
+  gender?: T;
+  bio?: T;
+  address?: T;
+  provinceCode?: T;
+  districtCode?: T;
+  wardCode?: T;
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

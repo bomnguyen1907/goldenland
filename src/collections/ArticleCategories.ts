@@ -1,9 +1,17 @@
 import type { CollectionConfig } from 'payload'
 
+import { activeOrAdmin, adminOnly } from '@/access'
+
 export const ArticleCategories: CollectionConfig = {
     slug: 'article-categories',
     admin: {
         useAsTitle: 'name',
+    },
+    access: {
+        create: adminOnly,
+        read: activeOrAdmin('isActive'),
+        update: adminOnly,
+        delete: adminOnly,
     },
     fields: [
         {
