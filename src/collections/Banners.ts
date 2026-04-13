@@ -1,10 +1,18 @@
 import type { CollectionConfig } from 'payload'
 
+import { activeOrAdmin, adminOnly } from '@/access'
+
 export const Banners: CollectionConfig = {
     slug: 'banners',
     admin: {
         useAsTitle: 'name',
         defaultColumns: ['name', 'position', 'isActive', 'startDate', 'endDate'],
+    },
+    access: {
+        create: adminOnly,
+        read: activeOrAdmin('isActive'),
+        update: adminOnly,
+        delete: adminOnly,
     },
     fields: [
         {

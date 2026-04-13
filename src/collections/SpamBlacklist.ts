@@ -1,10 +1,18 @@
 import type { CollectionConfig } from 'payload'
 
+import { adminOnly } from '@/access'
+
 export const SpamBlacklist: CollectionConfig = {
     slug: 'spam-blacklist',
     admin: {
         useAsTitle: 'value',
         defaultColumns: ['type', 'value', 'reason', 'createdAt'],
+    },
+    access: {
+        create: adminOnly,
+        read: adminOnly,
+        update: adminOnly,
+        delete: adminOnly,
     },
     fields: [
         {

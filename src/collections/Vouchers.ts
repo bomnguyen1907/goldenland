@@ -1,10 +1,18 @@
 import type { CollectionConfig } from 'payload'
 
+import { ownerOrAdmin, adminOnly } from '@/access'
+
 export const Vouchers: CollectionConfig = {
     slug: 'vouchers',
     admin: {
         useAsTitle: 'code',
         defaultColumns: ['code', 'user', 'discountType', 'status', 'expiresAt'],
+    },
+    access: {
+        create: adminOnly,
+        read: ownerOrAdmin('user'),
+        update: adminOnly,
+        delete: adminOnly,
     },
     fields: [
         {

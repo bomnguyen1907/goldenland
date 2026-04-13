@@ -6,6 +6,7 @@ import { fileURLToPath } from 'url'
 import sharp from 'sharp'
 
 import { Users } from './collections/Users'
+import { Profiles } from './collections/Profiles'
 import { Listings } from './collections/Listings'
 import { Projects } from './collections/Projects'
 import { Media } from './collections/Media'
@@ -37,6 +38,7 @@ import {
   countUnreadNotifications,
 } from './endpoints/notifications'
 import { myDashboard } from './endpoints/myDashboard'
+import { projectDetail, projects } from './endpoints/projects'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -49,7 +51,7 @@ export default buildConfig({
     },
   },
   globals: [Settings],
-    endpoints: [
+  endpoints: [
     ...divisionEndpoints,
     purchasePackage,
     searchListings,
@@ -59,8 +61,10 @@ export default buildConfig({
     markAllNotificationsRead,
     countUnreadNotifications,
     myDashboard,
+    projects,
+    projectDetail,
   ],
-  collections: [Users, Listings, Projects, Media, Investors, Articles, ArticleCategories, Banners, Contacts, Reports, Packages, PostingPrices, Vouchers, Orders,
+  collections: [Users, Profiles, Listings, Projects, Media, Investors, Articles, ArticleCategories, Banners, Contacts, Reports, Packages, PostingPrices, Vouchers, Orders,
     Notifications, SavedListings, ViewHistory, SpamBlacklist
   ],
   editor: lexicalEditor(),

@@ -1,5 +1,7 @@
 import type { CollectionConfig } from 'payload'
 
+import { adminOnly, statusOrAdmin } from '@/access'
+
 export const Projects: CollectionConfig = {
     slug: 'projects',
     admin: {
@@ -7,10 +9,11 @@ export const Projects: CollectionConfig = {
         defaultColumns: ['name', 'investor', 'status', 'createdAt'],
     },
     access: {
-        read: () => true,
-        create: () => true,
-        update: () => true,
-        delete: () => true,
+        create: adminOnly,
+        read: statusOrAdmin('status', 'active'),
+        update: adminOnly,
+        delete: adminOnly,
+
     },
     fields: [
         {

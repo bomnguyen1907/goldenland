@@ -1,10 +1,18 @@
 import type { CollectionConfig } from 'payload'
 
+import { ownerOrAdmin, adminOnly } from '@/access'
+
 export const Notifications: CollectionConfig = {
     slug: 'notifications',
     admin: {
         useAsTitle: 'title',
         defaultColumns: ['title', 'user', 'type', 'isRead', 'createdAt'],
+    },
+    access: {
+        create: adminOnly,
+        read: ownerOrAdmin('user'),
+        update: ownerOrAdmin('user'),
+        delete: adminOnly,
     },
     fields: [
         {

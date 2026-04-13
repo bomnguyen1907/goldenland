@@ -1,10 +1,18 @@
 import type { CollectionConfig } from 'payload'
 
+import { authenticated, ownerOrAdmin, adminOnly } from '@/access'
+
 export const Orders: CollectionConfig = {
     slug: 'orders',
     admin: {
         useAsTitle: 'orderCode',
         defaultColumns: ['orderCode', 'user', 'orderType', 'totalAmount', 'status', 'createdAt'],
+    },
+    access: {
+        create: authenticated,
+        read: ownerOrAdmin('user'),
+        update: adminOnly,
+        delete: adminOnly,
     },
     fields: [
         {

@@ -1,10 +1,18 @@
 import type { CollectionConfig } from 'payload'
 
+import { authenticated, ownerOrAdmin, statusOrOwnerOrAdmin } from '@/access'
+
 export const Articles: CollectionConfig = {
     slug: 'articles',
     admin: {
         useAsTitle: 'title',
         defaultColumns: ['title', 'category', 'status', 'author', 'createdAt'],
+    },
+    access: {
+        create: authenticated,
+        read: statusOrOwnerOrAdmin('status', 'published', 'author'),
+        update: ownerOrAdmin('author'),
+        delete: ownerOrAdmin('author'),
     },
     fields: [
         {

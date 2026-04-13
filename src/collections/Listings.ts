@@ -1,10 +1,18 @@
 import type { CollectionConfig } from 'payload'
 
+import { authenticated, ownerOrAdmin, statusOrOwnerOrAdmin, adminOnlyField } from '@/access'
+
 export const Listings: CollectionConfig = {
     slug: 'listings',
     admin: {
         useAsTitle: 'title',
         defaultColumns: ['title', 'listingType', 'price', 'status', 'createdAt'],
+    },
+    access: {
+        create: authenticated,
+        read: statusOrOwnerOrAdmin('status', 'active', 'user'),
+        update: ownerOrAdmin('user'),
+        delete: ownerOrAdmin('user'),
     },
     fields: [
         {
@@ -393,6 +401,9 @@ export const Listings: CollectionConfig = {
             type: 'relationship',
             relationTo: 'users',
             required: true,
+            access: {
+                update: adminOnlyField,
+            },
             admin: {
                 position: 'sidebar',
                 description: 'Người đăng tin',

@@ -1,10 +1,18 @@
 // @ts-nocheck
 import type { CollectionConfig } from 'payload'
 
+import { ownerOrAdmin, adminOnly } from '@/access'
+
 export const SavedListings: CollectionConfig = {
     slug: 'saved-listings',
     admin: {
         defaultColumns: ['user', 'listing', 'createdAt'],
+    },
+    access: {
+        create: ownerOrAdmin('user'),
+        read: ownerOrAdmin('user'),
+        update: adminOnly,
+        delete: ownerOrAdmin('user'),
     },
     fields: [
         {
