@@ -1,110 +1,148 @@
-import React from 'react'
-import Link from 'next/link'
-
 export default function Footer() {
-    const s = {
-        footer: {
-            borderTop: '1px solid #000',
-            background: '#fff',
-            marginTop: 60,
-            padding: '40px 0 20px 0',
-        } as React.CSSProperties,
-        container: {
-            maxWidth: 1100,
-            margin: '0 auto',
-            padding: '0 20px',
-        } as React.CSSProperties,
-        grid: {
-            display: 'grid',
-            gridTemplateColumns: 'repeat(4, 1fr)',
-            gap: 40,
-            marginBottom: 32,
-        } as React.CSSProperties,
-        colTitle: {
-            fontSize: 14,
-            fontWeight: 700,
-            marginBottom: 14,
-            textTransform: 'uppercase' as const,
-            letterSpacing: 1,
-        } as React.CSSProperties,
-        link: {
-            display: 'block',
-            color: '#555',
-            textDecoration: 'none',
-            fontSize: 13,
-            marginBottom: 8,
-        } as React.CSSProperties,
-        text: {
-            color: '#555',
-            fontSize: 13,
-            lineHeight: 1.7,
-        } as React.CSSProperties,
-        bottom: {
-            borderTop: '1px solid #e5e5e5',
-            paddingTop: 20,
-            textAlign: 'center' as const,
-            fontSize: 12,
-            color: '#999',
-        } as React.CSSProperties,
-    }
+  return (
+    <footer className="w-full border-t border-zinc-100 bg-stone-50 pb-8 pt-16">
+      <div className="mx-auto mb-16 grid max-w-screen-2xl grid-cols-1 gap-8 px-8 md:grid-cols-2 lg:grid-cols-4">
+        <div className="space-y-6">
+          <span className="font-lexend text-lg font-bold uppercase tracking-wider text-zinc-900">
+            TUYỂN CHỌN KIẾN TRÚC
+          </span>
+          <p className="text-sm leading-relaxed text-zinc-500">
+            Nền tảng báo chí và thông tin bất động sản hàng đầu dành cho các nhà đầu tư và người yêu
+            kiến trúc bền vững.
+          </p>
+          <div className="flex gap-4">
+            <a
+              className="flex h-10 w-10 items-center justify-center rounded-full bg-surface-container transition-all hover:bg-primary hover:text-white"
+              href="#"
+            >
+              <span className="material-symbols-outlined text-xl">share</span>
+            </a>
+          </div>
+        </div>
+        <div>
+          <h5 className="mb-6 font-lexend text-sm font-bold uppercase tracking-widest text-zinc-900">
+            Danh mục
+          </h5>
+          <ul className="space-y-4">
+            <li>
+              <a
+                className="font-lexend text-sm text-zinc-500 transition-colors hover:text-red-700"
+                href="#"
+              >
+                Mua bán nhà đất
+              </a>
+            </li>
+            <li>
+              <a
+                className="font-lexend text-sm text-zinc-500 transition-colors hover:text-red-700"
+                href="#"
+              >
+                Cho thuê căn hộ
+              </a>
+            </li>
+            <li>
+              <a
+                className="font-lexend text-sm text-zinc-500 transition-colors hover:text-red-700"
+                href="#"
+              >
+                Dự án mới công bố
+              </a>
+            </li>
+            <li>
+              <a
+                className="font-lexend text-sm text-zinc-500 transition-colors hover:text-red-700"
+                href="#"
+              >
+                Phân tích thị trường
+              </a>
+            </li>
+          </ul>
+        </div>
+        <div>
+          <h5 className="mb-6 font-lexend text-sm font-bold uppercase tracking-widest text-zinc-900">
+            Hỗ trợ khách hàng
+          </h5>
+          <ul className="space-y-4">
+            <li>
+              <a
+                className="font-lexend text-sm text-zinc-500 transition-colors hover:text-red-700"
+                href="#"
+              >
+                Về chúng tôi
+              </a>
+            </li>
+            <li>
+              <a
+                className="font-lexend text-sm text-zinc-500 transition-colors hover:text-red-700"
+                href="#"
+              >
+                Liên hệ
+              </a>
+            </li>
+            <li>
+              <a
+                className="font-lexend text-sm text-zinc-500 transition-colors hover:text-red-700"
+                href="#"
+              >
+                Điều khoản
+              </a>
+            </li>
+            <li>
+              <a
+                className="font-lexend text-sm text-zinc-500 transition-colors hover:text-red-700"
+                href="#"
+              >
+                Bảo mật
+              </a>
+            </li>
+          </ul>
+        </div>
+        <div>
+          <h5 className="mb-6 font-lexend text-sm font-bold uppercase tracking-widest text-zinc-900">
+            Liên hệ
+          </h5>
+          <ul className="space-y-4">
+            <li className="flex items-start gap-3 text-sm text-zinc-500">
+              <span className="material-symbols-outlined text-lg text-primary">location_on</span>
+              72 Lê Thánh Tôn, Quận 1, TP. Hồ Chí Minh
+            </li>
+            <li className="flex items-center gap-3 text-sm text-zinc-500">
+              <span className="material-symbols-outlined text-lg text-primary">call</span>
+              1900 1888
+            </li>
+            <li className="flex items-center gap-3 text-sm text-zinc-500">
+              <span className="material-symbols-outlined text-lg text-primary">mail</span>
+              contact@editorial-re.vn
+            </li>
+          </ul>
+        </div>
+      </div>
 
-    return (
-        <footer style={s.footer}>
-            <div style={s.container}>
-                <div style={s.grid}>
-                    <div>
-                        <div style={{ ...s.colTitle, fontSize: 16 }}>GOLDEN LAND</div>
-                        <div style={s.text}>
-                            Nền tảng bất động sản hàng đầu Việt Nam. Kết nối người mua, người bán và chủ đầu tư.
-                        </div>
-                    </div>
-
-                    <div>
-                        <div style={s.colTitle}>Sản phẩm</div>
-                        <Link href="/listings?type=sale" style={s.link}>
-                            Nhà đất bán
-                        </Link>
-                        <Link href="/listings?type=rent" style={s.link}>
-                            Nhà đất cho thuê
-                        </Link>
-                        <Link href="/projects" style={s.link}>
-                            Dự án
-                        </Link>
-                        <Link href="/articles" style={s.link}>
-                            Tin tức
-                        </Link>
-                    </div>
-
-                    <div>
-                        <div style={s.colTitle}>Hỗ trợ</div>
-                        <Link href="/" style={s.link}>
-                            Hướng dẫn đăng tin
-                        </Link>
-                        <Link href="/" style={s.link}>
-                            Bảng giá dịch vụ
-                        </Link>
-                        <Link href="/" style={s.link}>
-                            Câu hỏi thường gặp
-                        </Link>
-                        <Link href="/" style={s.link}>
-                            Liên hệ
-                        </Link>
-                    </div>
-
-                    <div>
-                        <div style={s.colTitle}>Liên hệ</div>
-                        <div style={s.text}>
-                            Hotline: 1900 1234
-                            <br />
-                            Email: support@goldenland.vn
-                            <br />
-                            Địa chỉ: TP. Hồ Chí Minh
-                        </div>
-                    </div>
-                </div>
-
-                <div style={s.bottom}>© {new Date().getFullYear()} Golden Land. All rights reserved.</div>
-            </div>
-        </footer>
-    )
+      <div className="mx-auto flex max-w-screen-2xl flex-col items-center justify-between gap-4 border-t border-zinc-100 px-8 pt-8 md:flex-row">
+        <p className="font-lexend text-sm text-zinc-500">
+          © 2024 Goldenland. Nền tảng thông tin bất động sản và tuyển chọn kiến trúc.
+        </p>
+        <div className="flex gap-6">
+          <a
+            className="font-lexend text-sm text-zinc-500 transition-colors hover:text-zinc-800"
+            href="#"
+          >
+            Facebook
+          </a>
+          <a
+            className="font-lexend text-sm text-zinc-500 transition-colors hover:text-zinc-800"
+            href="#"
+          >
+            LinkedIn
+          </a>
+          <a
+            className="font-lexend text-sm text-zinc-500 transition-colors hover:text-zinc-800"
+            href="#"
+          >
+            Instagram
+          </a>
+        </div>
+      </div>
+    </footer>
+  )
 }
