@@ -1,125 +1,33 @@
 'use client'
 
-import React, { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
+import { formatPrice, formatDate } from '../utils'
+import SectionTitle from '../components/SectionTitle'
 
 export default function ProjectDetailPage() {
-    const params = useParams()
-    const id = params?.id as string
+    const { id } = useParams() as { id: string }
     const [project, setProject] = useState<any>(null)
     const [loading, setLoading] = useState(true)
     const [currentImage, setCurrentImage] = useState(0)
 
     useEffect(() => {
+        if (!id) return
         const fetchData = async () => {
             try {
                 const res = await fetch(`/api/projects/${id}?depth=2`)
-                const data = await res.json()
-                setProject(data)
+                setProject(await res.json())
             } catch {
                 alert('Lỗi tải dữ liệu')
             }
             setLoading(false)
         }
-        if (id) fetchData()
+        fetchData()
     }, [id])
 
-    const formatPrice = (p?: number) => {
-        if (!p) return '-'
-        if (p >= 1000) return `${(p / 1000).toFixed(1)} tỷ`
-        return `${p} triệu`
-    }
-
-    const formatDate = (d?: string) => {
-        if (!d) return '-'
-        return new Date(d).toLocaleDateString('vi-VN')
-    }
-
-    const s = {
-        page: {
-            background: '#fff',
-            minHeight: '100vh',
-            color: '#000',
-            fontFamily: 'system-ui, sans-serif',
-        } as React.CSSProperties,
-        container: { maxWidth: 1100, margin: '0 auto', padding: '20px' } as React.CSSProperties,
-        back: {
-            display: 'inline-block',
-            marginBottom: 20,
-            color: '#000',
-            textDecoration: 'none',
-            fontSize: 14,
-            fontWeight: 600,
-            borderBottom: '1px solid #000',
-            paddingBottom: 2,
-        } as React.CSSProperties,
-        heroImage: {
-            width: '100%',
-            height: 400,
-            objectFit: 'cover' as const,
-            border: '1px solid #000',
-            background: '#f0f0f0',
-            display: 'block',
-        } as React.CSSProperties,
-        thumbs: {
-            display: 'flex',
-            gap: 8,
-            marginTop: 12,
-            overflowX: 'auto' as const,
-        } as React.CSSProperties,
-        thumb: {
-            width: 80,
-            height: 60,
-            objectFit: 'cover' as const,
-            border: '1px solid #000',
-            cursor: 'pointer',
-            opacity: 0.6,
-        } as React.CSSProperties,
-        thumbActive: { opacity: 1, border: '2px solid #000' } as React.CSSProperties,
-        title: { fontSize: 32, fontWeight: 700, margin: '24px 0 8px 0' } as React.CSSProperties,
-        meta: { color: '#555', fontSize: 15, marginBottom: 16 } as React.CSSProperties,
-        priceBox: {
-            border: '1px solid #000',
-            padding: 20,
-            margin: '20px 0',
-            display: 'grid',
-            gridTemplateColumns: 'repeat(3, 1fr)',
-            gap: 20,
-        } as React.CSSProperties,
-        priceLabel: { fontSize: 12, color: '#666', marginBottom: 4 } as React.CSSProperties,
-        priceValue: { fontSize: 18, fontWeight: 700 } as React.CSSProperties,
-        section: { marginTop: 32 } as React.CSSProperties,
-        sectionTitle: {
-            fontSize: 20,
-            fontWeight: 700,
-            paddingBottom: 8,
-            borderBottom: '2px solid #000',
-            marginBottom: 16,
-        } as React.CSSProperties,
-        infoGrid: {
-            display: 'grid',
-            gridTemplateColumns: 'repeat(2, 1fr)',
-            gap: 12,
-        } as React.CSSProperties,
-        infoRow: {
-            display: 'flex',
-            justifyContent: 'space-between',
-            padding: '10px 0',
-            borderBottom: '1px solid #e5e5e5',
-            fontSize: 14,
-        } as React.CSSProperties,
-        infoLabel: { color: '#666' } as React.CSSProperties,
-        infoValue: { fontWeight: 600 } as React.CSSProperties,
-        zoneCard: {
-            border: '1px solid #000',
-            padding: 16,
-            marginBottom: 12,
-        } as React.CSSProperties,
-    }
-
-    if (loading) return <div style={s.container}>Đang tải...</div>
-    if (!project) return <div style={s.container}>Không tìm thấy dự án</div>
+    if (loading) return <div className="max-w-[1100px] mx-auto px-5 pt-[100px]">Đang tải...</div>
+    if (!project) return <div className="max-w-[1100px] mx-auto px-5 pt-[100px]">Không tìm thấy dự án</div>
 
     const images = project.images || []
     const mainImage =
@@ -128,28 +36,29 @@ export default function ProjectDetailPage() {
             : images[currentImage - 1]?.image?.url || project.thumbnail?.url
 
     return (
-        <div style={s.page}>
-            <div style={s.container}>
-                <Link href="/projects" style={s.back}>
+        <div className="bg-white min-h-screen text-black">
+            <div className="max-w-[1100px] mx-auto px-5 pt-[100px] pb-10">
+                <Link href="/projects" className="inline-block mb-5 text-sm font-semibold border-b border-black pb-0.5 text-black no-underline">
                     ← Quay lại danh sách
                 </Link>
 
                 {/* HERO IMAGE */}
                 {mainImage ? (
-                    <img src={mainImage} alt={project.name} style={s.heroImage} />
+                    <img src={mainImage} alt={project.name} className="w-full h-[400px] object-cover border border-black block bg-gray-100" />
                 ) : (
-                    <div style={{ ...s.heroImage, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <div className="w-full h-[400px] border border-black bg-gray-100 flex items-center justify-center text-gray-400">
                         Chưa có ảnh
                     </div>
                 )}
 
                 {/* THUMBNAILS */}
                 {(project.thumbnail || images.length > 0) && (
-                    <div style={s.thumbs}>
+                    <div className="flex gap-2 mt-3 overflow-x-auto">
                         {project.thumbnail?.url && (
                             <img
                                 src={project.thumbnail.url}
-                                style={{ ...s.thumb, ...(currentImage === 0 ? s.thumbActive : {}) }}
+                                alt="thumb"
+                                className={`w-20 h-[60px] object-cover border cursor-pointer ${currentImage === 0 ? 'border-2 border-black opacity-100' : 'border-black opacity-60'}`}
                                 onClick={() => setCurrentImage(0)}
                             />
                         )}
@@ -157,66 +66,59 @@ export default function ProjectDetailPage() {
                             <img
                                 key={i}
                                 src={img.image?.url}
-                                style={{ ...s.thumb, ...(currentImage === i + 1 ? s.thumbActive : {}) }}
+                                alt={`thumb-${i}`}
+                                className={`w-20 h-[60px] object-cover border cursor-pointer ${currentImage === i + 1 ? 'border-2 border-black opacity-100' : 'border-black opacity-60'}`}
                                 onClick={() => setCurrentImage(i + 1)}
                             />
                         ))}
                     </div>
                 )}
 
-                <h1 style={s.title}>{project.name}</h1>
-                {project.address && <div style={s.meta}>📍 {project.address}</div>}
+                <h1 className="text-[32px] font-bold mt-6 mb-2">{project.name}</h1>
+                {project.address && <div className="text-gray-500 text-[15px] mb-4">📍 {project.address}</div>}
 
                 {/* PRICE BOX */}
-                <div style={s.priceBox}>
-                    <div>
-                        <div style={s.priceLabel}>Giá từ</div>
-                        <div style={s.priceValue}>{formatPrice(project.priceFrom)}</div>
-                    </div>
-                    <div>
-                        <div style={s.priceLabel}>Giá đến</div>
-                        <div style={s.priceValue}>{formatPrice(project.priceTo)}</div>
-                    </div>
-                    <div>
-                        <div style={s.priceLabel}>Tổng số căn</div>
-                        <div style={s.priceValue}>{project.totalUnits || '-'}</div>
-                    </div>
+                <div className="border border-black p-5 my-5 grid grid-cols-3 gap-5">
+                    {[
+                        { label: 'Giá từ', value: formatPrice(project.priceFrom) || '-' },
+                        { label: 'Giá đến', value: formatPrice(project.priceTo) || '-' },
+                        { label: 'Tổng số căn', value: project.totalUnits || '-' },
+                    ].map(({ label, value }) => (
+                        <div key={label}>
+                            <div className="text-xs text-gray-500 mb-1">{label}</div>
+                            <div className="text-lg font-bold">{value}</div>
+                        </div>
+                    ))}
                 </div>
 
                 {/* THÔNG TIN CHUNG */}
-                <div style={s.section}>
-                    <div style={s.sectionTitle}>Thông tin chung</div>
-                    <div style={s.infoGrid}>
-                        <div style={s.infoRow}>
-                            <span style={s.infoLabel}>Chủ đầu tư</span>
-                            <span style={s.infoValue}>{project.investor?.name || '-'}</span>
-                        </div>
-                        <div style={s.infoRow}>
-                            <span style={s.infoLabel}>Tổng diện tích</span>
-                            <span style={s.infoValue}>{project.totalArea ? `${project.totalArea} ha` : '-'}</span>
-                        </div>
-                        <div style={s.infoRow}>
-                            <span style={s.infoLabel}>Ngày khởi công</span>
-                            <span style={s.infoValue}>{formatDate(project.startDate)}</span>
-                        </div>
-                        <div style={s.infoRow}>
-                            <span style={s.infoLabel}>Ngày bàn giao</span>
-                            <span style={s.infoValue}>{formatDate(project.completionDate)}</span>
-                        </div>
+                <div className="mt-8">
+                    <SectionTitle>Thông tin chung</SectionTitle>
+                    <div className="grid grid-cols-2 gap-3">
+                        {[
+                            { label: 'Chủ đầu tư', value: project.investor?.name || '-' },
+                            { label: 'Tổng diện tích', value: project.totalArea ? `${project.totalArea} ha` : '-' },
+                            { label: 'Ngày khởi công', value: formatDate(project.startDate) },
+                            { label: 'Ngày bàn giao', value: formatDate(project.completionDate) },
+                        ].map(({ label, value }) => (
+                            <div key={label} className="flex justify-between py-2.5 border-b border-gray-200 text-sm">
+                                <span className="text-gray-500">{label}</span>
+                                <span className="font-semibold">{value}</span>
+                            </div>
+                        ))}
                     </div>
                 </div>
 
                 {/* MÔ TẢ */}
                 {project.description && (
-                    <div style={s.section}>
-                        <div style={s.sectionTitle}>Mô tả dự án</div>
+                    <div className="mt-8">
+                        <SectionTitle>Mô tả dự án</SectionTitle>
                         <div
-                            style={{ lineHeight: 1.7, fontSize: 15 }}
+                            className="leading-relaxed text-[15px]"
                             dangerouslySetInnerHTML={{
-                                __html:
-                                    typeof project.description === 'string'
-                                        ? project.description
-                                        : JSON.stringify(project.description),
+                                __html: typeof project.description === 'string'
+                                    ? project.description
+                                    : JSON.stringify(project.description),
                             }}
                         />
                     </div>
@@ -224,15 +126,13 @@ export default function ProjectDetailPage() {
 
                 {/* PHÂN KHU */}
                 {project.zones?.length > 0 && (
-                    <div style={s.section}>
-                        <div style={s.sectionTitle}>Phân khu ({project.zones.length})</div>
+                    <div className="mt-8">
+                        <SectionTitle>Phân khu ({project.zones.length})</SectionTitle>
                         {project.zones.map((z: any, i: number) => (
-                            <div key={i} style={s.zoneCard}>
-                                <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 6 }}>{z.name}</div>
-                                {z.description && (
-                                    <div style={{ color: '#555', fontSize: 14, marginBottom: 8 }}>{z.description}</div>
-                                )}
-                                <div style={{ fontSize: 13, color: '#666' }}>
+                            <div key={i} className="border border-black p-4 mb-3">
+                                <div className="font-bold text-base mb-1.5">{z.name}</div>
+                                {z.description && <div className="text-gray-500 text-sm mb-2">{z.description}</div>}
+                                <div className="text-xs text-gray-400">
                                     Số căn: {z.totalUnits || '-'} · Trạng thái: {z.status || '-'}
                                 </div>
                             </div>
