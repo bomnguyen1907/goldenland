@@ -1,4 +1,10 @@
+'use client'
+import type { Listing } from '@/payload-types'
+import { fetchNewListings } from '@/app/services/listings'
+import { useEffect, useState } from 'react'
+
 type PropertyItem = {
+  id: number
   title: string
   price: string
   area: string
@@ -7,82 +13,94 @@ type PropertyItem = {
   imageAlt: string
 }
 
-const properties: PropertyItem[] = [
-  {
-    title: 'Biệt thự đơn lập senturia vườn lài hoàn thiện chỉ 30 tỷ',
-    price: '30 tỷ',
-    area: '365 m²',
-    location: 'Quận 12, Hồ Chí Minh',
-    imageAlt: 'Senturia Vườn Lài',
-    image:
-      'https://lh3.googleusercontent.com/aida-public/AB6AXuAECDzXZezrcelq6C5EWlWkmf219bNNXLvGeMrDp4Y_IxbuAKz1iRBB_x22ZEJcdFLsSzUlChYFjTNDUfI-P52eRlUmT6A3rlHdqRIBP0sq738R0HlWeP-Gz_nh7GzDZEXHLvra6ho1GTfLx4BHypcMWfZd6nFATGGzOvRdahnSoX-wIJBswYxX5wvCBC17zUXDCVMgatFSA0wtPfOxTJCF3ifKAbSDGtyVyaclvhgdaR5f6gOWm2UQpL5Uhri2TBwotYefZI9mHazu',
-  },
-  {
-    title: 'Nhà mới 4 tầng DT (4m x 17m) - khu biệt thự Kiểu Đàm, P. Tân...',
-    price: '12 tỷ',
-    area: '68 m²',
-    location: 'Quận 7, Hồ Chí Minh',
-    imageAlt: 'Nhà Kiểu Đàm',
-    image:
-      'https://lh3.googleusercontent.com/aida-public/AB6AXuDJvraFzf0zA9_Fxy5xac4Xzu1DCR6oHHlueOmcYXTVvyaFJES4qcPmSSZKToAponBW03MG7jAflzP8yIJScBLKJTrxcHuvqOjOZomJE7GIdVzJBGXaJqoCdHeXxk4INDCVLDTgXYD42QtaJWqWB__FBKXKwREXvl4OzBH9YBKvAzNmxtP0NApvF6k6ixHO3eeTnC88GkObpF03CgFMwyXgiseewZSd02gXTXcJVAGSWq14OYG90Xr89_3Sl8Tb5Zw_g4_xW-1QBmUM',
-  },
-  {
-    title: 'Bán căn hộ 1+1PN 1WC 52m2 Victoria Village view sông...',
-    price: '4,5 tỷ',
-    area: '52 m²',
-    location: 'Quận 2, Hồ Chí Minh',
-    imageAlt: 'Victoria Village',
-    image:
-      'https://lh3.googleusercontent.com/aida-public/AB6AXuCY9DhR9fDE3Hb0AVkPRXME4dM_4RbHYfXNC6b7zsc3dBRrFAU8rH8Ndte9obB-6DZbb-bUTdhFXHxEoc1O__FT8kqmcEsbmXTQWzoxC1pZ_PYidNOls5qYHlwY6QUR_yA86OjjzHgOCCyBwidevNJfSlDDwfWBX786pDIohGCxLPOfzGyHW5zbSHghPvpI27AE8z58Wj6UIYFxT4jHTBvYlC5-tm1Z7PmLz1tF84Vm4l_KllSCp-bdhKkZNWRMxN8WVl5-jT1ScPEr',
-  },
-  {
-    title: 'NHÀ MỚI 4*16m 1LẦU 4PN 2WC 1/ NGUYỄN VĂN KHỐI P11',
-    price: '10,5 triệu/tháng',
-    area: '64 m²',
-    location: 'Gò Vấp, Hồ Chí Minh',
-    imageAlt: 'Nhà Nguyễn Văn Khối',
-    image:
-      'https://lh3.googleusercontent.com/aida-public/AB6AXuBRR-Z88ZR-PAMVesM2J3vGY46XzF_H6s-oevtRCaS5GBMX9h8iSLwluONFQFNq1EXbsuw6VL1clSgs6zEIduKkyI76FUPBkEl9A1vnTsTllq9EI2BtQCUDBBYlSbJUCzcekdaXvdlzP0-mnRvhQjRBKE3ZMQd_HFY2dJPjxos4UqiYdFfB1uKIgs9d6rBQOXBqLuk1LeihuHb4Ho8xN9gGmsdUt4oZk3ijoRCSm2uoUYF2XCAQ992kG603U1E-_u01k9gP7ugWHD8f',
-  },
-  {
-    title: 'Căn hộ 2PN The Global City bàn giao nội thất cao cấp',
-    price: '8,2 tỷ',
-    area: '78 m²',
-    location: 'TP. Thủ Đức, Hồ Chí Minh',
-    imageAlt: 'The Global City',
-    image:
-      'https://images.unsplash.com/photo-1600585154526-990dced4db0d?auto=format&fit=crop&w=1400&q=80',
-  },
-  {
-    title: 'Nhà phố 5 tầng khu dân cư Him Lam, sổ hồng riêng',
-    price: '16,8 tỷ',
-    area: '96 m²',
-    location: 'Quận 7, Hồ Chí Minh',
-    imageAlt: 'Nhà phố Him Lam',
-    image:
-      'https://images.unsplash.com/photo-1448630360428-65456885c650?auto=format&fit=crop&w=1400&q=80',
-  },
-  {
-    title: 'Căn studio cho thuê gần Landmark 81, full nội thất',
-    price: '12 triệu/tháng',
-    area: '38 m²',
-    location: 'Bình Thạnh, Hồ Chí Minh',
-    imageAlt: 'Studio gần Landmark 81',
-    image:
-      'https://images.unsplash.com/photo-1494526585095-c41746248156?auto=format&fit=crop&w=1400&q=80',
-  },
-  {
-    title: 'Đất nền mặt tiền đường 30m trung tâm hành chính mới',
-    price: '3,9 tỷ',
-    area: '120 m²',
-    location: 'Dĩ An, Bình Dương',
-    imageAlt: 'Đất nền trung tâm hành chính',
-    image:
-      'https://images.unsplash.com/photo-1568605114967-8130f3a36994?auto=format&fit=crop&w=1400&q=80',
-  },
-]
+const PAGE_SIZE = 8
+const FALLBACK_IMAGE =
+  'https://images.unsplash.com/photo-1600585154526-990dced4db0d?auto=format&fit=crop&w=1400&q=80'
+
+function hasUrl(value: unknown): value is { url?: string | null } {
+  return typeof value === 'object' && value !== null && 'url' in value
+}
+
+function formatPrice(listing: Listing): string {
+  if (listing.priceUnit === 'negotiable') {
+    return 'Thỏa thuận'
+  }
+
+  const amount =
+    listing.price >= 1000 ? `${(listing.price / 1000).toFixed(1)} tỷ` : `${listing.price} triệu`
+
+  if (listing.priceUnit === 'per_month') {
+    return `${amount}/tháng`
+  }
+
+  if (listing.priceUnit === 'per_m2') {
+    return `${amount}/m²`
+  }
+
+  return amount
+}
+
+function mapListingToProperty(listing: Listing): PropertyItem {
+  const firstImage = listing.images?.[0]?.image
+  const image = hasUrl(firstImage) && firstImage.url ? firstImage.url : FALLBACK_IMAGE
+
+  return {
+    id: listing.id,
+    title: listing.title,
+    price: formatPrice(listing),
+    area: listing.area ? `${listing.area} m²` : 'Đang cập nhật',
+    location: listing.address ?? 'Đang cập nhật',
+    image,
+    imageAlt: listing.title,
+  }
+}
 
 export function PropertyForYouSection() {
+  const [properties, setProperties] = useState<PropertyItem[]>([])
+  const [currentPage, setCurrentPage] = useState(0)
+  const [hasMore, setHasMore] = useState(true)
+  const [isInitialLoading, setIsInitialLoading] = useState(true)
+  const [isLoadingMore, setIsLoadingMore] = useState(false)
+
+  useEffect(() => {
+    const loadInitialListings = async () => {
+      try {
+        const response = await fetchNewListings({ limit: PAGE_SIZE, page: 1 })
+
+        setProperties(response.data.map(mapListingToProperty))
+        setCurrentPage(response.page)
+        setHasMore(response.hasMore)
+      } catch (error) {
+        console.error('Fetch new listings failed:', error)
+      } finally {
+        setIsInitialLoading(false)
+      }
+    }
+
+    void loadInitialListings()
+  }, [])
+
+  const handleLoadMore = async () => {
+    if (isLoadingMore || !hasMore) {
+      return
+    }
+
+    setIsLoadingMore(true)
+    const nextPage = currentPage + 1
+
+    try {
+      const response = await fetchNewListings({ limit: PAGE_SIZE, page: nextPage })
+
+      setProperties((previous) => [...previous, ...response.data.map(mapListingToProperty)])
+      setCurrentPage(response.page)
+      setHasMore(response.hasMore)
+    } catch (error) {
+      console.error('Load more listings failed:', error)
+    } finally {
+      setIsLoadingMore(false)
+    }
+  }
+
   return (
     <section className="mx-auto max-w-screen-2xl px-8 pb-24">
       <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-center justify-between">
@@ -100,30 +118,17 @@ export function PropertyForYouSection() {
               Tin nhà đất cho thuê mới nhất
             </a>
           </div>
-
-          <div className="flex gap-2">
-            <button
-              aria-label="Xem bất động sản trước"
-              className="flex h-10 w-10 items-center justify-center rounded-full border border-outline transition-all hover:bg-primary hover:text-white"
-              type="button"
-            >
-              <span className="material-symbols-outlined">chevron_left</span>
-            </button>
-            <button
-              aria-label="Xem bất động sản tiếp theo"
-              className="flex h-10 w-10 items-center justify-center rounded-full border border-outline transition-all hover:bg-primary hover:text-white"
-              type="button"
-            >
-              <span className="material-symbols-outlined">chevron_right</span>
-            </button>
-          </div>
         </div>
       </div>
+
+      {isInitialLoading && (
+        <div className="py-10 text-center text-secondary">Đang tải danh sách bất động sản...</div>
+      )}
 
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
         {properties.map((property) => (
           <div
-            key={property.title}
+            key={property.id}
             className="group cursor-pointer overflow-hidden rounded-lg border border-outline-variant/20 bg-white transition-all hover:shadow-xl"
           >
             <div className="relative h-[208px] min-h-[208px] max-h-[208px] overflow-hidden">
@@ -136,7 +141,7 @@ export function PropertyForYouSection() {
 
             <div className="flex h-[180px] flex-col justify-between p-4">
               <div>
-                <h4 className="font-lexend mb-2 line-clamp-2 font-bold text-on-surface transition-colors group-hover:text-primary">
+                <h4 className="font-lexend mb-2 overflow-hidden text-ellipsis [display:-webkit-box] [-webkit-line-clamp:2] [-webkit-box-orient:vertical] font-bold text-on-surface transition-colors group-hover:text-primary">
                   {property.title}
                 </h4>
 
@@ -146,9 +151,9 @@ export function PropertyForYouSection() {
                   {property.area}
                 </div>
 
-                <div className="mt-2 flex items-center gap-1 text-sm text-secondary">
-                  <span className="material-symbols-outlined text-base">location_on</span>
-                  {property.location}
+                <div className="mt-2 flex min-w-0 items-center gap-1 text-sm text-secondary">
+                  <span className="material-symbols-outlined shrink-0 text-base">location_on</span>
+                  <span className="min-w-0 flex-1 truncate">{property.location}</span>
                 </div>
               </div>
 
@@ -170,12 +175,18 @@ export function PropertyForYouSection() {
         ))}
       </div>
 
+      {!isInitialLoading && properties.length === 0 && (
+        <div className="py-10 text-center text-secondary">Hiện chưa có bất động sản nào.</div>
+      )}
+
       <div className="mt-10 flex justify-center">
         <button
+          onClick={handleLoadMore}
+          disabled={isInitialLoading || isLoadingMore || !hasMore}
           className="rounded-full border border-outline px-6 py-2 font-semibold text-on-surface transition-all hover:border-primary hover:bg-primary hover:text-white"
           type="button"
         >
-          Xem thêm
+          {isLoadingMore ? 'Đang tải...' : hasMore ? 'Xem thêm' : 'Đã hiển thị hết'}
         </button>
       </div>
     </section>
