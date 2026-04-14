@@ -1,0 +1,52 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build output
+.next/
+dist/
+build/
+out/
+
+# Environment & secrets
+.env
+.env.*
+!.env.example
+secrets/
+*.pem
+*.key
+
+# Lock files (quá lớn, không cần Claude đọc)
+package-lock.json
+pnpm-lock.yaml
+yarn.lock
+
+# Logs & cache
+*.log
+.cache/
+.turbo/
+
+# Test artifacts
+playwright-report/
+test-results/
+coverage/
+.nyc_output/
+
+# IDE & OS
+.vscode/
+.cursor/
+.DS_Store
+Thumbs.db
+
+# Payload CMS generated
+src/payload-types.ts
+
+# Media uploads (nếu có)
+media/
+uploads/
+public/uploads/
+
+# Misc
+*.tsbuildinfo
+next-env.d.ts
+skills-lock.json
