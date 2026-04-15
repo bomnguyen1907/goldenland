@@ -1,0 +1,457 @@
+/* ==========================================================================
+   News Page Styles (Added for the Batdongsan-style News interface)
+   ========================================================================== */
+
+.news-page {
+  /* Override global dark background for this specific page to match exactly the screenshot */
+  background-color: #ffffff;
+  color: #2c2c2c;
+  font-family:
+    'Inter',
+    system-ui,
+    -apple-system,
+    sans-serif;
+  min-height: 100vh;
+  padding-bottom: 4rem;
+}
+
+.news-page a {
+  text-decoration: none;
+  color: inherit;
+  transition: color 0.2s ease;
+}
+
+.news-page a:hover {
+  opacity: 1; /* override global opacity change */
+}
+
+/* Container */
+.news-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+
+/* Header */
+.news-header {
+  text-align: center;
+  margin-bottom: 3rem;
+  max-width: 800px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.news-header h1 {
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: #111;
+  margin-bottom: 1rem;
+  letter-spacing: -0.5px;
+}
+
+.news-header p {
+  font-size: 1rem;
+  color: #555;
+  line-height: 1.6;
+}
+
+/* Empty state */
+.news-empty {
+  text-align: center;
+  padding: 4rem 2rem;
+  background-color: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  color: #6b7280;
+}
+
+/* Grid Layout */
+.news-grid {
+  display: grid;
+  grid-template-columns: 8fr 4fr; /* Approx 65% / 35% */
+  gap: 2.5rem;
+  align-items: start;
+}
+
+@media (max-width: 992px) {
+  .news-grid {
+    grid-template-columns: 1fr;
+    gap: 3rem;
+  }
+}
+
+/* ----------------------------------
+   Left Column: Featured & List
+   ---------------------------------- */
+.news-main {
+  display: flex;
+  flex-direction: column;
+  gap: 2.5rem;
+}
+
+/* Featured Article */
+.news-featured {
+  position: relative;
+  border-radius: 12px;
+  overflow: hidden;
+  height: 480px;
+  background-color: #f1f3f5;
+  cursor: pointer;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+}
+
+.news-featured .image-wrapper {
+  width: 100%;
+  height: 100%;
+}
+
+.news-featured img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.news-featured:hover img {
+  transform: scale(1.05);
+}
+
+.news-featured .gradient-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to top,
+    rgba(0, 0, 0, 0.9) 0%,
+    rgba(0, 0, 0, 0.4) 40%,
+    transparent 100%
+  );
+  pointer-events: none;
+}
+
+.news-featured .content {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 2rem;
+  color: #fff;
+  z-index: 2;
+}
+
+.news-featured .meta-date {
+  font-size: 0.875rem;
+  color: #e0e0e0;
+  margin-bottom: 0.75rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.news-featured h2 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  line-height: 1.3;
+  margin: 0 0 0.5rem 0;
+  color: #ffffff;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.news-featured h2 a:hover {
+  text-decoration: underline;
+  color: #ffcccc;
+}
+
+.news-featured .excerpt {
+  font-size: 0.95rem;
+  color: #d1d5db;
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin: 0;
+}
+
+@media (max-width: 768px) {
+  .news-featured {
+    height: 350px;
+  }
+  .news-featured .content {
+    padding: 1.5rem;
+  }
+  .news-featured h2 {
+    font-size: 1.35rem;
+  }
+}
+
+/* Left List Articles */
+.news-main-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.news-list-item {
+  display: flex;
+  gap: 1.5rem;
+  padding: 1.5rem 0;
+  border-bottom: 1px solid #f0f0f0;
+  cursor: pointer;
+}
+
+.news-list-item:first-child {
+  padding-top: 0;
+}
+
+.news-list-item:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.news-list-item .image-wrapper {
+  flex-shrink: 0;
+  width: 240px;
+  height: 150px;
+  position: relative;
+  border-radius: 8px;
+  overflow: hidden;
+  background-color: #f1f3f5;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.news-list-item .image-wrapper img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.4s ease;
+}
+
+.news-list-item:hover .image-wrapper img {
+  transform: scale(1.08);
+}
+
+.news-badge {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  background-color: rgba(31, 41, 55, 0.85);
+  backdrop-filter: blur(4px);
+  color: #fff;
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 3px 6px;
+  border-radius: 4px;
+  z-index: 2;
+  text-transform: uppercase;
+}
+
+.news-list-item .content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.news-list-item .meta-date {
+  font-size: 0.8rem;
+  color: #6b7280;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+}
+
+.news-list-item h3 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  line-height: 1.4;
+  margin: 0 0 0.5rem 0;
+  color: #1a1a1a;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  transition: color 0.2s ease;
+}
+
+.news-list-item:hover h3 {
+  color: #dc2626; /* Deep red on hover */
+}
+
+.news-list-item .excerpt {
+  font-size: 0.9rem;
+  color: #4b5563;
+  line-height: 1.6;
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+@media (max-width: 640px) {
+  .news-list-item {
+    gap: 1rem;
+    padding: 1.25rem 0;
+  }
+  .news-list-item .image-wrapper {
+    width: 130px;
+    height: 90px;
+  }
+  .news-list-item h3 {
+    font-size: 1.05rem;
+  }
+  .news-list-item .excerpt {
+    -webkit-line-clamp: 2;
+    font-size: 0.85rem;
+  }
+}
+
+/* ----------------------------------
+   Right Column: Sidebar
+   ---------------------------------- */
+.news-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+/* Quick List */
+.sidebar-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.sidebar-item {
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.sidebar-item:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.sidebar-item .meta-date {
+  font-size: 0.8rem;
+  color: #6b7280;
+  margin-bottom: 0.35rem;
+  font-weight: 500;
+}
+
+.sidebar-item h3 {
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.4;
+  margin: 0;
+  color: #1f2937;
+  transition: color 0.2s ease;
+}
+
+.sidebar-item:hover h3 {
+  color: #dc2626;
+}
+
+/* Most Viewed Widget */
+.most-viewed-widget {
+  background-color: #fafafa;
+  border: 1px solid #eaeaea;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.02);
+}
+
+.most-viewed-widget h3 {
+  font-size: 1.15rem;
+  font-weight: 800;
+  margin: 0 0 1.25rem 0;
+  color: #111;
+}
+
+.most-viewed-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.viewed-item {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px dashed #e5e7eb;
+}
+
+.viewed-item:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.viewed-rank {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background-color: #fee2e2;
+  color: #ef4444;
+  font-size: 0.75rem;
+  font-weight: 800;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.viewed-item h4 {
+  font-size: 0.95rem;
+  font-weight: 600;
+  line-height: 1.4;
+  margin: 0;
+  color: #374151;
+  transition: color 0.2s ease;
+}
+
+.viewed-item:hover h4 {
+  color: #dc2626;
+}
+/* --- Pagination Container --- */
+.pagination-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1.5rem;
+  margin-top: 3rem;
+  padding-top: 2rem;
+  border-top: 1px solid #e0e0e0;
+}
+
+.pagination-container .page-btn {
+  padding: 0.6rem 1.2rem;
+  background-color: #f8f9fa;
+  color: #333;
+  text-decoration: none;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  transition: all 0.2s ease-in-out;
+}
+
+.pagination-container .page-btn:hover:not(.disabled) {
+  background-color: #d32f2f; /* Đổi màu đỏ theo theme của bạn */
+  color: #fff;
+  border-color: #d32f2f;
+}
+
+.pagination-container .page-btn.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background-color: #f1f1f1;
+}
+
+.pagination-container .page-info {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #555;
+}
