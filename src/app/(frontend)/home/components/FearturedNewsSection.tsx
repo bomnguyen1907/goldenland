@@ -73,57 +73,6 @@ const categories: NewsCategory[] = [
     ],
   },
   {
-    title: 'Tin tức',
-    articles: [
-      {
-        title: 'Thị trường căn hộ trung cấp ghi nhận mức hấp thụ tăng mạnh',
-        summary:
-          'Nguồn cung mới được điều tiết hợp lý giúp căn hộ trung cấp trở thành phân khúc dẫn dắt giao dịch tại các đô thị lớn trong quý gần đây.',
-        date: '28 Tháng 11, 2024',
-        readTime: '4 phút đọc',
-        label: 'Cập nhật',
-        image:
-          'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=1400&q=80',
-      },
-      {
-        title: 'Nguồn cung nhà phố mới tại khu Đông tăng 18% so với cùng kỳ',
-        summary: 'Nguồn cung tăng tập trung tại các khu đô thị mới có tiến độ hạ tầng ổn định.',
-        date: '24 Tháng 11, 2024',
-        readTime: '3 phút đọc',
-        label: 'Nguồn cung',
-        image:
-          'https://images.unsplash.com/photo-1460317442991-0ec209397118?auto=format&fit=crop&w=400&q=80',
-      },
-      {
-        title: 'Lãi suất cho vay mua nhà giữ mức ổn định trong tháng này',
-        summary: 'Nhóm ngân hàng thương mại duy trì chính sách ưu đãi cho người mua ở thực.',
-        date: '22 Tháng 11, 2024',
-        readTime: '2 phút đọc',
-        label: 'Tài chính',
-        image:
-          'https://images.unsplash.com/photo-1554224155-6726b3ff858f?auto=format&fit=crop&w=400&q=80',
-      },
-      {
-        title: 'Người mua ưu tiên dự án có pháp lý rõ ràng và tiến độ nhanh',
-        summary: 'Yếu tố pháp lý và uy tín chủ đầu tư tiếp tục dẫn dắt quyết định xuống tiền.',
-        date: '20 Tháng 11, 2024',
-        readTime: '3 phút đọc',
-        label: 'Người mua',
-        image:
-          'https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=400&q=80',
-      },
-      {
-        title: 'Doanh nghiệp địa ốc đẩy mạnh số hóa quy trình bán hàng',
-        summary: 'Công cụ tự động hóa CRM và quản trị lead giúp tối ưu chi phí vận hành.',
-        date: '18 Tháng 11, 2024',
-        readTime: '3 phút đọc',
-        label: 'Doanh nghiệp',
-        image:
-          'https://images.unsplash.com/photo-1517502884422-41eaead166d4?auto=format&fit=crop&w=400&q=80',
-      },
-    ],
-  },
-  {
     title: 'BĐS TP.HCM',
     articles: [
       {
@@ -295,7 +244,7 @@ export function FeaturedNewsSection() {
             })}
           </div>
         </div>
-        <a className="group mb-2 flex items-center gap-1 font-semibold text-primary" href="#">
+        <a className="group mb-2 flex items-center gap-1 font-semibold text-primary" href="/articles">
           Xem tất cả
           <span className="material-symbols-outlined transition-transform group-hover:translate-x-1">
             arrow_forward

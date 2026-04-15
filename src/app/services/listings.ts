@@ -44,19 +44,9 @@ async function fetchJSON<T>(url: string, config?: AxiosRequestConfig): Promise<T
 export async function fetchListings(config?: AxiosRequestConfig): Promise<ListingsResponse> {
   return fetchJSON<ListingsResponse>('/api/listings', config)
 }
-
-// Exporting listing detail by slug. Slug is required. If slug is not provided, throw error. If listing is not found, return 404 error.
-export async function fetchListingDetail(
-  slug: string,
-  config?: AxiosRequestConfig,
-): Promise<ListingDetailResponse> {
-  const normalizedSlug = slug.trim()
-
-  if (!normalizedSlug) {
-    throw new Error('Slug is required')
-  }
-
-  return fetchJSON<ListingDetailResponse>(`/api/listings/${encodeURIComponent(normalizedSlug)}`, config)
+// Exporting listing detail by id.
+export async function fetchListingDetail(id: string, config?: AxiosRequestConfig): Promise<ListingDetailResponse> {
+  return fetchJSON<ListingDetailResponse>(`/api/listings/${id}`, config)
 }
 
 // Exporting new listings base on createdAt field, sorted by createdAt in descending order, limit to 8 listings. Client can sent limit = 8 to get next 8 listings, and so on. If limit is not sent, default to 8 listings.

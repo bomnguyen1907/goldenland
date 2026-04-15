@@ -39,7 +39,7 @@ import {
 } from './endpoints/notifications'
 import { myDashboard } from './endpoints/myDashboard'
 import { projectDetail, projects } from './endpoints/projects'
-import { getListings, getListingsDetail, getNewListings } from './endpoints/listings'
+import { getNewListings } from './endpoints/listings'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -64,9 +64,7 @@ export default buildConfig({
     myDashboard,
     projects,
     projectDetail,
-    getListings,
     getNewListings,
-    getListingsDetail,
   ],
   collections: [Users, Profiles, Listings, Projects, Media, Investors, Articles, ArticleCategories, Banners, Contacts, Reports, Packages, PostingPrices, Vouchers, Orders,
     Notifications, SavedListings, ViewHistory, SpamBlacklist
