@@ -1,7 +1,14 @@
+body {
+  margin-top: 50px;
+}
 .article-detail-page {
   background-color: #fff;
   color: #333;
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-family:
+    'Inter',
+    system-ui,
+    -apple-system,
+    sans-serif;
   min-height: 100vh;
   padding: 3rem 1.5rem;
 }
@@ -69,7 +76,7 @@
   margin-bottom: 1.5rem;
 }
 
-.article-content h2, 
+.article-content h2,
 .article-content h3 {
   color: #111;
   margin-top: 2.5rem;
@@ -89,10 +96,10 @@
   max-width: 100%;
   border-radius: 8px;
   margin: 2rem 0;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
 }
 
-.article-content ul, 
+.article-content ul,
 .article-content ol {
   margin-bottom: 1.5rem;
   padding-left: 1.5rem;

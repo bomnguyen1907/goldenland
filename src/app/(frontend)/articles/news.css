@@ -1,7 +1,9 @@
 /* ==========================================================================
    News Page Styles (Added for the Batdongsan-style News interface)
    ========================================================================== */
-
+body {
+  margin-top: 50px;
+}
 .news-page {
   /* Override global dark background for this specific page to match exactly the screenshot */
   background-color: #ffffff;
