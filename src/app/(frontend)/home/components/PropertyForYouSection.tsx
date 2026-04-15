@@ -1,6 +1,7 @@
 'use client'
 import type { Listing } from '@/payload-types'
 import { fetchNewListings } from '@/app/services/listings'
+import Link from 'next/link'
 import { useEffect, useState } from 'react'
 
 type PropertyItem = {
@@ -14,13 +15,16 @@ type PropertyItem = {
 }
 
 const PAGE_SIZE = 8
+const MAX_FETCH_COUNT = 2
 const FALLBACK_IMAGE =
   'https://images.unsplash.com/photo-1600585154526-990dced4db0d?auto=format&fit=crop&w=1400&q=80'
 
+// Type guard to check if the value has a url property that is a string or null
 function hasUrl(value: unknown): value is { url?: string | null } {
   return typeof value === 'object' && value !== null && 'url' in value
 }
 
+// Function to format the price of a listing based on its price unit and value
 function formatPrice(listing: Listing): string {
   if (listing.priceUnit === 'negotiable') {
     return 'Thỏa thuận'
@@ -40,6 +44,7 @@ function formatPrice(listing: Listing): string {
   return amount
 }
 
+// Function to map a Listing object to a PropertyItem object, extracting the necessary fields and formatting them for display
 function mapListingToProperty(listing: Listing): PropertyItem {
   const firstImage = listing.images?.[0]?.image
   const image = hasUrl(firstImage) && firstImage.url ? firstImage.url : FALLBACK_IMAGE
@@ -61,6 +66,10 @@ export function PropertyForYouSection() {
   const [hasMore, setHasMore] = useState(true)
   const [isInitialLoading, setIsInitialLoading] = useState(true)
   const [isLoadingMore, setIsLoadingMore] = useState(false)
+  const [fetchCount, setFetchCount] = useState(0)
+
+  const reachedFetchLimit = fetchCount >= MAX_FETCH_COUNT
+  const showGoToPropertiesButton = reachedFetchLimit && hasMore
 
   useEffect(() => {
     const loadInitialListings = async () => {
@@ -73,6 +82,7 @@ export function PropertyForYouSection() {
       } catch (error) {
         console.error('Fetch new listings failed:', error)
       } finally {
+        setFetchCount((prev) => prev + 1)
         setIsInitialLoading(false)
       }
     }
@@ -80,8 +90,9 @@ export function PropertyForYouSection() {
     void loadInitialListings()
   }, [])
 
+  // Handler function to load more listings when the user clicks the "Load More" button, fetching the next page of listings and appending them to the existing list
   const handleLoadMore = async () => {
-    if (isLoadingMore || !hasMore) {
+    if (isLoadingMore || !hasMore || reachedFetchLimit) {
       return
     }
 
@@ -97,6 +108,7 @@ export function PropertyForYouSection() {
     } catch (error) {
       console.error('Load more listings failed:', error)
     } finally {
+      setFetchCount((prev) => prev + 1)
       setIsLoadingMore(false)
     }
   }
@@ -110,12 +122,8 @@ export function PropertyForYouSection() {
 
         <div className="flex items-center gap-6">
           <div className="hidden items-center gap-4 text-sm font-medium md:flex">
-            <a className="text-secondary transition-colors hover:text-primary" href="#">
+            <a className="text-secondary transition-colors hover:text-primary" href="/properties">
               Tin nhà đất bán mới nhất
-            </a>
-            <span className="text-outline-variant">|</span>
-            <a className="text-secondary transition-colors hover:text-primary" href="#">
-              Tin nhà đất cho thuê mới nhất
             </a>
           </div>
         </div>
@@ -180,14 +188,23 @@ export function PropertyForYouSection() {
       )}
 
       <div className="mt-10 flex justify-center">
-        <button
-          onClick={handleLoadMore}
-          disabled={isInitialLoading || isLoadingMore || !hasMore}
-          className="rounded-full border border-outline px-6 py-2 font-semibold text-on-surface transition-all hover:border-primary hover:bg-primary hover:text-white"
-          type="button"
-        >
-          {isLoadingMore ? 'Đang tải...' : hasMore ? 'Xem thêm' : 'Đã hiển thị hết'}
-        </button>
+        {showGoToPropertiesButton ? (
+          <Link
+            className="rounded-full border border-primary px-6 py-2 font-semibold text-primary transition-all hover:bg-primary hover:text-white"
+            href="/properties"
+          >
+            Xem tất cả tại trang Bất động sản
+          </Link>
+        ) : (
+          <button
+            onClick={handleLoadMore}
+            disabled={isInitialLoading || isLoadingMore || !hasMore || reachedFetchLimit}
+            className="rounded-full border border-outline px-6 py-2 font-semibold text-on-surface transition-all hover:border-primary hover:bg-primary hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
+            type="button"
+          >
+            {isLoadingMore ? 'Đang tải...' : hasMore ? 'Xem thêm' : 'Đã hiển thị hết'}
+          </button>
+        )}
       </div>
     </section>
   )

@@ -24,7 +24,7 @@ export function FeaturedPropertiesSection() {
         <h2 className="text-3xl font-bold uppercase tracking-tighter text-on-surface">
           Dự án bất động sản nổi bật
         </h2>
-        <a className="group flex items-center gap-1 font-semibold text-primary" href="#">
+        <a className="group flex items-center gap-1 font-semibold text-primary" href="/projects">
           Xem thêm
           <span className="material-symbols-outlined transition-transform group-hover:translate-x-1">
             arrow_forward
