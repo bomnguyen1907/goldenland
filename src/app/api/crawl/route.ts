@@ -5,6 +5,15 @@ import axios from 'axios'
 import * as cheerio from 'cheerio'
 
 // ============================================================
+// CẤU HÌNH HEADERS GỌI API & CÀO DATA
+// ============================================================
+const DEFAULT_HTTP_HEADERS = {
+  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+  'Accept': 'text/html,application/xhtml+xml',
+  'Accept-Language': 'vi-VN,vi;q=0.9,en;q=0.8',
+}
+
+// ============================================================
 // CẤU HÌNH NGUỒN RSS & SELECTORS
 // ============================================================
 const RSS_SOURCES = [
@@ -56,6 +65,28 @@ const RSS_SOURCES = [
 // TIỆN ÍCH
 // ============================================================
 
+// ============================================================
+// LUẬT TỰ ĐỘNG PHÂN LOẠI DANH MỤC
+// ============================================================
+// Thứ tự trong mảng quyết định độ ưu tiên (HN & HCM ưu tiên giải quyết trước)
+const CATEGORY_RULES = [
+  { slug: 'bat-dong-san-tp-hcm', name: 'Bất động sản TP HCM', keywords: ['tp.hcm', 'hồ chí minh', 'sài gòn', 'thủ đức', 'quận 1', 'quận 2', 'quận 3', 'quận 7', 'quận 9', 'tphcm', 'tp hcm', 'tân bình', 'bình thạnh', 'phú nhuận', 'gò vấp'] },
+  { slug: 'bat-dong-san-ha-noi', name: 'Bất động sản Hà Nội', keywords: ['hà nội', 'thủ đô', 'cầu giấy', 'hoàn kiếm', 'từ liêm', 'đống đa', 'hai bà trưng', 'thanh xuân', 'hà đông', 'ba đình', 'tây hồ', 'hoàng mai', 'long biên'] },
+  { slug: 'can-ho-chung-cu', name: 'Căn hộ chung cư', keywords: ['căn hộ', 'chung cư', 'condominium', 'nhà tập thể', 'penthouse', 'duplex', 'chung cư cao cấp', 'căn hộ cao cấp'] },
+  { slug: 'dat-nen', name: 'Đất nền', keywords: ['đất nền', 'phân lô', 'đất thổ cư', 'đất dự án', 'đất nền dự án', 'lô đất', 'quy hoạch', 'giải tỏa', 'sổ đỏ', 'sổ hồng', 'đất nông nghiệp'] },
+  { slug: 'bat-dong-san-nghi-duong', name: 'Bất động sản nghỉ dưỡng', keywords: ['nghỉ dưỡng', 'condotel', 'villa', 'resort', 'biệt thự biển', 'biệt thự nghỉ dưỡng', 'homestay', 'farmstay', 'shophouse biển'] },
+]
+
+function detectCategoryId(text: string, categoryIdMap: Record<string, number>): number {
+  const lowerText = text.toLowerCase()
+  for (const rule of CATEGORY_RULES) {
+    if (rule.keywords.some(kw => lowerText.includes(kw))) {
+      return categoryIdMap[rule.slug]
+    }
+  }
+  return categoryIdMap['tin-tuc-bds'] // Mặc định
+}
+
 function slugify(text: string): string {
   return text
     .toLowerCase()
@@ -82,7 +113,7 @@ async function downloadAndUploadImage(imageUrl: string, altText: string, payload
       responseType: 'arraybuffer',
       timeout: 10000,
       headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36...',
+        ...DEFAULT_HTTP_HEADERS,
         'Referer': new URL(imageUrl).origin
       }
     })
@@ -355,18 +386,6 @@ function htmlToLexicalBlocks(
 
     // ---- DIV / SECTION (container) — đệ quy vào trong ----
     if (['div', 'section', 'article', 'main'].includes(tagName)) {
-      // Kiểm tra xem div có chứa ảnh không
-      const img = el.find('> img, > picture img, > picture source')
-      if (img.length > 0) {
-        const imgSrc = el.find('img').first().attr('data-src') || el.find('img').first().attr('src') || ''
-        if (imgSrc) {
-          const mediaId = imageIds.get(imgSrc)
-          if (mediaId) {
-            blocks.push(createUploadNode(mediaId))
-          }
-        }
-      }
-
       const innerBlocks = htmlToLexicalBlocks($, el, imageIds)
       blocks.push(...innerBlocks)
       return
@@ -411,6 +430,45 @@ function htmlToLexicalBlocks(
 }
 
 // ============================================================
+// DEBUG: TÌM SELECTOR CHỨA NỘI DUNG NHIỀU NHẤT
+// ============================================================
+
+function findBestContentSelector($: cheerio.CheerioAPI): { selector: string; elementCount: number } | null {
+  const candidates = [
+    'article',
+    '.article-content',
+    '.post-content',
+    '.entry-content',
+    '.content-main',
+    '.main-content',
+    '[class*="article"]',
+    '[class*="content"]',
+    'main article',
+    'main',
+    '[role="main"]',
+  ]
+
+  let best = { selector: '', elementCount: 0 }
+
+  for (const selector of candidates) {
+    const $el = $(selector)
+    if ($el.length === 0) continue
+
+    // Tính số text nodes (càng nhiều càng tốt)
+    let textCount = 0
+    $el.each((_i, node) => {
+      textCount += $(node).find('p, h1, h2, h3, h4, h5, h6, li').length
+    })
+
+    if (textCount > best.elementCount) {
+      best = { selector, elementCount: textCount }
+    }
+  }
+
+  return best.elementCount > 0 ? best : null
+}
+
+// ============================================================
 // CÀO NỘI DUNG ĐẦY ĐỦ TỪ TRANG GỐC
 // ============================================================
 
@@ -430,12 +488,7 @@ async function scrapeFullArticle(
   try {
     // Fetch trang bài viết
     const { data: html } = await axios.get(url, {
-      headers: {
-        'User-Agent':
-          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        Accept: 'text/html,application/xhtml+xml',
-        'Accept-Language': 'vi-VN,vi;q=0.9,en;q=0.8',
-      },
+      headers: DEFAULT_HTTP_HEADERS,
       timeout: 15000,
     })
 
@@ -447,9 +500,28 @@ async function scrapeFullArticle(
     })
 
     // Lấy nội dung chính
-    const contentElement = $(sourceConfig.selectors.content)
+    let contentElement = $(sourceConfig.selectors.content)
+    
+    // DEBUG: Log để kiểm tra selector
+    const primarySelectors = sourceConfig.selectors.content.split(',').map(s => s.trim())
+    console.log(`[Crawl] 🔍 Thử tìm nội dung với selectors: ${primarySelectors.join(' | ')}`)
+    
+    if (contentElement.length > 0) {
+      console.log(`[Crawl] ✅ Tìm thấy content với selector chính`)
+    } else {
+      console.log(`[Crawl] ⚠️  Không tìm được selector chính, dùng auto-detect...`)
+      const best = findBestContentSelector($)
+      if (best) {
+        console.log(`[Crawl] 🎯 Auto-detected selector: "${best.selector}" (${best.elementCount} elements)`)
+        console.log(`[Crawl] ℹ️  Hãy cập nhật RSS_SOURCES cho ${sourceConfig.name}`)
+        contentElement = $(best.selector)
+      }
+    }
+    
+    // Nếu vẫn không tìm được
     if (contentElement.length === 0) {
-      console.log(`[Crawl] Không tìm thấy content element cho: ${url}`)
+      console.log(`[Crawl] ❌ Không tìm thấy content element cho: ${url}`)
+      console.log(`[Crawl] 💡 Cần update selectors cho ${sourceConfig.name}`)
       return null
     }
 
@@ -561,25 +633,34 @@ export async function GET(request: Request) {
     }
     const authorId = users[0].id
 
-    // Lấy hoặc tạo category
-    const { docs: categories } = await payload.find({
-      collection: 'article-categories',
-      where: { slug: { equals: 'tin-tuc-bds' } },
-      limit: 1,
-    })
-    let categoryId = categories.length > 0 ? categories[0].id : null
+    // Lấy hoặc tạo tự động tất cả các category cần thiết
+    const categoryIdMap: Record<string, number> = {}
+    const allExpectedCategories = [
+      ...CATEGORY_RULES.map(r => ({ slug: r.slug, name: r.name })),
+      { slug: 'tin-tuc-bds', name: 'Tin tức BĐS' }
+    ]
 
-    if (!categoryId) {
-      const newCat = await payload.create({
+    for (const catConf of allExpectedCategories) {
+      const { docs } = await payload.find({
         collection: 'article-categories',
-        data: {
-          name: 'Tin tức BĐS',
-          slug: 'tin-tuc-bds',
-          description: 'Tin tức bất động sản được cào tự động',
-          isActive: true,
-        } as any,
+        where: { slug: { equals: catConf.slug } },
+        limit: 1,
       })
-      categoryId = newCat.id
+
+      if (docs.length > 0) {
+        categoryIdMap[catConf.slug] = docs[0].id
+      } else {
+        const newCat = await payload.create({
+          collection: 'article-categories',
+          data: {
+            name: catConf.name,
+            slug: catConf.slug,
+            description: `Danh mục phân loại bài viết RSS`,
+            isActive: true,
+          } as any,
+        })
+        categoryIdMap[catConf.slug] = newCat.id
+      }
     }
 
     const totalStats = { created: 0, skipped: 0, errors: 0, sources: [] as string[] }
@@ -670,6 +751,9 @@ export async function GET(request: Request) {
               excerpt = $rss.text().trim().substring(0, 500)
             }
 
+            const searchString = `${item.title} ${excerpt} ${item.content || item.contentSnippet || ''}`
+            const finalCategoryId = detectCategoryId(searchString, categoryIdMap)
+
             // Tạo bài viết
             await payload.create({
               collection: 'articles',
@@ -681,7 +765,7 @@ export async function GET(request: Request) {
                 thumbnail: (fullData?.thumbnailId as any) || null,
                 status: 'published',
                 author: authorId,
-                category: categoryId,
+                category: finalCategoryId,
                 publishedAt: item.pubDate
                   ? new Date(item.pubDate).toISOString()
                   : new Date().toISOString(),
