@@ -3,7 +3,9 @@ import { getPayload } from 'payload'
 import configPromise from '../../../../payload.config'
 import { notFound } from 'next/navigation'
 import { RichText } from '@payloadcms/richtext-lexical/react'
+import { ViewCounter } from './ViewCounter'
 import './news-detail.css'
+import { ShareButtons } from './ShareButton'
 
 export const dynamic = 'force-dynamic'
 
@@ -45,14 +47,18 @@ export default async function ArticleDetailPage(props: { params: Promise<{ slug:
       <div className="article-container">
         <header className="article-header">
           <div className="breadcrumb">
-            <a href="/news">Tin tức</a> &gt; <span>{article.title}</span>
+            <a href="/articles">Tin tức</a> &gt; <span>{article.title}</span>
           </div>
           <h1>{article.title}</h1>
           <div className="meta-info">
             <span className="author">Đăng bởi Quản trị viên</span> •
-            <span className="date">{formatDate(article.createdAt)}</span>
+            <span className="date">{formatDate(article.createdAt)}</span> •
+            <span className="views">{article.viewCount || 0} lượt xem</span>
           </div>
         </header>
+
+        <ViewCounter articleId={String(article.id)} />
+        <ShareButtons title={article.title} />
 
         {article.excerpt && <div className="article-excerpt">{article.excerpt}</div>}
 

@@ -8,6 +8,35 @@ export const Articles: CollectionConfig = {
         useAsTitle: 'title',
         defaultColumns: ['title', 'category', 'status', 'author', 'createdAt'],
     },
+    endpoints: [
+        {
+            path: '/:id/view',
+            method: 'post',
+            handler: async (req) => {
+                const id = req.routeParams?.id as string;
+                try {
+                    const article = await req.payload.findByID({
+                        collection: 'articles',
+                        id: id as string,
+                        depth: 0,
+                    });
+
+                    await req.payload.update({
+                        collection: 'articles',
+                        id: id as string,
+                        data: {
+                            viewCount: (article.viewCount || 0) + 1,
+                        },
+                        req, // Maintain transaction safety
+                    });
+
+                    return Response.json({ success: true, viewCount: (article.viewCount || 0) + 1 });
+                } catch (error) {
+                    return Response.json({ error: 'Article not found' }, { status: 404 });
+                }
+            },
+        },
+    ],
     access: {
         create: authenticated,
         read: statusOrOwnerOrAdmin('status', 'published', 'author'),
@@ -141,6 +170,16 @@ export const Articles: CollectionConfig = {
                 position: 'sidebar',
                 description: 'Ngày xuất bản',
                 condition: (data) => data?.status === 'published',
+            },
+        },
+        {
+            name: 'viewCount',
+            type: 'number',
+            defaultValue: 0,
+            admin: {
+                position: 'sidebar',
+                description: 'Lượt xem',
+                readOnly: true,
             },
         },
     ],
