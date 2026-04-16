@@ -23,6 +23,7 @@
     "@payloadcms/next": "3.81.0",
     "@payloadcms/richtext-lexical": "3.81.0",
     "@payloadcms/ui": "3.81.0",
+    "@reduxjs/toolkit": "^2.11.2",
     "axios": "^1.15.0",
     "cheerio": "^1.2.0",
     "cross-env": "^7.0.3",
@@ -33,9 +34,10 @@
     "payload": "3.81.0",
     "react": "19.2.4",
     "react-dom": "19.2.4",
+    "react-redux": "^9.2.0",
+    "rss-parser": "^3.13.0",
     "sharp": "0.34.2",
-    "tailwind-scrollbar-hide": "^4.0.0",
-    "rss-parser": "^3.13.0"
+    "tailwind-scrollbar-hide": "^4.0.0"
   },
   "devDependencies": {
     "@playwright/test": "1.58.2",
