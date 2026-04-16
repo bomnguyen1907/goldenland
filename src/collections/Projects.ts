@@ -124,10 +124,6 @@ export const Projects: CollectionConfig = {
                                     type: 'text',
                                 },
                                 {
-                                    name: 'districtCode',
-                                    type: 'text',
-                                },
-                                {
                                     name: 'wardCode',
                                     type: 'text',
                                 },
