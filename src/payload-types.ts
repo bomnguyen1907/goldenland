@@ -232,7 +232,6 @@ export interface Profile {
   bio?: string | null;
   address?: string | null;
   provinceCode?: string | null;
-  districtCode?: string | null;
   wardCode?: string | null;
   updatedAt: string;
   createdAt: string;
@@ -282,7 +281,6 @@ export interface Listing {
   legalStatus?: ('red_book' | 'sale_contract' | 'pending' | 'other') | null;
   furnitureStatus?: ('luxury' | 'full' | 'basic' | 'none') | null;
   provinceCode?: string | null;
-  districtCode?: string | null;
   wardCode?: string | null;
   street?: string | null;
   /**
@@ -390,7 +388,6 @@ export interface Project {
    */
   completionDate?: string | null;
   provinceCode?: string | null;
-  districtCode?: string | null;
   wardCode?: string | null;
   address?: string | null;
   latitude?: number | null;
@@ -1019,7 +1016,6 @@ export interface ProfilesSelect<T extends boolean = true> {
   bio?: T;
   address?: T;
   provinceCode?: T;
-  districtCode?: T;
   wardCode?: T;
   updatedAt?: T;
   createdAt?: T;
@@ -1046,7 +1042,6 @@ export interface ListingsSelect<T extends boolean = true> {
   legalStatus?: T;
   furnitureStatus?: T;
   provinceCode?: T;
-  districtCode?: T;
   wardCode?: T;
   street?: T;
   address?: T;
@@ -1091,7 +1086,6 @@ export interface ProjectsSelect<T extends boolean = true> {
   startDate?: T;
   completionDate?: T;
   provinceCode?: T;
-  districtCode?: T;
   wardCode?: T;
   address?: T;
   latitude?: T;

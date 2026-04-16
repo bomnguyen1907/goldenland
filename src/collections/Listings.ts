@@ -208,7 +208,6 @@ export const Listings: CollectionConfig = {
                                         path: '@/fields/AddressPicker',
                                         clientProps: {
                                             provinceField: 'provinceCode',
-                                            districtField: 'districtCode',
                                             wardField: 'wardCode',
                                         },
                                     },
@@ -220,11 +219,6 @@ export const Listings: CollectionConfig = {
                             fields: [
                                 {
                                     name: 'provinceCode',
-                                    type: 'text',
-                                    admin: { hidden: true },
-                                },
-                                {
-                                    name: 'districtCode',
                                     type: 'text',
                                     admin: { hidden: true },
                                 },

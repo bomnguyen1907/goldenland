@@ -13,7 +13,6 @@ export const searchListings: Endpoint = {
             listingType,
             propertyType,
             provinceCode,
-            districtCode,
             wardCode,
             minPrice,
             maxPrice,
@@ -46,7 +45,6 @@ export const searchListings: Endpoint = {
         if (listingType) where.and.push({ listingType: { equals: listingType } })
         if (propertyType) where.and.push({ propertyType: { equals: propertyType } })
         if (provinceCode) where.and.push({ provinceCode: { equals: provinceCode } })
-        if (districtCode) where.and.push({ districtCode: { equals: districtCode } })
         if (wardCode) where.and.push({ wardCode: { equals: wardCode } })
         if (direction) where.and.push({ direction: { equals: direction } })
         if (legalStatus) where.and.push({ legalStatus: { equals: legalStatus } })
