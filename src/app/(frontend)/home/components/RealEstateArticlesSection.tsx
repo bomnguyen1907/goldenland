@@ -54,7 +54,7 @@ const newsItems: NewsItem[] = [
   },
 ]
 
-export function RealEstateNewsSection() {
+export function RealEstateArticlesSection() {
   const [emblaRef, emblaApi] = useEmblaCarousel({
     align: 'start',
     loop: true,
