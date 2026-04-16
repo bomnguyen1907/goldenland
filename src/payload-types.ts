@@ -508,6 +508,10 @@ export interface Article {
    * Ngày xuất bản
    */
   publishedAt?: string | null;
+  /**
+   * Lượt xem
+   */
+  viewCount?: number | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -1175,6 +1179,7 @@ export interface ArticlesSelect<T extends boolean = true> {
   author?: T;
   status?: T;
   publishedAt?: T;
+  viewCount?: T;
   updatedAt?: T;
   createdAt?: T;
 }

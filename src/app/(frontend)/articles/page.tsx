@@ -20,16 +20,32 @@ function formatDate(dateStr: string | null | undefined) {
 export default async function NewsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ page?: string }>
+  searchParams: Promise<{ page?: string; category?: string }>
 }) {
   const payload = await getPayload({ config: configPromise })
 
-  // 2. Dùng await để lấy dữ liệu thực tế từ searchParams (Bắt buộc trong Next.js 15+)
   const resolvedSearchParams = await searchParams
 
-  // Lấy trang hiện tại từ URL đã được unwrap, mặc định là 1
   const currentPage = Number(resolvedSearchParams?.page) || 1
+  const currentCategory = resolvedSearchParams?.category || ''
   const ITEMS_PER_PAGE = 15
+
+  // Lấy danh sách Categories
+  const { docs: categories } = await payload.find({
+    collection: 'article-categories',
+    limit: 100,
+    where: { isActive: { equals: true } },
+    sort: 'sort',
+  })
+
+  // Chuẩn bị filter cho Articles
+  const baseWhere: any = {
+    status: { equals: 'published' },
+  }
+
+  if (currentCategory) {
+    baseWhere.category = { equals: currentCategory }
+  }
 
   // Gọi Payload CMS kèm theo các tham số phân trang
   const {
@@ -44,13 +60,24 @@ export default async function NewsPage({
     limit: ITEMS_PER_PAGE,
     page: currentPage,
     sort: '-createdAt', // Sắp xếp bài mới nhất lên đầu
+    where: baseWhere,
   })
 
-  // Phân chia dữ liệu 15 bài cho các khu vực
+  // Lấy các bài viết xem nhiều nhất (Global)
+  const { docs: topViewedArticles } = await payload.find({
+    collection: 'articles',
+    limit: 5,
+    sort: '-viewCount',
+    where: {
+      status: { equals: 'published' },
+    },
+  })
+
+  // Phân chia dữ liệu 15 bài cho các khu vực (nếu vẫn muốn hiện nhiều bài trong danh sách)
   const featuredArticle = articles.length > 0 ? articles[0] : null
   const leftListArticles = articles.length > 1 ? articles.slice(1, 5) : []
-  const rightTopArticles = articles.length > 5 ? articles.slice(5, 9) : []
-  const mostViewedArticles = articles.length > 9 ? articles.slice(9, 13) : []
+  const rightTopArticles = articles.length > 5 ? articles.slice(5) : []
+  const mostViewedArticles = topViewedArticles
 
   // Helper để lấy url hình ảnh
   const getImageUrl = (thumbnail: any) => {
@@ -71,6 +98,22 @@ export default async function NewsPage({
             của Batdongsan.com.vn.
           </p>
         </header>
+
+        {/* Thanh Tabs Lọc danh mục */}
+        <div className="news-categories-tabs">
+          <Link href="/articles" className={!currentCategory ? 'active' : ''}>
+            Tất cả
+          </Link>
+          {categories.map((cat: any) => (
+            <Link
+              key={cat.id}
+              href={`/articles?category=${cat.id}`}
+              className={currentCategory === String(cat.id) ? 'active' : ''}
+            >
+              {cat.name}
+            </Link>
+          ))}
+        </div>
 
         {articles.length === 0 ? (
           <div className="news-empty">
@@ -120,7 +163,7 @@ export default async function NewsPage({
                         <div className="content">
                           <div className="meta-date">{formatDate(article.createdAt)} • Tin tức</div>
                           <h3>
-                            <Link href={`/news/${article.slug}`}>{article.title}</Link>
+                            <Link href={`/articles/${article.slug}`}>{article.title}</Link>
                           </h3>
                           <p className="excerpt">{article.excerpt}</p>
                         </div>
@@ -131,18 +174,18 @@ export default async function NewsPage({
               </div>
 
               <aside className="news-sidebar">
-                {rightTopArticles.length > 0 && (
+                {/* {rightTopArticles.length > 0 && (
                   <div className="sidebar-list">
                     {rightTopArticles.map((article: any) => (
                       <div key={article.id} className="sidebar-item">
                         <div className="meta-date">{formatDate(article.createdAt)} • Tin tức</div>
                         <h3>
-                          <Link href={`/news/${article.slug}`}>{article.title}</Link>
+                          <Link href={`/articles/${article.slug}`}>{article.title}</Link>
                         </h3>
                       </div>
                     ))}
                   </div>
-                )}
+                )} */}
 
                 {mostViewedArticles.length > 0 && (
                   <div className="most-viewed-widget">
@@ -151,9 +194,14 @@ export default async function NewsPage({
                       {mostViewedArticles.map((article: any, index: number) => (
                         <div key={article.id} className="viewed-item">
                           <span className="viewed-rank">{index + 1}</span>
-                          <h4>
-                            <Link href={`/articles/${article.slug}`}>{article.title}</Link>
-                          </h4>
+                          <div>
+                            <h4>
+                              <Link href={`/articles/${article.slug}`}>{article.title}</Link>
+                            </h4>
+                            <span style={{ fontSize: '0.8em', color: '#666' }}>
+                              {article.viewCount || 0} lượt xem
+                            </span>
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -166,7 +214,10 @@ export default async function NewsPage({
             {totalPages > 1 && (
               <div className="pagination-container">
                 {hasPrevPage ? (
-                  <Link href={`/articles?page=${prevPage}`} className="page-btn">
+                  <Link
+                    href={`/articles?page=${prevPage}${currentCategory ? `&category=${currentCategory}` : ''}`}
+                    className="page-btn"
+                  >
                     &laquo; Trang trước
                   </Link>
                 ) : (
@@ -178,7 +229,10 @@ export default async function NewsPage({
                 </span>
 
                 {hasNextPage ? (
-                  <Link href={`/articles?page=${nextPage}`} className="page-btn">
+                  <Link
+                    href={`/articles?page=${nextPage}${currentCategory ? `&category=${currentCategory}` : ''}`}
+                    className="page-btn"
+                  >
                     Trang sau &raquo;
                   </Link>
                 ) : (
