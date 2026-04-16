@@ -1,9 +1,9 @@
 import { HeroSection } from './components/HeroSection'
-import { FeaturedNewsSection } from './components/FearturedNewsSection'
+import { FeaturedArticlesSection } from './components/FearturedArticlesSection'
 import { FeaturedPropertiesSection } from './components/FeaturedPropertiesSection'
 import { PropertiesByLocationSection } from './components/PropertiesByLocationSection'
 import { PropertyForYouSection } from './components/PropertyForYouSection'
-import { RealEstateNewsSection } from './components/RealEstateNewsSection'
+import { RealEstateArticlesSection } from './components/RealEstateArticlesSection'
 
 export default function Home() {
   return (
@@ -11,8 +11,8 @@ export default function Home() {
       {/* Hero section for the homepage, showcasing a large banner image and a call-to-action button */}
       <HeroSection />
 
-      {/* Featured news section, highlighting the latest and most important news in the real estate market */}
-      <FeaturedNewsSection />
+      {/* Featured articles section, highlighting the latest and most important articles in the real estate market */}
+      <FeaturedArticlesSection />
 
       {/* Featured properties section, showcasing a selection of properties that are currently available for sale or rent */}
       <PropertyForYouSection />
@@ -23,8 +23,8 @@ export default function Home() {
       {/* Real estate news section, providing users with the latest updates and insights on the real estate market */}
       <PropertiesByLocationSection />
 
-      {/* Real estate news section, providing users with the latest updates and insights on the real estate market */}
-      <RealEstateNewsSection />
+      {/* Real estate articles section, providing users with the latest updates and insights on the real estate market */}
+      <RealEstateArticlesSection />
     </div>
   )
 }
