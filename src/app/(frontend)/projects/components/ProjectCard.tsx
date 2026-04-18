@@ -9,7 +9,7 @@ type Project = {
     priceTo?: number
     totalArea?: number
     totalUnits?: number
-    status?: string
+    saleStatus?: string
     propertyTypes?: string[]
     thumbnail?: { url?: string } | null
     investor?: { name?: string } | null
@@ -23,7 +23,7 @@ const STATUS_MAP: Record<string, { label: string; cls: string }> = {
 
 export default function ProjectCard({ project: p }: { project: Project }) {
     const imgUrl = p.thumbnail?.url || null
-    const badge = p.status ? STATUS_MAP[p.status] : null
+    const badge = p.saleStatus ? STATUS_MAP[p.saleStatus] : null
 
     return (
         <Link

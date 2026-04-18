@@ -428,6 +428,10 @@ export interface Project {
   videoUrl?: string | null;
   status: 'draft' | 'active' | 'hidden';
   /**
+   * Trạng thái mở bán (hiển thị cho khách)
+   */
+  saleStatus?: ('active' | 'upcoming' | 'completed') | null;
+  /**
    * Hiển thị ở trang chủ
    */
   isFeatured?: boolean | null;
@@ -1114,6 +1118,7 @@ export interface ProjectsSelect<T extends boolean = true> {
   masterPlan?: T;
   videoUrl?: T;
   status?: T;
+  saleStatus?: T;
   isFeatured?: T;
   seoTitle?: T;
   seoDescription?: T;

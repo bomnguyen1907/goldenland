@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
-import { formatPrice, formatDate } from '../utils'
+import { formatPrice, formatDate, lexicalToHtml } from '../utils'
 import SectionTitle from '../components/SectionTitle'
 
 const STATUS_MAP: Record<string, { label: string; cls: string }> = {
@@ -167,7 +167,7 @@ export default function ProjectDetailPage() {
                             dangerouslySetInnerHTML={{
                                 __html: typeof project.description === 'string'
                                     ? project.description
-                                    : JSON.stringify(project.description),
+                                    : lexicalToHtml(project.description),
                             }}
                         />
                     </div>
