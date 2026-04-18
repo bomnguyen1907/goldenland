@@ -770,8 +770,19 @@ async function run() {
     const img2Id = await downloadMedia(payload, `proj-${i}-b`, `${rest.name} - tiện ích nội khu`)
     const img3Id = await downloadMedia(payload, `proj-${i}-c`, `${rest.name} - mặt bằng dự án`)
 
+    // Determine saleStatus based on completionDate
+    const now = new Date()
+    const completionDate = rest.completionDate ? new Date(rest.completionDate as string) : null
+    const startDate = rest.startDate ? new Date(rest.startDate as string) : null
+    let saleStatus: 'active' | 'upcoming' | 'completed' = 'active'
+    if (completionDate && completionDate < now) {
+      saleStatus = 'completed'
+    } else if (startDate && startDate > now) {
+      saleStatus = 'upcoming'
+    }
+
     const investorId = investorMap.get(investorName)
-    const data: Record<string, unknown> = { ...rest }
+    const data: Record<string, unknown> = { ...rest, saleStatus }
     if (investorId) data.investor = investorId
     if (thumbId) data.thumbnail = thumbId
     data.images = [
