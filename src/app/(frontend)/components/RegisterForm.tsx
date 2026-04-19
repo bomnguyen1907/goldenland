@@ -2,7 +2,9 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { register, signIn } from '@/app/services/auth'
+import { useDispatch, useSelector } from 'react-redux'
+import { registerThunk, selectAuthLoading, selectAuthError } from '../store/slices/authSlice'
+import type { RootState, AppDispatch } from '../store'
 
 type RegisterFormProps = {
   onClose: () => void
@@ -11,6 +13,10 @@ type RegisterFormProps = {
 
 export function RegisterForm({ onClose, onSwitchToSignIn }: RegisterFormProps) {
   const router = useRouter()
+  const dispatch = useDispatch<AppDispatch>()
+  const loading = useSelector((state: RootState) => selectAuthLoading(state as any))
+  const reduxError = useSelector((state: RootState) => selectAuthError(state as any))
+
   const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -18,40 +24,28 @@ export function RegisterForm({ onClose, onSwitchToSignIn }: RegisterFormProps) {
   const [agreeTerms, setAgreeTerms] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [localError, setLocalError] = useState<string | null>(null)
+
+  const errorMessage = localError || reduxError
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    setErrorMessage(null)
+    setLocalError(null)
 
     if (password !== confirmPassword) {
-      setErrorMessage('Mật khẩu xác nhận không khớp.')
+      setLocalError('Mật khẩu xác nhận không khớp.')
       return
     }
 
     if (!agreeTerms) {
-      setErrorMessage('Vui lòng đồng ý điều khoản dịch vụ để tiếp tục.')
+      setLocalError('Vui lòng đồng ý điều khoản dịch vụ để tiếp tục.')
       return
     }
 
-    setIsSubmitting(true)
-
-    try {
-      await register({
-        fullName,
-        email,
-        password,
-      })
-      await signIn(email, password)
+    const result = await dispatch(registerThunk({ fullName, email, password }))
+    if (result.type.endsWith('/fulfilled')) {
       onClose()
       router.refresh()
-    } catch (error) {
-      setErrorMessage(
-        error instanceof Error ? error.message : 'Đăng ký thất bại. Vui lòng thử lại.',
-      )
-    } finally {
-      setIsSubmitting(false)
     }
   }
 
@@ -133,64 +127,112 @@ export function RegisterForm({ onClose, onSwitchToSignIn }: RegisterFormProps) {
           <p className="text-sm text-gray-500 mb-1">Xin chào bạn</p>
           <h2 className="text-2xl font-bold text-gray-900 mb-8">Đăng ký tài khoản mới</h2>
 
-          {/* Phone input */}
-          <div className="mb-4">
-            <label className="block text-sm text-gray-700 mb-1.5">Số điện thoại</label>
-            <div className="relative">
-              <span className="absolute inset-y-0 left-3 flex items-center text-gray-400">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="w-4 h-4"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={1.8}
-                    d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
-                  />
-                </svg>
-              </span>
+          <form onSubmit={handleSubmit}>
+            {/* Full Name input */}
+            <div className="mb-4">
+              <label className="block text-sm text-gray-700 mb-1.5">Họ và Tên</label>
               <input
-                type="tel"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="Nhập số điện thoại của bạn"
-                className="w-full border border-gray-200 rounded-lg pl-9 pr-4 py-2.5 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition bg-white"
+                type="text"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                disabled={loading}
+                placeholder="Nhập họ và tên của bạn"
+                className="w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition bg-white disabled:opacity-50 disabled:cursor-not-allowed"
               />
             </div>
-          </div>
 
-          {/* Terms checkbox */}
-          <label className="flex items-start gap-2.5 cursor-pointer mb-6 select-none">
-            <input
-              type="checkbox"
-              checked={agreeTerms}
-              onChange={() => setAgreeTerms(!agreeTerms)}
-              className="mt-0.5 w-4 h-4 rounded border-gray-300 text-red-600 focus:ring-red-500 shrink-0"
-            />
-            <span className="text-sm text-gray-600 leading-relaxed">
-              Tôi đồng ý với{' '}
-              <a href="#" className="text-red-600 font-medium hover:underline">
-                Điều khoản dịch vụ
-              </a>{' '}
-              và{' '}
-              <a href="#" className="text-red-600 font-medium hover:underline">
-                Chính sách bảo mật
-              </a>{' '}
-              của Batdongsan.com.vn
-            </span>
-          </label>
+            {/* Email input */}
+            <div className="mb-4">
+              <label className="block text-sm text-gray-700 mb-1.5">Email</label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                disabled={loading}
+                placeholder="Nhập email của bạn"
+                className="w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition bg-white disabled:opacity-50 disabled:cursor-not-allowed"
+              />
+            </div>
 
-          {/* Continue button */}
-          <button
-            disabled={!agreeTerms || !email}
-            className="w-full bg-red-600 hover:bg-red-700 disabled:bg-red-300 active:bg-red-800 text-white font-semibold py-3 rounded-lg transition text-sm tracking-wide mb-5"
-          >
-            Tiếp tục
-          </button>
+            {/* Password input */}
+            <div className="mb-4">
+              <label className="block text-sm text-gray-700 mb-1.5">Mật khẩu</label>
+              <div className="relative">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  disabled={loading}
+                  placeholder="Nhập mật khẩu"
+                  className="w-full border border-gray-200 rounded-lg px-4 py-2.5 pr-10 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition bg-white disabled:opacity-50 disabled:cursor-not-allowed"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute inset-y-0 right-3 flex items-center text-gray-400 hover:text-gray-600"
+                >
+                  {showPassword ? '👁️' : '👁️‍🗨️'}
+                </button>
+              </div>
+            </div>
+
+            {/* Confirm Password input */}
+            <div className="mb-4">
+              <label className="block text-sm text-gray-700 mb-1.5">Xác nhận mật khẩu</label>
+              <div className="relative">
+                <input
+                  type={showConfirmPassword ? 'text' : 'password'}
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  disabled={loading}
+                  placeholder="Nhập lại mật khẩu"
+                  className="w-full border border-gray-200 rounded-lg px-4 py-2.5 pr-10 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition bg-white disabled:opacity-50 disabled:cursor-not-allowed"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute inset-y-0 right-3 flex items-center text-gray-400 hover:text-gray-600"
+                >
+                  {showConfirmPassword ? '👁️' : '👁️‍🗨️'}
+                </button>
+              </div>
+            </div>
+
+            {/* Terms checkbox */}
+            <label className="flex items-start gap-2.5 cursor-pointer mb-4 select-none">
+              <input
+                type="checkbox"
+                checked={agreeTerms}
+                onChange={() => setAgreeTerms(!agreeTerms)}
+                disabled={loading}
+                className="mt-0.5 w-4 h-4 rounded border-gray-300 text-red-600 focus:ring-red-500 shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
+              />
+              <span className="text-sm text-gray-600 leading-relaxed">
+                Tôi đồng ý với{' '}
+                <a href="#" className="text-red-600 font-medium hover:underline">
+                  Điều khoản dịch vụ
+                </a>{' '}
+                và{' '}
+                <a href="#" className="text-red-600 font-medium hover:underline">
+                  Chính sách bảo mật
+                </a>{' '}
+                của Batdongsan.com.vn
+              </span>
+            </label>
+
+            {errorMessage ? (
+              <p className="mb-4 text-sm font-medium text-red-600">{errorMessage}</p>
+            ) : null}
+
+            {/* Register button */}
+            <button
+              type="submit"
+              disabled={loading || !agreeTerms}
+              className="w-full bg-red-600 hover:bg-red-700 disabled:bg-red-300 active:bg-red-800 text-white font-semibold py-3 rounded-lg transition text-sm tracking-wide mb-5 disabled:cursor-not-allowed"
+            >
+              {loading ? 'Đang đăng ký...' : 'Đăng ký'}
+            </button>
+          </form>
 
           {/* Divider */}
           <div className="flex items-center justify-center mb-5">
@@ -198,7 +240,7 @@ export function RegisterForm({ onClose, onSwitchToSignIn }: RegisterFormProps) {
           </div>
 
           {/* Google */}
-          <button className="w-full flex items-center justify-center gap-2.5 border border-gray-200 rounded-lg py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 transition mb-3">
+          <button disabled={loading} className="w-full flex items-center justify-center gap-2.5 border border-gray-200 rounded-lg py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 transition mb-3 disabled:opacity-50 disabled:cursor-not-allowed">
             <svg className="w-4 h-4" viewBox="0 0 24 24">
               <path
                 fill="#4285F4"
@@ -221,7 +263,7 @@ export function RegisterForm({ onClose, onSwitchToSignIn }: RegisterFormProps) {
           </button>
 
           {/* Apple */}
-          <button className="w-full flex items-center justify-center gap-2.5 bg-black hover:bg-gray-900 text-white rounded-lg py-3 text-sm font-medium transition mb-8">
+          <button disabled={loading} className="w-full flex items-center justify-center gap-2.5 bg-black hover:bg-gray-900 text-white rounded-lg py-3 text-sm font-medium transition mb-8 disabled:opacity-50 disabled:cursor-not-allowed">
             <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
               <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98l-.09.06c-.22.14-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.77M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z" />
             </svg>

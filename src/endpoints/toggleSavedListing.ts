@@ -26,6 +26,8 @@ export const toggleSavedListing: Endpoint = {
                     and: [{ user: { equals: user.id } }, { listing: { equals: listingId } }],
                 },
                 limit: 1,
+                overrideAccess: false,
+                req,
             })
 
             if (existing.docs.length > 0) {
@@ -33,6 +35,8 @@ export const toggleSavedListing: Endpoint = {
                 await payload.delete({
                     collection: 'saved-listings',
                     id: existing.docs[0].id,
+                    overrideAccess: false,
+                    req,
                 })
                 return Response.json({ success: true, saved: false, message: 'Đã bỏ lưu' })
             } else {
@@ -43,6 +47,8 @@ export const toggleSavedListing: Endpoint = {
                         user: user.id,
                         listing: listingId,
                     },
+                    overrideAccess: false,
+                    req,
                 })
                 return Response.json({ success: true, saved: true, message: 'Đã lưu tin' })
             }

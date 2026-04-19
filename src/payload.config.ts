@@ -38,8 +38,8 @@ import {
   countUnreadNotifications,
 } from './endpoints/notifications'
 import { myDashboard } from './endpoints/myDashboard'
+import { meProfile } from './endpoints/me'
 import { projectDetail, projects } from './endpoints/projects'
-import { getNewListings } from './endpoints/listings'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -62,9 +62,9 @@ export default buildConfig({
     markAllNotificationsRead,
     countUnreadNotifications,
     myDashboard,
+    meProfile,
     projects,
     projectDetail,
-    getNewListings,
   ],
   collections: [Users, Profiles, Listings, Projects, Media, Investors, Articles, ArticleCategories, Banners, Contacts, Reports, Packages, PostingPrices, Vouchers, Orders,
     Notifications, SavedListings, ViewHistory, SpamBlacklist

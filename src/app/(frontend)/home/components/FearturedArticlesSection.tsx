@@ -1,7 +1,10 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { fetchFeaturedArticlesBasedOnCategoryId } from '@/app/services/articles'
+import {
+  fetchFeaturedArticlesBasedOnCategoryId,
+  fetchTopViewedRealEstateNews,
+} from '@/app/services/articles'
 
 type Article = {
   id: string | number
@@ -14,19 +17,19 @@ type Article = {
 }
 
 type ArticlesCategory = {
-  id: number
+  id: number | 'top-viewed'
   title: string
   articles: Article[]
 }
 
-const categoryIds = [5, 1, 2] as const
+const categoryIds = ['top-viewed', 1, 2] as const
 
 // Temporary image when an article has no thumbnail.
 const PLACEHOLDER_IMAGE = 'https://placehold.co/1200x675?text=No+Image'
 
 // Fixed tab labels for the homepage section.
 const categoryLabels: Record<(typeof categoryIds)[number], string> = {
-  5: 'BĐS du lịch',
+  'top-viewed': 'Tin nổi bật',
   2: 'BĐS TPHCM',
   1: 'BĐS Hà Nội',
 }
@@ -76,35 +79,56 @@ export function FeaturedArticlesSection() {
 
     const loadFeaturedArticles = async () => {
       try {
-        // Load all category tabs in parallel.
-        const results = await Promise.all(
-          categoryIds.map(async (categoryId) => {
-            const articles = await fetchFeaturedArticlesBasedOnCategoryId(categoryId)
+        const [topViewedResult, haNoiResult, tpHcmResult] = await Promise.allSettled([
+          fetchTopViewedRealEstateNews(),
+          fetchFeaturedArticlesBasedOnCategoryId(1),
+          fetchFeaturedArticlesBasedOnCategoryId(2),
+        ])
 
-            return {
-              id: categoryId,
-              title: categoryLabels[categoryId],
-              articles: articles.map((article) => ({
-                id: article.id,
-                title: article.title,
-                summary: article.excerpt ?? '',
-                date: new Date(article.updatedAt).toLocaleDateString('vi-VN', {
-                  day: '2-digit',
-                  month: 'long',
-                  year: 'numeric',
-                }),
-                readTime: estimateReadTime(article.excerpt ?? ''),
-                image: article.imageUrl ?? PLACEHOLDER_IMAGE,
-                label: categoryLabels[categoryId],
-              })),
-            }
-          }),
-        )
+        const buildCategory = (
+          id: ArticlesCategory['id'],
+          title: string,
+          articles: Awaited<ReturnType<typeof fetchFeaturedArticlesBasedOnCategoryId>>,
+        ): ArticlesCategory => ({
+          id,
+          title,
+          articles: articles.map((article) => ({
+            id: article.id,
+            title: article.title,
+            summary: article.excerpt ?? '',
+            date: new Date(article.updatedAt).toLocaleDateString('vi-VN', {
+              day: '2-digit',
+              month: 'long',
+              year: 'numeric',
+            }),
+            readTime: estimateReadTime(article.excerpt ?? ''),
+            image: article.imageUrl ?? PLACEHOLDER_IMAGE,
+            label: title,
+          })),
+        })
+
+        const nextCategories: ArticlesCategory[] = []
+
+        if (topViewedResult.status === 'fulfilled') {
+          nextCategories.push(buildCategory('top-viewed', categoryLabels['top-viewed'], topViewedResult.value))
+        }
+
+        if (haNoiResult.status === 'fulfilled') {
+          nextCategories.push(buildCategory(1, categoryLabels[1], haNoiResult.value))
+        } else {
+          nextCategories.push({ id: 1, title: categoryLabels[1], articles: [] })
+        }
+
+        if (tpHcmResult.status === 'fulfilled') {
+          nextCategories.push(buildCategory(2, categoryLabels[2], tpHcmResult.value))
+        } else {
+          nextCategories.push({ id: 2, title: categoryLabels[2], articles: [] })
+        }
 
         if (isMounted) {
-          // Default to the first tab after a successful fetch.
-          setRemoteCategories(results)
-          setActiveCategoryTitle(results[0]?.title ?? initialCategories[0].title)
+          // Default to the first available tab after a successful fetch.
+          setRemoteCategories(nextCategories)
+          setActiveCategoryTitle(nextCategories[0]?.title ?? initialCategories[0].title)
         }
       } catch {
         if (isMounted) {

@@ -23,6 +23,8 @@ export const trackView: Endpoint = {
                         ],
                     },
                     limit: 1,
+                    overrideAccess: false,
+                    req,
                 })
 
                 if (recent.docs.length === 0) {
@@ -32,6 +34,8 @@ export const trackView: Endpoint = {
                             user: user.id,
                             listing: id,
                         },
+                        overrideAccess: false,
+                        req,
                     })
                 }
             }

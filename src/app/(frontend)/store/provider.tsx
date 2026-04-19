@@ -1,17 +1,33 @@
 // store/provider.tsx
 'use client'
 
-import { Provider } from 'react-redux'
+import { ReactNode, useEffect } from 'react'
+import { Provider, useDispatch } from 'react-redux'
 import { store } from './index'
-import { useEffect, ReactNode } from 'react'
-import { setUser } from './slices/authSlice'
+import { hydrateAuthThunk, UserState } from './slices/authSlice'
+import type { AppDispatch } from './index'
 
-export default function ReduxProvider({ children, user }: { children: ReactNode; user?: any }) {
+function ReduxInitializer({ user }: { user: UserState | null }) {
+  const dispatch = useDispatch<AppDispatch>()
+
   useEffect(() => {
-    if (user) {
-      store.dispatch(setUser(user))
-    }
-  }, [user])
+    dispatch(hydrateAuthThunk(user))
+  }, [dispatch, user?.id]) // Re-run if user.id changes
 
-  return <Provider store={store}>{children}</Provider>
+  return null
+}
+
+export default function ReduxProvider({
+  children,
+  user,
+}: {
+  children: ReactNode
+  user?: UserState | null
+}) {
+  return (
+    <Provider store={store}>
+      <ReduxInitializer user={user || null} />
+      {children}
+    </Provider>
+  )
 }
