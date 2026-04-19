@@ -3,8 +3,11 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
-import { formatPrice, formatDate, lexicalToHtml } from '../utils'
+import { formatPrice, formatDate, lexicalToHtml, PROPERTY_TYPES } from '../utils'
 import SectionTitle from '../components/SectionTitle'
+import ProjectCard from '../components/ProjectCard'
+
+const HOTLINE = '0901 234 567'
 
 const STATUS_MAP: Record<string, { label: string; cls: string }> = {
     active: { label: 'Đang mở bán', cls: 'bg-emerald-500 text-white' },
@@ -12,11 +15,18 @@ const STATUS_MAP: Record<string, { label: string; cls: string }> = {
     completed: { label: 'Đã bàn giao', cls: 'bg-gray-500 text-white' },
 }
 
+function getYoutubeId(url?: string): string | null {
+    if (!url) return null
+    const m = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([A-Za-z0-9_-]{11})/)
+    return m ? m[1] : null
+}
+
 export default function ProjectDetailPage() {
     const { id } = useParams() as { id: string }
     const [project, setProject] = useState<any>(null)
     const [loading, setLoading] = useState(true)
     const [currentImage, setCurrentImage] = useState(0)
+    const [related, setRelated] = useState<any[]>([])
 
     useEffect(() => {
         if (!id) return
@@ -30,6 +40,20 @@ export default function ProjectDetailPage() {
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ views: (data.views || 0) + 1 }),
                 }).catch(() => {})
+
+                // Fetch related projects (same province, exclude current)
+                if (data.provinceCode) {
+                    const params = new URLSearchParams({
+                        limit: '3',
+                        depth: '1',
+                        'where[and][0][provinceCode][equals]': data.provinceCode,
+                        'where[and][1][id][not_equals]': String(data.id),
+                    })
+                    fetch(`/api/projects?${params}`)
+                        .then((r) => r.json())
+                        .then((d) => setRelated(d.docs || []))
+                        .catch(() => {})
+                }
             } catch {
                 alert('Lỗi tải dữ liệu')
             }
@@ -65,10 +89,11 @@ export default function ProjectDetailPage() {
             ? project.thumbnail.url
             : images[currentImage - 1]?.image?.url || project.thumbnail?.url
 
-    const badge = project.status ? STATUS_MAP[project.status] : null
+    const badge = project.saleStatus ? STATUS_MAP[project.saleStatus] : null
+    const youtubeId = getYoutubeId(project.videoUrl)
 
     return (
-        <div className="bg-gray-50 min-h-screen text-gray-900">
+        <div className="bg-gray-50 min-h-screen text-gray-900 pb-24">
             <div className="max-w-[1100px] mx-auto px-5 pt-[100px] pb-12">
                 {/* BACK LINK */}
                 <Link
@@ -104,7 +129,7 @@ export default function ProjectDetailPage() {
                             <img
                                 src={project.thumbnail.url}
                                 alt="thumb"
-                                className={`w-20 h-[60px] object-cover rounded-lg cursor-pointer transition-all ${currentImage === 0 ? 'ring-2 ring-emerald-500 opacity-100' : 'opacity-60 hover:opacity-90'}`}
+                                className={`w-20 h-[60px] object-cover rounded-lg cursor-pointer transition-all flex-shrink-0 ${currentImage === 0 ? 'ring-2 ring-emerald-500 opacity-100' : 'opacity-60 hover:opacity-90'}`}
                                 onClick={() => setCurrentImage(0)}
                             />
                         )}
@@ -113,7 +138,7 @@ export default function ProjectDetailPage() {
                                 key={i}
                                 src={img.image?.url}
                                 alt={`thumb-${i}`}
-                                className={`w-20 h-[60px] object-cover rounded-lg cursor-pointer transition-all ${currentImage === i + 1 ? 'ring-2 ring-emerald-500 opacity-100' : 'opacity-60 hover:opacity-90'}`}
+                                className={`w-20 h-[60px] object-cover rounded-lg cursor-pointer transition-all flex-shrink-0 ${currentImage === i + 1 ? 'ring-2 ring-emerald-500 opacity-100' : 'opacity-60 hover:opacity-90'}`}
                                 onClick={() => setCurrentImage(i + 1)}
                             />
                         ))}
@@ -121,6 +146,18 @@ export default function ProjectDetailPage() {
                 )}
 
                 <h1 className="text-[30px] font-bold mb-2 text-gray-900">{project.name}</h1>
+
+                {/* PROPERTY TYPE TAGS */}
+                {project.propertyTypes?.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5 mb-3">
+                        {project.propertyTypes.map((t: string) => (
+                            <span key={t} className="bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full px-3 py-0.5 text-xs font-medium">
+                                {PROPERTY_TYPES.find((x) => x.value === t)?.label || t}
+                            </span>
+                        ))}
+                    </div>
+                )}
+
                 {project.address && (
                     <div className="text-gray-500 text-[15px] mb-5 flex items-center gap-1">
                         📍 {project.address}
@@ -199,6 +236,75 @@ export default function ProjectDetailPage() {
                         </div>
                     </div>
                 )}
+
+                {/* MẶT BẰNG TỔNG THỂ */}
+                {project.masterPlan?.url && (
+                    <div className="mb-8">
+                        <SectionTitle>Mặt bằng tổng thể</SectionTitle>
+                        <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+                            <img
+                                src={project.masterPlan.url}
+                                alt="Mặt bằng tổng thể"
+                                className="w-full object-contain max-h-[600px]"
+                            />
+                        </div>
+                    </div>
+                )}
+
+                {/* VIDEO */}
+                {youtubeId && (
+                    <div className="mb-8">
+                        <SectionTitle>Video dự án</SectionTitle>
+                        <div className="rounded-xl overflow-hidden shadow-sm aspect-video">
+                            <iframe
+                                src={`https://www.youtube.com/embed/${youtubeId}`}
+                                title="Video dự án"
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                allowFullScreen
+                                className="w-full h-full"
+                            />
+                        </div>
+                    </div>
+                )}
+
+                {/* DỰ ÁN LIÊN QUAN */}
+                {related.length > 0 && (
+                    <div className="mb-8">
+                        <SectionTitle>Dự án cùng khu vực</SectionTitle>
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                            {related.map((p) => <ProjectCard key={p.id} project={p} />)}
+                        </div>
+                    </div>
+                )}
+            </div>
+
+            {/* STICKY CTA */}
+            <div className="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-gray-200 shadow-lg px-4 py-3">
+                <div className="max-w-[1100px] mx-auto flex items-center justify-between gap-3">
+                    <div className="hidden sm:block">
+                        <div className="text-xs text-gray-400">Hotline tư vấn</div>
+                        <div className="text-base font-bold text-gray-900">{HOTLINE}</div>
+                    </div>
+                    <div className="flex gap-3 w-full sm:w-auto">
+                        <a
+                            href={`tel:${HOTLINE.replace(/\s/g, '')}`}
+                            className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-5 py-2.5 bg-white border-2 border-emerald-600 text-emerald-600 font-semibold rounded-xl text-sm hover:bg-emerald-50 transition"
+                        >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                            </svg>
+                            Gọi ngay
+                        </a>
+                        <a
+                            href={`https://zalo.me/${HOTLINE.replace(/\s/g, '')}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl text-sm transition"
+                        >
+                            Nhận bảng giá
+                        </a>
+                    </div>
+                </div>
             </div>
         </div>
     )

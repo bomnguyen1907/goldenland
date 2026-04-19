@@ -1,6 +1,7 @@
 'use client'
 
-import { useEffect, useCallback, useState } from 'react'
+import { useEffect, useCallback, useState, Suspense } from 'react'
+import { useSearchParams, useRouter } from 'next/navigation'
 import qs from 'qs'
 import ProjectCard from './components/ProjectCard'
 import ProjectFilters from './components/ProjectFilters'
@@ -37,6 +38,32 @@ const DEFAULT: Filters = {
     minPrice: '', maxPrice: '', sort: '-createdAt', page: 1,
 }
 
+function filtersFromParams(params: URLSearchParams): Filters {
+    return {
+        keyword: params.get('keyword') || '',
+        province: params.get('province') || '',
+        propertyType: params.get('propertyType') || '',
+        status: params.get('status') || '',
+        minPrice: params.get('minPrice') || '',
+        maxPrice: params.get('maxPrice') || '',
+        sort: params.get('sort') || '-createdAt',
+        page: Number(params.get('page') || 1),
+    }
+}
+
+function filtersToParams(f: Filters): string {
+    const p = new URLSearchParams()
+    if (f.keyword) p.set('keyword', f.keyword)
+    if (f.province) p.set('province', f.province)
+    if (f.propertyType) p.set('propertyType', f.propertyType)
+    if (f.status) p.set('status', f.status)
+    if (f.minPrice) p.set('minPrice', f.minPrice)
+    if (f.maxPrice) p.set('maxPrice', f.maxPrice)
+    if (f.sort !== '-createdAt') p.set('sort', f.sort)
+    if (f.page > 1) p.set('page', String(f.page))
+    return p.toString()
+}
+
 function SkeletonCard() {
     return (
         <div className="rounded-xl overflow-hidden shadow-md bg-white animate-pulse">
@@ -51,13 +78,16 @@ function SkeletonCard() {
     )
 }
 
-export default function ProjectsPage() {
+function ProjectsPageInner() {
+    const searchParams = useSearchParams()
+    const router = useRouter()
+
     const [projects, setProjects] = useState<Project[]>([])
     const [loading, setLoading] = useState(true)
     const [totalPages, setTotalPages] = useState(1)
     const [totalDocs, setTotalDocs] = useState(0)
-    const [filters, setFilters] = useState<Filters>(DEFAULT)
-    const [keywordInput, setKeywordInput] = useState('') // draft for search input only
+    const [filters, setFilters] = useState<Filters>(() => filtersFromParams(searchParams))
+    const [keywordInput, setKeywordInput] = useState(() => searchParams.get('keyword') || '')
 
     const loadProjects = useCallback(async (f: Filters) => {
         setLoading(true)
@@ -91,7 +121,11 @@ export default function ProjectsPage() {
         setLoading(false)
     }, [])
 
-    useEffect(() => { loadProjects(filters) }, [filters, loadProjects])
+    useEffect(() => {
+        loadProjects(filters)
+        const qs = filtersToParams(filters)
+        router.replace(qs ? `/projects?${qs}` : '/projects', { scroll: false })
+    }, [filters, loadProjects, router])
 
     const apply = (changes: Partial<Omit<Filters, 'sort' | 'page'>>) =>
         setFilters((prev) => ({ ...prev, ...changes, page: 1 }))
@@ -184,5 +218,13 @@ export default function ProjectsPage() {
                 />
             </div>
         </div>
+    )
+}
+
+export default function ProjectsPage() {
+    return (
+        <Suspense>
+            <ProjectsPageInner />
+        </Suspense>
     )
 }
