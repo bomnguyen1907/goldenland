@@ -20,6 +20,8 @@ export const myDashboard: Endpoint = {
                         and: [{ user: { equals: user.id } }, { status: { equals: 'active' } }],
                     },
                     limit: 0,
+                    overrideAccess: false,
+                    req,
                 }),
                 payload.find({
                     collection: 'listings',
@@ -27,6 +29,8 @@ export const myDashboard: Endpoint = {
                         and: [{ user: { equals: user.id } }, { status: { equals: 'pending' } }],
                     },
                     limit: 0,
+                    overrideAccess: false,
+                    req,
                 }),
                 payload.find({
                     collection: 'listings',
@@ -34,6 +38,8 @@ export const myDashboard: Endpoint = {
                         and: [{ user: { equals: user.id } }, { status: { equals: 'expired' } }],
                     },
                     limit: 0,
+                    overrideAccess: false,
+                    req,
                 }),
                 payload.find({
                     collection: 'listings',
@@ -41,6 +47,8 @@ export const myDashboard: Endpoint = {
                         and: [{ user: { equals: user.id } }, { status: { equals: 'sold' } }],
                     },
                     limit: 0,
+                    overrideAccess: false,
+                    req,
                 }),
                 payload.find({
                     collection: 'listings',
@@ -48,6 +56,8 @@ export const myDashboard: Endpoint = {
                         and: [{ user: { equals: user.id } }, { status: { equals: 'draft' } }],
                     },
                     limit: 0,
+                    overrideAccess: false,
+                    req,
                 }),
             ])
 
@@ -58,6 +68,8 @@ export const myDashboard: Endpoint = {
                     and: [{ user: { equals: user.id } }, { status: { equals: 'active' } }],
                 },
                 limit: 0,
+                overrideAccess: false,
+                req,
             })
 
             // Đếm tin đã lưu
@@ -65,6 +77,8 @@ export const myDashboard: Endpoint = {
                 collection: 'saved-listings',
                 where: { user: { equals: user.id } },
                 limit: 0,
+                overrideAccess: false,
+                req,
             })
 
             // Đếm thông báo chưa đọc
@@ -74,6 +88,8 @@ export const myDashboard: Endpoint = {
                     and: [{ user: { equals: user.id } }, { isRead: { equals: false } }],
                 },
                 limit: 0,
+                overrideAccess: false,
+                req,
             })
 
             // 5 order gần nhất
@@ -82,6 +98,8 @@ export const myDashboard: Endpoint = {
                 where: { user: { equals: user.id } },
                 sort: '-createdAt',
                 limit: 5,
+                overrideAccess: false,
+                req,
             })
 
             return Response.json({

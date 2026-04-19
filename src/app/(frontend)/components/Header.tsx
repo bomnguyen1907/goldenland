@@ -3,18 +3,13 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
+import { useSelector } from 'react-redux'
 import { RegisterForm } from './RegisterForm'
 import { SignInForm } from './SignInForm'
 import { Button } from '@payloadcms/ui'
 import ProfilePopUp from './ProfilePopUp'
-
-type TopAppBarUser = {
-  email?: string | null
-  id?: number | string
-  name?: string | null
-  phone?: string | null
-  avatarUrl?: string | null
-}
+import { selectUser, selectIsLoggedIn } from '../store/slices/authSlice'
+import type { RootState } from '../store'
 
 const navLinks = [
   { href: '/properties', label: 'Nhà đất bán' },
@@ -43,10 +38,12 @@ function isNavLinkActive(pathname: string, href: string): boolean {
   )
 }
 
-export default function TopAppBar({ user }: { user?: TopAppBarUser | null }) {
+export default function TopAppBar() {
   const pathname = usePathname()
+  const user = useSelector((state: RootState) => selectUser(state as any))
+  const isLoggedIn = useSelector((state: RootState) => selectIsLoggedIn(state as any))
+  
   const profilePopupContainerRef = useRef<HTMLDivElement | null>(null)
-  const isLoggedIn = Boolean(user?.id)
   const [showSignIn, setShowSignIn] = useState(false)
   const [showRegister, setShowRegister] = useState(false)
   const isAuthModalOpen = showSignIn || showRegister

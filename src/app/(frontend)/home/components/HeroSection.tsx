@@ -11,10 +11,10 @@ export function HeroSection() {
                 Mua bán
               </button>
               <button className="pb-3 text-sm font-medium text-secondary transition-colors hover:text-on-surface">
-                Cho thuê
+                Dự án
               </button>
               <button className="pb-3 text-sm font-medium text-secondary transition-colors hover:text-on-surface">
-                Dự án
+                Tin tức
               </button>
             </div>
             <div className="space-y-4">

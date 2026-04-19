@@ -1,12 +1,7 @@
-import axios from 'axios'
 import type { AxiosRequestConfig } from 'axios'
 import type { Article, Media } from '@/payload-types'
 import { buildQuery } from '@/app/lib/query'
-
-// API error shape
-type ApiErrorResponse = {
-  error?: string
-}
+import { getJSON, getServerBaseURL } from '@/app/lib/http'
 
 // Payload find response shape
 type PayloadFindResponse<T> = {
@@ -19,9 +14,6 @@ export type FeaturedArticleSummary = Pick<Article, 'id' | 'title' | 'excerpt' | 
   imageUrl?: string
 }
 
-// Base URL used to build absolute media URLs from Payload paths.
-const SERVER_URL = 'http://localhost:3000'
-
 const resolveMediaURL = (thumbnail?: (number | null) | Media): string | undefined => {
   // Relationship can be ID-only or missing depending on query depth/select.
   if (!thumbnail || typeof thumbnail === 'number') return undefined
@@ -30,25 +22,7 @@ const resolveMediaURL = (thumbnail?: (number | null) | Media): string | undefine
     return thumbnail.url
   }
 
-  return `${SERVER_URL}${thumbnail.url}`
-}
-
-// Generic GET helper with error handling
-async function fetchJSON<T>(url: string, config?: AxiosRequestConfig): Promise<T> {
-  try {
-    const response = await axios.get<T>(url, config)
-
-    return response.data
-  } catch (error) {
-    if (axios.isAxiosError(error)) {
-      const payload = error.response?.data as ApiErrorResponse | undefined
-      const errorMessage = payload?.error ?? error.message
-
-      throw new Error(errorMessage)
-    }
-
-    throw error
-  }
+  return `${getServerBaseURL()}${thumbnail.url}`
 }
 
 // Fetch featured articles by category id
@@ -65,7 +39,7 @@ export async function fetchFeaturedArticlesBasedOnCategoryId(
             title: true,
             excerpt: true,
             updatedAt: true,
-        thumbnail: true,
+            thumbnail: true,
         },
         where: {
             category: {
@@ -76,7 +50,7 @@ export async function fetchFeaturedArticlesBasedOnCategoryId(
         sort: '-createdAt',
     })
 
-    const response = await fetchJSON<PayloadFindResponse<RawFeaturedArticle>>(
+    const response = await getJSON<PayloadFindResponse<RawFeaturedArticle>>(
       `/api/articles${query}`,
       config,
     )
@@ -90,5 +64,50 @@ export async function fetchFeaturedArticlesBasedOnCategoryId(
       imageUrl: resolveMediaURL(thumbnail),
     }))
 }
+
+// Fetch 6 published real-estate news articles (category = 6) sorted by highest view count.
+export async function fetchTopViewedRealEstateNews(
+  config?: AxiosRequestConfig,
+): Promise<FeaturedArticleSummary[]> {
+  const query = buildQuery({
+    select: {
+      title: true,
+      excerpt: true,
+      updatedAt: true,
+      thumbnail: true,
+    },
+    where: {
+      and: [
+        {
+          category: {
+            equals: 6,
+          },
+        },
+        {
+          status: {
+            equals: 'published',
+          },
+        },
+      ],
+    },
+    limit: 6,
+    sort: '-viewCount',
+  })
+
+  const response = await getJSON<PayloadFindResponse<RawFeaturedArticle>>(
+    `/api/articles${query}`,
+    config,
+  )
+
+  return response.docs.map(({ id, title, excerpt, updatedAt, thumbnail }) => ({
+    id,
+    title,
+    excerpt,
+    updatedAt,
+    imageUrl: resolveMediaURL(thumbnail),
+  }))
+}
+
+
 
 

@@ -1,9 +1,18 @@
 import type { Listing } from '@/payload-types'
-import axios from 'axios'
 import type { AxiosRequestConfig } from 'axios'
+import { buildQuery } from '@/app/lib/query'
+import { getJSON } from '@/app/lib/http'
 
-type ApiErrorResponse = {
-  error?: string
+type ListingsCountByLocationApiResponse = {
+  totalDocs: number
+}
+
+type PayloadFindResponse<T> = {
+  docs: T[]
+  page: number
+  totalPages: number
+  totalDocs: number
+  hasNextPage: boolean
 }
 
 export type ListingsResponse = {
@@ -22,31 +31,13 @@ export type NewListingsResponse = {
   hasMore: boolean
 }
 
-// Helper function to fetch JSON data and handle errors
-async function fetchJSON<T>(url: string, config?: AxiosRequestConfig): Promise<T> {
-  try {
-    const response = await axios.get<T>(url, config)
-
-    return response.data
-  } catch (error) {
-    if (axios.isAxiosError(error)) {
-      const payload = error.response?.data as ApiErrorResponse | undefined
-      const errorMessage = payload?.error ?? error.message
-
-      throw new Error(errorMessage)
-    }
-
-    throw error
-  }
-}
-
 // Exporting list of listings, limit to 100 listings.
 export async function fetchListings(config?: AxiosRequestConfig): Promise<ListingsResponse> {
-  return fetchJSON<ListingsResponse>('/api/listings', config)
+  return getJSON<ListingsResponse>('/api/listings', config)
 }
 // Exporting listing detail by id.
 export async function fetchListingDetail(id: string, config?: AxiosRequestConfig): Promise<ListingDetailResponse> {
-  return fetchJSON<ListingDetailResponse>(`/api/listings/${id}`, config)
+  return getJSON<ListingDetailResponse>(`/api/listings/${id}`, config)
 }
 
 // Exporting new listings base on createdAt field, sorted by createdAt in descending order, limit to 8 listings. Client can sent limit = 8 to get next 8 listings, and so on. If limit is not sent, default to 8 listings.
@@ -57,18 +48,43 @@ export async function fetchNewListings(
   },
   config?: AxiosRequestConfig,
 ): Promise<NewListingsResponse> {
-  const searchParams = new URLSearchParams()
+  const query = buildQuery({
+    sort: '-createdAt',
+    limit: typeof params?.limit === 'number' ? params.limit : 8,
+    page: typeof params?.page === 'number' ? params.page : 1,
+  })
 
-  if (typeof params?.limit === 'number') {
-    searchParams.set('limit', String(params.limit))
+  const response = await getJSON<PayloadFindResponse<Listing>>(`/api/listings${query}`, config)
+
+  return {
+    data: response.docs,
+    page: response.page,
+    totalPages: response.totalPages,
+    totalDocs: response.totalDocs,
+    hasMore: response.hasNextPage,
   }
+}
 
-  if (typeof params?.page === 'number') {
-    searchParams.set('page', String(params.page))
-  }
+export type ListingsCountByLocationResponse = number
 
-  const query = searchParams.toString()
-  const url = query ? `/api/listings-new?${query}` : '/api/listings-new'
+// Exporting count of listings base on location id
+export async function fetchListingsCountByLocation(locationId: string, config?: AxiosRequestConfig): Promise<ListingsCountByLocationResponse> {
+  // Normalize numeric category values from UI params.
+  const categoryValue = /^\d+$/.test(String(locationId)) ? Number(locationId) : locationId
 
-  return fetchJSON<NewListingsResponse>(url, config)
+  // Payload count endpoint returns matched document count in totalDocs.
+  const query = buildQuery({
+    where: {
+      provinceCode: {
+        equals: categoryValue,
+      },
+    },
+  })
+
+  const response = await getJSON<ListingsCountByLocationApiResponse>(
+    `/api/listings/count${query}`,
+    config,
+  )
+
+  return response.totalDocs
 }
