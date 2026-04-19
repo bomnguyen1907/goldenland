@@ -435,6 +435,10 @@ export interface Project {
    * Hiển thị ở trang chủ
    */
   isFeatured?: boolean | null;
+  /**
+   * Lượt xem (tự động cập nhật)
+   */
+  views?: number | null;
   seoTitle?: string | null;
   seoDescription?: string | null;
   updatedAt: string;
@@ -1120,6 +1124,7 @@ export interface ProjectsSelect<T extends boolean = true> {
   status?: T;
   saleStatus?: T;
   isFeatured?: T;
+  views?: T;
   seoTitle?: T;
   seoDescription?: T;
   updatedAt?: T;

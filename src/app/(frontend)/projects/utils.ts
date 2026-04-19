@@ -42,6 +42,7 @@ export const PRICE_RANGES = [
 
 export const SORT_OPTIONS = [
     { label: 'Mới nhất', value: '-createdAt' },
+    { label: 'Nổi bật nhất', value: '-views' },
     { label: 'Giá tăng dần', value: 'priceFrom' },
     { label: 'Giá giảm dần', value: '-priceFrom' },
     { label: 'Quy mô lớn nhất', value: '-totalUnits' },
