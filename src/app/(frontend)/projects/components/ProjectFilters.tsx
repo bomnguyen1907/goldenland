@@ -64,7 +64,7 @@ function Dropdown({
                 <div className="absolute top-full left-0 mt-2 bg-white rounded-xl shadow-xl border border-gray-100 z-50 min-w-[220px] p-4">
                     <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Chọn {label.toLowerCase()}</p>
                     {children}
-                    <div className="flex items-center justify-between mt-4 pt-3 border-t border-gray-100">
+                    <div className="mt-4 pt-3 border-t border-gray-100">
                         <button
                             type="button"
                             onClick={() => { onReset(); onToggle() }}
@@ -74,13 +74,6 @@ function Dropdown({
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                             </svg>
                             Đặt lại
-                        </button>
-                        <button
-                            type="button"
-                            onClick={onToggle}
-                            className="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold rounded-lg transition"
-                        >
-                            Xong
                         </button>
                     </div>
                 </div>
@@ -113,6 +106,7 @@ export default function ProjectFilters({
     onResetAll,
 }: FiltersProps) {
     const [open, setOpen] = useState<'province' | 'type' | 'price' | 'status' | null>(null)
+    const [provinceSearch, setProvinceSearch] = useState('')
     const toggle = (key: typeof open) => setOpen((v) => (v === key ? null : key))
 
     const provinceLabel = PROVINCES.find((p) => p.value === province)?.label || 'Toàn quốc'
@@ -141,14 +135,32 @@ export default function ProjectFilters({
                 {/* Khu vực */}
                 <Dropdown label="Khu vực" displayValue={provinceLabel} open={open === 'province'}
                     onToggle={() => toggle('province')}
-                    onReset={() => onApplyProvince('')}
+                    onReset={() => { onApplyProvince(''); setProvinceSearch('') }}
                 >
-                    <div className="flex flex-wrap gap-2 max-h-48 overflow-y-auto">
-                        {PROVINCES.map((p) => (
-                            <Pill key={p.value} label={p.label} active={province === p.value}
-                                onClick={() => { onApplyProvince(p.value); setOpen(null) }}
-                            />
-                        ))}
+                    <div className="w-[200px]">
+                        <input
+                            className="w-full px-3 py-2 mb-2 rounded-lg border border-gray-200 text-sm outline-none focus:border-emerald-400 bg-gray-50 placeholder:text-gray-400"
+                            placeholder="Tìm Tỉnh/ Thành phố"
+                            value={provinceSearch}
+                            onChange={(e) => setProvinceSearch(e.target.value)}
+                        />
+                        <div className="max-h-52 overflow-y-auto">
+                            {PROVINCES
+                                .filter((p) => p.label.toLowerCase().includes(provinceSearch.toLowerCase()))
+                                .map((p) => (
+                                    <button
+                                        key={p.value}
+                                        type="button"
+                                        onClick={() => { onApplyProvince(p.value); setOpen(null); setProvinceSearch('') }}
+                                        className={`flex items-center justify-between w-full px-2 py-2.5 rounded-lg text-sm text-left transition hover:bg-gray-50 ${
+                                            province === p.value ? 'text-emerald-600 font-semibold' : 'text-gray-700'
+                                        }`}
+                                    >
+                                        <span>{p.label}</span>
+                                    </button>
+                                ))
+                            }
+                        </div>
                     </div>
                 </Dropdown>
 

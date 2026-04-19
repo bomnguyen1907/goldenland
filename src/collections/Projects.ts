@@ -272,6 +272,15 @@ export const Projects: CollectionConfig = {
                             defaultValue: false,
                             admin: { description: 'Hiển thị ở trang chủ' },
                         },
+                        {
+                            name: 'views',
+                            type: 'number',
+                            defaultValue: 0,
+                            admin: {
+                                description: 'Lượt xem (tự động cập nhật)',
+                                readOnly: true,
+                            },
+                        },
                     ],
                 },
 

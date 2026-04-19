@@ -23,7 +23,13 @@ export default function ProjectDetailPage() {
         const fetchData = async () => {
             try {
                 const res = await fetch(`/api/projects/${id}?depth=2`)
-                setProject(await res.json())
+                const data = await res.json()
+                setProject(data)
+                fetch(`/api/projects/${id}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ views: (data.views || 0) + 1 }),
+                }).catch(() => {})
             } catch {
                 alert('Lỗi tải dữ liệu')
             }
