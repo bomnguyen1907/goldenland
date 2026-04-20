@@ -6,7 +6,7 @@ export const Packages: CollectionConfig = {
     slug: 'packages',
     admin: {
         useAsTitle: 'name',
-        defaultColumns: ['name', 'price', 'totalListings', 'bonusVouchers', 'isActive'],
+        defaultColumns: ['name', 'price', 'totalProperties', 'bonusVouchers', 'isActive'],
     },
     access: {
         create: adminOnly,
@@ -48,7 +48,7 @@ export const Packages: CollectionConfig = {
             type: 'row',
             fields: [
                 {
-                    name: 'totalListings',
+                    name: 'totalProperties',
                     type: 'number',
                     required: true,
                     min: 1,
@@ -64,7 +64,7 @@ export const Packages: CollectionConfig = {
             ],
         },
         {
-            name: 'listingDurationDays',
+            name: 'propertyDurationDays',
             type: 'number',
             required: true,
             min: 1,

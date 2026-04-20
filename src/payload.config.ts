@@ -8,7 +8,7 @@ import sharp from 'sharp'
 
 import { Users } from './collections/Users'
 import { Profiles } from './collections/Profiles'
-import { Listings } from './collections/Listings'
+import { Properties } from './collections/Properties'
 import { Projects } from './collections/Projects'
 import { Media } from './collections/Media'
 import { Investors } from './collections/Investors'
@@ -22,7 +22,7 @@ import { PostingPrices } from './collections/PostingPrices'
 import { Vouchers } from './collections/Vouchers'
 import { Orders } from './collections/Orders'
 import { Notifications } from './collections/Notifications'
-import { SavedListings } from './collections/SavedListings'
+import { SavedProperties } from './collections/SavedProperties'
 import { ViewHistory } from './collections/ViewHistory'
 import { SpamBlacklist } from './collections/SpamBlacklist'
 
@@ -30,8 +30,8 @@ import { Settings } from './app/globals/Settings'
 
 import { divisionEndpoints } from './endpoints/divisions'
 import { purchasePackage } from './endpoints/purchasePackage'
-import { searchListings } from './endpoints/searchListings'
-import { toggleSavedListing } from './endpoints/toggleSavedListing'
+import { searchProperties } from './endpoints/searchProperties'
+import { toggleSavedProperty } from './endpoints/toggleSavedProperty'
 import { trackView } from './endpoints/trackView'
 import {
   markNotificationRead,
@@ -56,8 +56,8 @@ export default buildConfig({
   endpoints: [
     ...divisionEndpoints,
     purchasePackage,
-    searchListings,
-    toggleSavedListing,
+    searchProperties,
+    toggleSavedProperty,
     trackView,
     markNotificationRead,
     markAllNotificationsRead,
@@ -67,8 +67,8 @@ export default buildConfig({
     projects,
     projectDetail,
   ],
-  collections: [Users, Profiles, Listings, Projects, Media, Investors, Articles, ArticleCategories, Banners, Contacts, Reports, Packages, PostingPrices, Vouchers, Orders,
-    Notifications, SavedListings, ViewHistory, SpamBlacklist
+  collections: [Users, Profiles, Properties, Projects, Media, Investors, Articles, ArticleCategories, Banners, Contacts, Reports, Packages, PostingPrices, Vouchers, Orders,
+    Notifications, SavedProperties, ViewHistory, SpamBlacklist
   ],
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || '',

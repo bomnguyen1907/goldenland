@@ -69,7 +69,7 @@ export interface Config {
   collections: {
     users: User;
     profiles: Profile;
-    listings: Listing;
+    properties: Property;
     projects: Project;
     media: Media;
     investors: Investor;
@@ -83,7 +83,7 @@ export interface Config {
     vouchers: Voucher;
     orders: Order;
     notifications: Notification;
-    'saved-listings': SavedListing;
+    'saved-properties': SavedProperty;
     'view-history': ViewHistory;
     'spam-blacklist': SpamBlacklist;
     'payload-kv': PayloadKv;
@@ -95,7 +95,7 @@ export interface Config {
   collectionsSelect: {
     users: UsersSelect<false> | UsersSelect<true>;
     profiles: ProfilesSelect<false> | ProfilesSelect<true>;
-    listings: ListingsSelect<false> | ListingsSelect<true>;
+    properties: PropertiesSelect<false> | PropertiesSelect<true>;
     projects: ProjectsSelect<false> | ProjectsSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
     investors: InvestorsSelect<false> | InvestorsSelect<true>;
@@ -109,7 +109,7 @@ export interface Config {
     vouchers: VouchersSelect<false> | VouchersSelect<true>;
     orders: OrdersSelect<false> | OrdersSelect<true>;
     notifications: NotificationsSelect<false> | NotificationsSelect<true>;
-    'saved-listings': SavedListingsSelect<false> | SavedListingsSelect<true>;
+    'saved-properties': SavedPropertiesSelect<false> | SavedPropertiesSelect<true>;
     'view-history': ViewHistorySelect<false> | ViewHistorySelect<true>;
     'spam-blacklist': SpamBlacklistSelect<false> | SpamBlacklistSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
@@ -163,7 +163,10 @@ export interface User {
   id: number;
   fullName: string;
   phone?: string | null;
-  avatar?: (number | null) | Media;
+  /**
+   * URL ảnh đại diện từ bucket/Avatar
+   */
+  avatar_id?: string | null;
   role: 'admin' | 'user';
   /**
    * Số dư tài khoản (VNĐ)
@@ -199,25 +202,6 @@ export interface User {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "media".
- */
-export interface Media {
-  id: number;
-  alt: string;
-  updatedAt: string;
-  createdAt: string;
-  url?: string | null;
-  thumbnailURL?: string | null;
-  filename?: string | null;
-  mimeType?: string | null;
-  filesize?: number | null;
-  width?: number | null;
-  height?: number | null;
-  focalX?: number | null;
-  focalY?: number | null;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "profiles".
  */
 export interface Profile {
@@ -238,9 +222,9 @@ export interface Profile {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "listings".
+ * via the `definition` "properties".
  */
-export interface Listing {
+export interface Property {
   id: number;
   title: string;
   /**
@@ -294,7 +278,10 @@ export interface Listing {
    */
   images?:
     | {
-        image: number | Media;
+        /**
+         * Link ảnh từ storage/v1/object/public/Properties/{properties_id}
+         */
+        image: string;
         sort?: number | null;
         id?: string | null;
       }[]
@@ -463,6 +450,25 @@ export interface Investor {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "media".
+ */
+export interface Media {
+  id: number;
+  alt: string;
+  updatedAt: string;
+  createdAt: string;
+  url?: string | null;
+  thumbnailURL?: string | null;
+  filename?: string | null;
+  mimeType?: string | null;
+  filesize?: number | null;
+  width?: number | null;
+  height?: number | null;
+  focalX?: number | null;
+  focalY?: number | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "articles".
  */
 export interface Article {
@@ -598,7 +604,7 @@ export interface Report {
   /**
    * Tin bị báo cáo
    */
-  listing: number | Listing;
+  property: number | Property;
   /**
    * Người báo cáo
    */
@@ -642,7 +648,7 @@ export interface Package {
   /**
    * Số lượt đăng tin
    */
-  totalListings: number;
+  totalProperties: number;
   /**
    * Thời hạn gói (ngày)
    */
@@ -650,7 +656,7 @@ export interface Package {
   /**
    * Mỗi tin đăng hiển thị bao nhiêu ngày
    */
-  listingDurationDays: number;
+  propertyDurationDays: number;
   /**
    * Số voucher tặng kèm khi mua gói
    */
@@ -750,7 +756,7 @@ export interface Order {
   /**
    * Tin đăng liên quan (nếu đăng tin lẻ)
    */
-  listing?: (number | null) | Listing;
+  property?: (number | null) | Property;
   /**
    * Voucher đã áp dụng (nếu có)
    */
@@ -790,11 +796,11 @@ export interface Notification {
   user: number | User;
   title: string;
   message: string;
-  type: 'system' | 'listing' | 'payment' | 'promotion' | 'verification';
+  type: 'system' | 'property' | 'payment' | 'promotion' | 'verification';
   /**
    * Loại đối tượng liên quan
    */
-  referenceType?: ('listing' | 'order' | 'voucher' | 'article') | null;
+  referenceType?: ('property' | 'order' | 'voucher' | 'article') | null;
   /**
    * ID đối tượng liên quan
    */
@@ -805,12 +811,12 @@ export interface Notification {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "saved-listings".
+ * via the `definition` "saved-properties".
  */
-export interface SavedListing {
+export interface SavedProperty {
   id: number;
   user: number | User;
-  listing: number | Listing;
+  property: number | Property;
   updatedAt: string;
   createdAt: string;
 }
@@ -821,7 +827,7 @@ export interface SavedListing {
 export interface ViewHistory {
   id: number;
   user: number | User;
-  listing: number | Listing;
+  property: number | Property;
   updatedAt: string;
   createdAt: string;
 }
@@ -874,8 +880,8 @@ export interface PayloadLockedDocument {
         value: number | Profile;
       } | null)
     | ({
-        relationTo: 'listings';
-        value: number | Listing;
+        relationTo: 'properties';
+        value: number | Property;
       } | null)
     | ({
         relationTo: 'projects';
@@ -930,8 +936,8 @@ export interface PayloadLockedDocument {
         value: number | Notification;
       } | null)
     | ({
-        relationTo: 'saved-listings';
-        value: number | SavedListing;
+        relationTo: 'saved-properties';
+        value: number | SavedProperty;
       } | null)
     | ({
         relationTo: 'view-history';
@@ -990,7 +996,7 @@ export interface PayloadMigration {
 export interface UsersSelect<T extends boolean = true> {
   fullName?: T;
   phone?: T;
-  avatar?: T;
+  avatar_id?: T;
   role?: T;
   balance?: T;
   isVerified?: T;
@@ -1034,9 +1040,9 @@ export interface ProfilesSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "listings_select".
+ * via the `definition` "properties_select".
  */
-export interface ListingsSelect<T extends boolean = true> {
+export interface PropertiesSelect<T extends boolean = true> {
   title?: T;
   slug?: T;
   description?: T;
@@ -1237,7 +1243,7 @@ export interface ContactsSelect<T extends boolean = true> {
  * via the `definition` "reports_select".
  */
 export interface ReportsSelect<T extends boolean = true> {
-  listing?: T;
+  property?: T;
   reporter?: T;
   reason?: T;
   detail?: T;
@@ -1256,9 +1262,9 @@ export interface PackagesSelect<T extends boolean = true> {
   description?: T;
   price?: T;
   originalPrice?: T;
-  totalListings?: T;
+  totalProperties?: T;
   durationDays?: T;
-  listingDurationDays?: T;
+  propertyDurationDays?: T;
   bonusVouchers?: T;
   features?:
     | T
@@ -1313,7 +1319,7 @@ export interface OrdersSelect<T extends boolean = true> {
   orderType?: T;
   package?: T;
   postingPrice?: T;
-  listing?: T;
+  property?: T;
   voucher?: T;
   originalAmount?: T;
   discountAmount?: T;
@@ -1343,11 +1349,11 @@ export interface NotificationsSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "saved-listings_select".
+ * via the `definition` "saved-properties_select".
  */
-export interface SavedListingsSelect<T extends boolean = true> {
+export interface SavedPropertiesSelect<T extends boolean = true> {
   user?: T;
-  listing?: T;
+  property?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -1357,7 +1363,7 @@ export interface SavedListingsSelect<T extends boolean = true> {
  */
 export interface ViewHistorySelect<T extends boolean = true> {
   user?: T;
-  listing?: T;
+  property?: T;
   updatedAt?: T;
   createdAt?: T;
 }

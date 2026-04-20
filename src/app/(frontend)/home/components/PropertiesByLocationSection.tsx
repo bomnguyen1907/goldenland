@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { fetchListingsCountByLocation } from '@/app/services/listings'
+import { fetchPropertiesCountByLocation } from '@/app/services/properties'
 
 type LocationCard = {
   city: string
@@ -62,7 +62,7 @@ export function PropertiesByLocationSection() {
       try {
         const results = await Promise.all(
           locations.map(async (location) => {
-            const count = await fetchListingsCountByLocation(location.provinceCode)
+            const count = await fetchPropertiesCountByLocation(location.provinceCode)
 
             return [location.provinceCode, count] as const
           }),

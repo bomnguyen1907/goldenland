@@ -3,10 +3,10 @@ import type { CollectionConfig } from 'payload'
 
 import { ownerOrAdmin, adminOnly } from '@/access'
 
-export const SavedListings: CollectionConfig = {
-    slug: 'saved-listings',
+export const SavedProperties: CollectionConfig = {
+    slug: 'saved-properties',
     admin: {
-        defaultColumns: ['user', 'listing', 'createdAt'],
+        defaultColumns: ['user', 'property', 'createdAt'],
     },
     access: {
         create: ownerOrAdmin('user'),
@@ -23,9 +23,9 @@ export const SavedListings: CollectionConfig = {
             index: true,
         },
         {
-            name: 'listing',
+            name: 'property',
             type: 'relationship',
-            relationTo: 'listings',
+            relationTo: 'properties',
             required: true,
         },
     ],
@@ -33,12 +33,12 @@ export const SavedListings: CollectionConfig = {
         // Ngăn lưu trùng
         beforeChange: [
             async ({ data, operation, req }) => {
-                if (operation === 'create' && data?.user && data?.listing) {
+                if (operation === 'create' && data?.user && data?.property) {
                     const existing = await req.payload.find({
-                        collection: 'saved-listings',
+                        collection: 'saved-properties',
                         where: {
                             user: { equals: data.user },
-                            listing: { equals: data.listing },
+                            property: { equals: data.property },
                         },
                         limit: 1,
                     })
