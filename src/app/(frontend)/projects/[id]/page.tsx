@@ -1,11 +1,14 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import dynamic from 'next/dynamic'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { formatPrice, formatDate, lexicalToHtml, PROPERTY_TYPES } from '../utils'
 import SectionTitle from '../components/SectionTitle'
 import ProjectCard from '../components/ProjectCard'
+
+const MapSection = dynamic(() => import('./components/MapSection'), { ssr: false })
 
 const HOTLINE = '0901 234 567'
 
@@ -200,6 +203,14 @@ export default function ProjectDetailPage() {
                         ))}
                     </div>
                 </div>
+
+                {/* BẢN ĐỒ */}
+                {project.latitude && project.longitude && (
+                    <div className="mb-8">
+                        <SectionTitle>Vị trí dự án {project.name}</SectionTitle>
+                        <MapSection lat={project.latitude} lng={project.longitude} name={project.name} />
+                    </div>
+                )}
 
                 {/* MÔ TẢ */}
                 {project.description && (
