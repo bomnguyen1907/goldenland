@@ -45,7 +45,7 @@ export default async function RootLayout(props: { children: React.ReactNode }) {
           email: user.email,
           fullName: (user as { fullName?: string | null }).fullName ?? null,
           phone: (user as { phone?: string | null }).phone ?? null,
-          avatarUrl: (user as { avatar?: { url?: string } }).avatar?.url ?? null,
+          avatarUrl: (user as { avatar_id?: string | null }).avatar_id ?? null,
         }
       : null
   } catch {

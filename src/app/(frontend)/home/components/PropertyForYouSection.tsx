@@ -1,6 +1,6 @@
 'use client'
-import type { Listing } from '@/payload-types'
-import { fetchNewListings } from '@/app/services/listings'
+import type { Property } from '@/payload-types'
+import { fetchNewProperties } from '@/app/services/properties'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 
@@ -19,44 +19,52 @@ const MAX_FETCH_COUNT = 2
 const FALLBACK_IMAGE =
   'https://images.unsplash.com/photo-1600585154526-990dced4db0d?auto=format&fit=crop&w=1400&q=80'
 
-// Type guard to check if the value has a url property that is a string or null
-function hasUrl(value: unknown): value is { url?: string | null } {
-  return typeof value === 'object' && value !== null && 'url' in value
-}
+// Removed hasUrl because images are strings now
 
-// Function to format the price of a listing based on its price unit and value
-function formatPrice(listing: Listing): string {
-  if (listing.priceUnit === 'negotiable') {
+// Function to format the price of a property based on its price unit and value
+function formatPrice(property: Property): string {
+  if (property.priceUnit === 'negotiable') {
     return 'Thỏa thuận'
   }
 
-  const amount =
-    listing.price >= 1000 ? `${(listing.price / 1000).toFixed(1)} tỷ` : `${listing.price} triệu`
+  const price = property.price
+  let amountStr = ''
 
-  if (listing.priceUnit === 'per_month') {
-    return `${amount}/tháng`
+  if (price >= 1000000000) {
+    const billions = price / 1000000000
+    amountStr = `${billions.toFixed(billions % 1 === 0 ? 0 : 1).replace('.0', '')} tỷ`
+  } else if (price >= 1000000) {
+    const millions = price / 1000000
+    amountStr = `${millions.toFixed(millions % 1 === 0 ? 0 : 1).replace('.0', '')} triệu`
+  } else {
+    // Fallback logic for legacy data or small numbers
+    amountStr = price >= 1000 ? `${(price / 1000).toFixed(1).replace('.0', '')} tỷ` : `${price} triệu`
   }
 
-  if (listing.priceUnit === 'per_m2') {
-    return `${amount}/m²`
+  if (property.priceUnit === 'per_month') {
+    return `${amountStr}/tháng`
   }
 
-  return amount
+  if (property.priceUnit === 'per_m2') {
+    return `${amountStr}/m²`
+  }
+
+  return amountStr
 }
 
-// Function to map a Listing object to a PropertyItem object, extracting the necessary fields and formatting them for display
-function mapListingToProperty(listing: Listing): PropertyItem {
-  const firstImage = listing.images?.[0]?.image
-  const image = hasUrl(firstImage) && firstImage.url ? firstImage.url : FALLBACK_IMAGE
+// Function to map a Property object to a PropertyItem object, extracting the necessary fields and formatting them for display
+function mapPropertyToItem(property: Property): PropertyItem {
+  const firstImage = property.images?.[0]?.image
+  const image = typeof firstImage === 'string' ? firstImage : FALLBACK_IMAGE
 
   return {
-    id: listing.id,
-    title: listing.title,
-    price: formatPrice(listing),
-    area: listing.area ? `${listing.area} m²` : 'Đang cập nhật',
-    location: listing.address ?? 'Đang cập nhật',
+    id: property.id,
+    title: property.title,
+    price: formatPrice(property),
+    area: property.area ? `${property.area} m²` : 'Đang cập nhật',
+    location: property.address ?? 'Đang cập nhật',
     image,
-    imageAlt: listing.title,
+    imageAlt: property.title,
   }
 }
 
@@ -72,25 +80,25 @@ export function PropertyForYouSection() {
   const showGoToPropertiesButton = reachedFetchLimit && hasMore
 
   useEffect(() => {
-    const loadInitialListings = async () => {
+    const loadInitialProperties = async () => {
       try {
-        const response = await fetchNewListings({ limit: PAGE_SIZE, page: 1 })
+        const response = await fetchNewProperties({ limit: PAGE_SIZE, page: 1 })
 
-        setProperties(response.data.map(mapListingToProperty))
+        setProperties(response.data.map(mapPropertyToItem))
         setCurrentPage(response.page)
         setHasMore(response.hasMore)
       } catch (error) {
-        console.error('Fetch new listings failed:', error)
+        console.error('Fetch new properties failed:', error)
       } finally {
         setFetchCount((prev) => prev + 1)
         setIsInitialLoading(false)
       }
     }
 
-    void loadInitialListings()
+    void loadInitialProperties()
   }, [])
 
-  // Handler function to load more listings when the user clicks the "Load More" button, fetching the next page of listings and appending them to the existing list
+  // Handler function to load more properties when the user clicks the "Load More" button, fetching the next page of properties and appending them to the existing list
   const handleLoadMore = async () => {
     if (isLoadingMore || !hasMore || reachedFetchLimit) {
       return
@@ -100,13 +108,13 @@ export function PropertyForYouSection() {
     const nextPage = currentPage + 1
 
     try {
-      const response = await fetchNewListings({ limit: PAGE_SIZE, page: nextPage })
+      const response = await fetchNewProperties({ limit: PAGE_SIZE, page: nextPage })
 
-      setProperties((previous) => [...previous, ...response.data.map(mapListingToProperty)])
+      setProperties((previous) => [...previous, ...response.data.map(mapPropertyToItem)])
       setCurrentPage(response.page)
       setHasMore(response.hasMore)
     } catch (error) {
-      console.error('Load more listings failed:', error)
+      console.error('Load more properties failed:', error)
     } finally {
       setFetchCount((prev) => prev + 1)
       setIsLoadingMore(false)
@@ -165,7 +173,7 @@ export function PropertyForYouSection() {
                 </div>
               </div>
 
-              <div className="flex items-center justify-between border-t border-outline-variant/10 pt-4">
+              <div className="mt-2 flex items-center justify-between ">
                 <span className="text-xs italic text-secondary">Đăng hôm nay</span>
 
                 <button

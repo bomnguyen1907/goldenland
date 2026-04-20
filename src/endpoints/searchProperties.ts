@@ -1,8 +1,8 @@
 // @ts-nocheck
 import type { Endpoint } from 'payload'
 
-export const searchListings: Endpoint = {
-    path: '/search/listings',
+export const searchProperties: Endpoint = {
+    path: '/search/properties',
     method: 'get',
     handler: async (req) => {
         const { payload } = req
@@ -58,7 +58,7 @@ export const searchListings: Endpoint = {
 
         try {
             const result = await payload.find({
-                collection: 'listings',
+                collection: 'properties',
                 where,
                 page: Number(page),
                 limit: Number(limit),
