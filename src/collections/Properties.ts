@@ -2,8 +2,8 @@ import type { CollectionConfig } from 'payload'
 
 import { authenticated, ownerOrAdmin, statusOrOwnerOrAdmin, adminOnlyField } from '@/access'
 
-export const Listings: CollectionConfig = {
-    slug: 'listings',
+export const Properties: CollectionConfig = {
+    slug: 'properties',
     admin: {
         useAsTitle: 'title',
         defaultColumns: ['title', 'listingType', 'price', 'status', 'createdAt'],
@@ -274,9 +274,9 @@ export const Listings: CollectionConfig = {
                             fields: [
                                 {
                                     name: 'image',
-                                    type: 'upload',
-                                    relationTo: 'media',
+                                    type: 'text',
                                     required: true,
+                                    admin: { description: 'Link ảnh từ storage/v1/object/public/Properties/{properties_id}' }
                                 },
                                 {
                                     name: 'sort',

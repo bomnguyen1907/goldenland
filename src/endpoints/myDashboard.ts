@@ -15,7 +15,7 @@ export const myDashboard: Endpoint = {
             // Đếm tin đăng của tôi theo status
             const [active, pending, expired, sold, drafts] = await Promise.all([
                 payload.find({
-                    collection: 'listings',
+                    collection: 'properties',
                     where: {
                         and: [{ user: { equals: user.id } }, { status: { equals: 'active' } }],
                     },
@@ -24,7 +24,7 @@ export const myDashboard: Endpoint = {
                     req,
                 }),
                 payload.find({
-                    collection: 'listings',
+                    collection: 'properties',
                     where: {
                         and: [{ user: { equals: user.id } }, { status: { equals: 'pending' } }],
                     },
@@ -33,7 +33,7 @@ export const myDashboard: Endpoint = {
                     req,
                 }),
                 payload.find({
-                    collection: 'listings',
+                    collection: 'properties',
                     where: {
                         and: [{ user: { equals: user.id } }, { status: { equals: 'expired' } }],
                     },
@@ -42,7 +42,7 @@ export const myDashboard: Endpoint = {
                     req,
                 }),
                 payload.find({
-                    collection: 'listings',
+                    collection: 'properties',
                     where: {
                         and: [{ user: { equals: user.id } }, { status: { equals: 'sold' } }],
                     },
@@ -51,7 +51,7 @@ export const myDashboard: Endpoint = {
                     req,
                 }),
                 payload.find({
-                    collection: 'listings',
+                    collection: 'properties',
                     where: {
                         and: [{ user: { equals: user.id } }, { status: { equals: 'draft' } }],
                     },
@@ -74,7 +74,7 @@ export const myDashboard: Endpoint = {
 
             // Đếm tin đã lưu
             const saved = await payload.find({
-                collection: 'saved-listings',
+                collection: 'saved-properties',
                 where: { user: { equals: user.id } },
                 limit: 0,
                 overrideAccess: false,
@@ -104,7 +104,7 @@ export const myDashboard: Endpoint = {
 
             return Response.json({
                 balance: user.balance || 0,
-                listings: {
+                properties: {
                     active: active.totalDocs,
                     pending: pending.totalDocs,
                     expired: expired.totalDocs,
@@ -113,7 +113,7 @@ export const myDashboard: Endpoint = {
                     total: active.totalDocs + pending.totalDocs + expired.totalDocs + sold.totalDocs + drafts.totalDocs,
                 },
                 vouchersActive: vouchers.totalDocs,
-                savedListings: saved.totalDocs,
+                savedProperties: saved.totalDocs,
                 unreadNotifications: unreadNotifs.totalDocs,
                 recentOrders: recentOrders.docs,
             })

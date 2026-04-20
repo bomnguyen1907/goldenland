@@ -1,8 +1,8 @@
 // @ts-nocheck
 import type { Endpoint } from 'payload'
 
-export const toggleSavedListing: Endpoint = {
-    path: '/saved-listings/toggle',
+export const toggleSavedProperty: Endpoint = {
+    path: '/saved-properties/toggle',
     method: 'post',
     handler: async (req) => {
         const { payload, user } = req
@@ -13,17 +13,17 @@ export const toggleSavedListing: Endpoint = {
 
         try {
             const body = await req.json?.()
-            const { listingId } = body || {}
+            const { propertyId } = body || {}
 
-            if (!listingId) {
-                return Response.json({ error: 'Thiếu listingId' }, { status: 400 })
+            if (!propertyId) {
+                return Response.json({ error: 'Thiếu propertyId' }, { status: 400 })
             }
 
             // Kiểm tra đã lưu chưa
             const existing = await payload.find({
-                collection: 'saved-listings',
+                collection: 'saved-properties',
                 where: {
-                    and: [{ user: { equals: user.id } }, { listing: { equals: listingId } }],
+                    and: [{ user: { equals: user.id } }, { property: { equals: propertyId } }],
                 },
                 limit: 1,
                 overrideAccess: false,
@@ -33,7 +33,7 @@ export const toggleSavedListing: Endpoint = {
             if (existing.docs.length > 0) {
                 // Đã lưu → bỏ lưu
                 await payload.delete({
-                    collection: 'saved-listings',
+                    collection: 'saved-properties',
                     id: existing.docs[0].id,
                     overrideAccess: false,
                     req,
@@ -42,10 +42,10 @@ export const toggleSavedListing: Endpoint = {
             } else {
                 // Chưa lưu → lưu
                 await payload.create({
-                    collection: 'saved-listings',
+                    collection: 'saved-properties',
                     data: {
                         user: user.id,
-                        listing: listingId,
+                        property: propertyId,
                     },
                     overrideAccess: false,
                     req,
