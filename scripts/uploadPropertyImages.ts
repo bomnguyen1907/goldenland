@@ -52,10 +52,16 @@ async function run() {
   console.log('Fetching all properties...')
   const { docs: properties } = await payload.find({
     collection: 'properties',
-    limit: 200,
+    depth: 0,
+    limit: 10000,
+    pagination: false,
   })
 
   console.log(`Found ${properties.length} properties. Starting upload and update process...`)
+
+  let updatedCount = 0
+  let failedCount = 0
+  const failedPropertyIds: Array<string | number> = []
 
   for (let i = 0; i < properties.length; i++) {
     const property = properties[i]
@@ -100,6 +106,36 @@ async function run() {
       }
     }
 
+    // Ensure every property ends up with at least one image.
+    if (newImagesArray.length === 0) {
+      const fallbackPath = `property-${propertyId}/1.jpg`
+      const fallbackBuffer = imageBuffers[0]
+
+      try {
+        const { error } = await supabase.storage
+          .from(BUCKET_NAME)
+          .upload(fallbackPath, fallbackBuffer, {
+            contentType: 'image/jpeg',
+            upsert: true,
+          })
+
+        if (error) {
+          console.error(`Fallback upload failed for Property ${propertyId}:`, error.message)
+        } else {
+          const { data: publicUrlData } = supabase.storage
+            .from(BUCKET_NAME)
+            .getPublicUrl(fallbackPath)
+
+          newImagesArray.push({
+            image: publicUrlData.publicUrl,
+            sort: 1,
+          })
+        }
+      } catch (err) {
+        console.error(`Unexpected fallback upload error for Property ${propertyId}:`, err)
+      }
+    }
+
     // Update the property in Payload with the actual new image URLs
     if (newImagesArray.length > 0) {
       try {
@@ -110,11 +146,35 @@ async function run() {
             images: newImagesArray,
           },
         })
+        updatedCount += 1
         console.log(`Updated Property ID: ${propertyId} with new image URLs.`)
       } catch (err) {
+        failedCount += 1
+        failedPropertyIds.push(propertyId)
         console.error(`Error updating property ${propertyId} in Payload:`, err)
       }
+    } else {
+      failedCount += 1
+      failedPropertyIds.push(propertyId)
+      console.error(`Property ${propertyId} still has no uploaded images after fallback attempt.`)
     }
+  }
+
+  const { docs: finalProperties } = await payload.find({
+    collection: 'properties',
+    depth: 0,
+    limit: 10000,
+    pagination: false,
+  })
+  const withoutImages = finalProperties.filter((property) => !Array.isArray(property.images) || property.images.length === 0)
+
+  console.log('--- Upload summary ---')
+  console.log(`Total properties processed: ${properties.length}`)
+  console.log(`Updated with images: ${updatedCount}`)
+  console.log(`Failed to update: ${failedCount}`)
+  console.log(`Properties without images after run: ${withoutImages.length}`)
+  if (failedPropertyIds.length > 0) {
+    console.log(`Failed property IDs: ${failedPropertyIds.join(', ')}`)
   }
 
   console.log('--- Upload and update complete ---')

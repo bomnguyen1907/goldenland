@@ -67,18 +67,61 @@ export async function fetchNewProperties(
 
 export type PropertiesCountByLocationResponse = number
 
+type CountWhereClause = {
+  or?: Array<Record<string, unknown>>
+  provinceCode?: {
+    equals: string
+  }
+}
+
+function buildLocationCountWhere(locationId: string): CountWhereClause {
+  const normalized = String(locationId).trim()
+
+  // Hà Nội can appear as either "01" or "1" in different datasets.
+  if (normalized === '01' || normalized === '1') {
+    return {
+      or: [
+        { provinceCode: { equals: '01' } },
+        { provinceCode: { equals: '1' } },
+      ],
+    }
+  }
+
+  // Đồng Nai old/new code compatibility.
+  if (normalized === '77' || normalized === '75') {
+    return {
+      or: [
+        { provinceCode: { equals: '75' } },
+        { provinceCode: { equals: '77' } },
+        { address: { contains: 'Đồng Nai' } },
+        { address: { contains: 'Dong Nai' } },
+      ],
+    }
+  }
+
+  // Bình Dương may be represented by legacy code or merged-code datasets.
+  if (normalized === '74') {
+    return {
+      or: [
+        { provinceCode: { equals: '74' } },
+        { address: { contains: 'Bình Dương' } },
+        { address: { contains: 'Binh Duong' } },
+      ],
+    }
+  }
+
+  return {
+    provinceCode: {
+      equals: normalized,
+    },
+  }
+}
+
 // Exporting count of properties base on location id
 export async function fetchPropertiesCountByLocation(locationId: string, config?: AxiosRequestConfig): Promise<PropertiesCountByLocationResponse> {
-  // Normalize numeric category values from UI params.
-  const categoryValue = /^\d+$/.test(String(locationId)) ? Number(locationId) : locationId
-
   // Payload count endpoint returns matched document count in totalDocs.
   const query = buildQuery({
-    where: {
-      provinceCode: {
-        equals: categoryValue,
-      },
-    },
+    where: buildLocationCountWhere(locationId),
   })
 
   const response = await getJSON<PropertiesCountByLocationApiResponse>(

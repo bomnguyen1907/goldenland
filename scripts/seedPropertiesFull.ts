@@ -2,6 +2,7 @@ import dotenv from 'dotenv'
 dotenv.config()
 
 import { getPayload } from 'payload'
+import { createClient } from '@supabase/supabase-js'
 
 const TITLES = [
   'Bán nhà mặt phố trung tâm',
@@ -30,6 +31,19 @@ const DIRECTIONS = ['east', 'west', 'south', 'north', 'northeast', 'southeast', 
 const LEGAL_STATUSES = ['red_book', 'sale_contract', 'pending', 'other']
 const FURNITURE_STATUSES = ['luxury', 'full', 'basic', 'none']
 
+const SUPABASE_URL = process.env.SUPABASE_URL || ''
+const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
+const BUCKET_NAME = 'Properties'
+const SEED_SLUG_PREFIX = 'seed-prop-full'
+
+const DUMMY_IMAGE_URLS = [
+  'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80',
+  'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800&q=80',
+  'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&q=80',
+  'https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80',
+  'https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?w=800&q=80',
+]
+
 // Location Mocks (Ho Chi Minh City and Hanoi approx)
 const LOCATIONS = [
   { provinceCode: '79', wardCode: '26740', street: 'Nguyễn Huệ', district: 'Quận 1', city: 'TP. Hồ Chí Minh', baseLat: 10.7732, baseLng: 106.7034 },
@@ -54,26 +68,84 @@ const getRandomItem = <T>(arr: T[]): T => arr[Math.floor(Math.random() * arr.len
 const getRandomBoolean = () => Math.random() >= 0.5
 const randomOffset = () => (Math.random() - 0.5) * 0.01 // Add slight variation to coords
 
+async function downloadImage(url: string): Promise<ArrayBuffer> {
+  const response = await fetch(url)
+  if (!response.ok) {
+    throw new Error(`Failed to download image ${url}: ${response.status}`)
+  }
+  return response.arrayBuffer()
+}
+
 async function seed() {
+  if (!SUPABASE_URL || !SUPABASE_KEY) {
+    console.error('Missing Supabase URL or Service Role Key in .env')
+    process.exit(1)
+  }
+
+  const supabase = createClient(SUPABASE_URL, SUPABASE_KEY)
+
   const { default: config } = await import('../src/payload.config')
   const payload = await getPayload({ config: await config })
+
+  const { docs: users } = await payload.find({
+    collection: 'users',
+    depth: 0,
+    limit: 1000,
+    pagination: false,
+  })
+
+  if (!users.length) {
+    console.error('No users found. Please seed users before seeding properties.')
+    process.exit(1)
+  }
+
+  const userIds = users.map((user) => user.id)
+
+  const { docs: projects } = await payload.find({
+    collection: 'projects',
+    depth: 0,
+    limit: 1000,
+    pagination: false,
+  })
+  const projectIds = projects.map((project) => project.id)
+
+  console.log(`Loaded ${userIds.length} users and ${projectIds.length} projects for random assignment.`)
+
+  console.log('Downloading dummy images into memory...')
+  const imageBuffers: ArrayBuffer[] = []
+  for (const url of DUMMY_IMAGE_URLS) {
+    try {
+      const buf = await downloadImage(url)
+      imageBuffers.push(buf)
+    } catch (error) {
+      console.error(`Failed to download dummy image: ${url}`, error)
+    }
+  }
+
+  if (imageBuffers.length === 0) {
+    console.error('No dummy images downloaded, exiting.')
+    process.exit(1)
+  }
 
   console.log('--- Cleaning up previous seed properties ---')
   await payload.delete({
     collection: 'properties',
     where: {
-      or: [
-        { title: { contains: 'Mã TS' } },
-        { title: { contains: 'tại' } }
-      ]
+      slug: {
+        contains: `${SEED_SLUG_PREFIX}-`,
+      },
     }
   })
 
   console.log('--- Seeding 100 realistic properties with FULL metadata ---')
 
+  let createdCount = 0
+  let imageLinkedCount = 0
+  let failedCount = 0
+
   for (let i = 1; i <= 100; i++) {
-    const hasProject = Math.random() >= 0.4
-    const projectId = hasProject ? getRandomInt(72, 104) : null
+    const hasProject = projectIds.length > 0 && Math.random() >= 0.4
+    const projectId = hasProject ? getRandomItem(projectIds) : null
 
     let propertyType = 'apartment'
     if (!hasProject) {
@@ -88,30 +160,22 @@ async function seed() {
     const houseNumber = getRandomInt(1, 200)
     const titleBase = getRandomItem(TITLES)
     const title = `${titleBase} tại ${loc.street}, ${loc.city}`
-    const slug = `${title.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').replace(/[^a-z0-9]+/g, '-')}-${getRandomInt(10000, 99999)}`
+    const slug = `${SEED_SLUG_PREFIX}-${title.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').replace(/[^a-z0-9]+/g, '-')}-${getRandomInt(10000, 99999)}`
     const description = `${getRandomItem(DESCRIPTIONS)} ${getRandomItem(DESCRIPTIONS)}`
     
-    let price = getRandomInt(1, 20) * 1000000000 // 1 to 20 tỷ
-    let priceUnit = 'total'
+    const price = getRandomInt(1, 20) * 1000000000 // 1 to 20 tỷ
+    const priceUnit: 'total' = 'total'
 
     const area = getRandomInt(30, 300)
     const bedrooms = propertyType === 'land' || propertyType === 'warehouse' ? 0 : getRandomInt(1, 5)
     const bathrooms = propertyType === 'land' || propertyType === 'warehouse' ? 0 : getRandomInt(1, 4)
-
-    const numImages = getRandomInt(1, 5)
-    const images = Array.from({ length: numImages }, (_, idx) => ({
-      image: `https://ccwmekftdqxobmxscvzy.supabase.co/storage/v1/object/public/Properties/property-${i}/${idx + 1}.jpg`,
-      sort: idx + 1
-    }))
-
-    const userId = getRandomInt(1, 11)
-    
+    const userId = getRandomItem(userIds)
 
 
     const isVerified = getRandomBoolean()
 
     try {
-      await payload.create({
+      const property = await payload.create({
         collection: 'properties',
         data: {
           title,
@@ -140,14 +204,13 @@ async function seed() {
           longitude: loc.baseLng + randomOffset(),
 
           // MEDIA
-          images,
           videoUrl: getRandomBoolean() ? 'https://www.youtube.com/watch?v=dQw4w9WgXcQ' : undefined,
 
           // STATUS & VERIFICATION
           status: 'active',
           label: getRandomItem(['normal', 'vip', 'hot', 'premium']) as any,
           isVerified,
-          verifiedBy: isVerified ? getRandomInt(1, 11) : undefined,
+          verifiedBy: isVerified ? getRandomItem(userIds) : undefined,
           verifiedAt: isVerified ? new Date(Date.now() - getRandomInt(1, 10) * 86400000).toISOString() : undefined,
 
           // SEO
@@ -159,12 +222,56 @@ async function seed() {
           project: projectId,
         },
       })
-      console.log(`Created full property ${i}/100: ${title}`)
+      createdCount += 1
+
+      const propertyId = property.id
+      const numImages = getRandomInt(1, 5)
+      const uploadedImages: Array<{ image: string; sort: number }> = []
+
+      for (let imageIndex = 1; imageIndex <= numImages; imageIndex++) {
+        const filePath = `property-${propertyId}/${imageIndex}.jpg`
+        const buffer = imageBuffers[(imageIndex - 1) % imageBuffers.length]
+
+        const { error } = await supabase.storage
+          .from(BUCKET_NAME)
+          .upload(filePath, buffer, {
+            contentType: 'image/jpeg',
+            upsert: true,
+          })
+
+        if (error) {
+          console.error(`Failed image upload for property ${propertyId}, file ${imageIndex}.jpg: ${error.message}`)
+          continue
+        }
+
+        const { data: publicUrlData } = supabase.storage.from(BUCKET_NAME).getPublicUrl(filePath)
+        uploadedImages.push({
+          image: publicUrlData.publicUrl,
+          sort: imageIndex,
+        })
+      }
+
+      if (!uploadedImages.length) {
+        throw new Error(`No images uploaded successfully for property ${propertyId}`)
+      }
+
+      await payload.update({
+        collection: 'properties',
+        id: propertyId,
+        data: {
+          images: uploadedImages,
+        },
+      })
+
+      imageLinkedCount += 1
+      console.log(`Created full property ${i}/100 (ID: ${propertyId}) with ${uploadedImages.length} images: ${title}`)
     } catch (error) {
+      failedCount += 1
       console.error(`Failed to create property ${i}:`, error instanceof Error ? error.message : error)
     }
   }
 
+  console.log(`Summary: created=${createdCount}, linkedImages=${imageLinkedCount}, failed=${failedCount}`)
   console.log('--- Full Property seed complete ---')
   process.exit(0)
 }

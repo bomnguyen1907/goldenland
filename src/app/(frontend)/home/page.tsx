@@ -1,6 +1,6 @@
 import { HeroSection } from './components/HeroSection'
 import { FeaturedArticlesSection } from './components/FearturedArticlesSection'
-import { FeaturedPropertiesSection } from './components/FeaturedPropertiesSection'
+import { FeaturedProjectsSection } from './components/FeaturedProjectsSection'
 import { PropertiesByLocationSection } from './components/PropertiesByLocationSection'
 import { PropertyForYouSection } from './components/PropertyForYouSection'
 import { RealEstateArticlesSection } from './components/RealEstateArticlesSection'
@@ -18,7 +18,7 @@ export default function Home() {
       <PropertyForYouSection />
 
       {/* Properties by location section, allowing users to browse properties based on their preferred locations */}
-      <FeaturedPropertiesSection />
+      <FeaturedProjectsSection />
 
       {/* Real estate news section, providing users with the latest updates and insights on the real estate market */}
       <PropertiesByLocationSection />
