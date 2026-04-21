@@ -64,7 +64,7 @@ async function seed() {
     const title = `${titleBase} - Mã TS${getRandomInt(1000, 9999)}`
     
     let price = 0
-    let priceUnit = 'total'
+    let priceUnit: 'total' | 'per_m2' | 'per_month' = 'total'
     if (listingType === 'sale') {
       price = getRandomInt(1, 20) * 1000000000 // 1 to 20 tỷ
       priceUnit = getRandomBoolean() ? 'total' : 'per_m2'

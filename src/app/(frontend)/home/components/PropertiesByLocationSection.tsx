@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { fetchPropertiesCountByLocation } from '@/app/services/properties'
+import { fetchNewestProjects } from '@/app/services/projects'
 
 type LocationCard = {
   city: string
@@ -13,71 +14,60 @@ const locations: LocationCard[] = [
   {
     city: 'TP. Hồ Chí Minh',
     provinceCode: '79',
-    image:
-      `https://ccwmekftdqxobmxscvzy.supabase.co/storage/v1/object/public/Provinces/tp-ho-chi-minh.jpg`,
+    image: `https://ccwmekftdqxobmxscvzy.supabase.co/storage/v1/object/public/Provinces/tp-ho-chi-minh.jpg`,
   },
   {
     city: 'Hà Nội',
-    provinceCode: '1',
-    image:
-      `https://ccwmekftdqxobmxscvzy.supabase.co/storage/v1/object/public/Provinces/ha-noi.jpg`,
+    provinceCode: '01',
+    image: `https://ccwmekftdqxobmxscvzy.supabase.co/storage/v1/object/public/Provinces/ha-noi.jpg`,
   },
   {
     city: 'Đà Nẵng',
     provinceCode: '48',
-    image:
-      `https://ccwmekftdqxobmxscvzy.supabase.co/storage/v1/object/public/Provinces/da-nang.webp`,
+    image: `https://ccwmekftdqxobmxscvzy.supabase.co/storage/v1/object/public/Provinces/da-nang.webp`,
   },
   {
     city: 'Bình Dương',
     provinceCode: '74',
-    image:
-      `https://ccwmekftdqxobmxscvzy.supabase.co/storage/v1/object/public/Provinces/binh-duong.webp`,
+    image: `https://ccwmekftdqxobmxscvzy.supabase.co/storage/v1/object/public/Provinces/binh-duong.webp`,
   },
   {
     city: 'Đồng Nai',
-    provinceCode: '77',
-    image:
-      `https://ccwmekftdqxobmxscvzy.supabase.co/storage/v1/object/public/Provinces/dong-nai.jpg`,
+    provinceCode: '75',
+    image: `https://ccwmekftdqxobmxscvzy.supabase.co/storage/v1/object/public/Provinces/dong-nai.jpg`,
   },
-]
-
-const tags = [
-  'Vinhomes Central Park',
-  'Vinhomes Grand Park',
-  'Vinhomes Smart City',
-  'Vinhomes Ocean Park',
-  'Vũng Tàu Pearl',
-  'Bcons Green View',
-  'Grandeur Palace',
 ]
 
 export function PropertiesByLocationSection() {
   const [countsByProvince, setCountsByProvince] = useState<Record<string, number>>({})
+  const [dynamicTags, setDynamicTags] = useState<string[]>([])
 
   useEffect(() => {
     let isMounted = true
 
-    const loadCounts = async () => {
+    const loadData = async () => {
       try {
-        const results = await Promise.all(
-          locations.map(async (location) => {
-            const count = await fetchPropertiesCountByLocation(location.provinceCode)
-
-            return [location.provinceCode, count] as const
-          }),
-        )
+        const [countsResults, projectsResponse] = await Promise.all([
+          Promise.all(
+            locations.map(async (location) => {
+              const count = await fetchPropertiesCountByLocation(location.provinceCode)
+              return [location.provinceCode, count] as const
+            }),
+          ),
+          fetchNewestProjects(),
+        ])
 
         if (!isMounted) return
 
-        setCountsByProvince(Object.fromEntries(results))
+        setCountsByProvince(Object.fromEntries(countsResults))
+        setDynamicTags(projectsResponse.data.map((project) => project.name))
       } catch {
         if (!isMounted) return
         setCountsByProvince({})
       }
     }
 
-    void loadCounts()
+    void loadData()
 
     return () => {
       isMounted = false
@@ -88,7 +78,7 @@ export function PropertiesByLocationSection() {
     const count = countsByProvince[provinceCode]
 
     if (typeof count !== 'number') {
-      return 'Dang cap nhat'
+      return 'Đang cập nhật'
     }
 
     return `${count} tin đăng`
@@ -123,7 +113,7 @@ export function PropertiesByLocationSection() {
       </div>
 
       <div className="mt-8 flex flex-wrap justify-center gap-2">
-        {tags.map((item) => (
+        {dynamicTags.map((item) => (
           <span
             key={item}
             className="cursor-pointer rounded-full bg-zinc-100 px-4 py-2 text-xs text-secondary transition-colors hover:bg-primary hover:text-white"

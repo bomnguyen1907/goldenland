@@ -31,6 +31,8 @@ import { Settings } from './app/globals/Settings'
 import { divisionEndpoints } from './endpoints/divisions'
 import { purchasePackage } from './endpoints/purchasePackage'
 import { searchProperties } from './endpoints/searchProperties'
+import { searchProjects } from './endpoints/searchProjects'
+import { searchNews } from './endpoints/searchNews'
 import { toggleSavedProperty } from './endpoints/toggleSavedProperty'
 import { trackView } from './endpoints/trackView'
 import {
@@ -57,6 +59,8 @@ export default buildConfig({
     ...divisionEndpoints,
     purchasePackage,
     searchProperties,
+    searchProjects,
+    searchNews,
     toggleSavedProperty,
     trackView,
     markNotificationRead,

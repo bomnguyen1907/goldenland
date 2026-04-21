@@ -38,7 +38,7 @@ function isNavLinkActive(pathname: string, href: string): boolean {
   )
 }
 
-export default function TopAppBar() {
+export default function Header() {
   const pathname = usePathname()
   const user = useSelector((state: RootState) => selectUser(state as any))
   const isLoggedIn = useSelector((state: RootState) => selectIsLoggedIn(state as any))
@@ -65,7 +65,7 @@ export default function TopAppBar() {
   }
 
   const modalContainerClassName =
-    'relative w-1/2 h-3/4 max-w-5xl overflow-hidden rounded-2xl bg-white shadow-[0px_24px_48px_rgba(0,0,0,0.25)]'
+    'relative w-2/3 h-[85vh] overflow-hidden rounded-2xl bg-white shadow-[0px_24px_48px_rgba(0,0,0,0.25)]'
 
   useEffect(() => {
     if (!isAuthModalOpen) return
@@ -195,14 +195,6 @@ export default function TopAppBar() {
             className={modalContainerClassName}
             onClick={(event) => event.stopPropagation()}
           >
-            <button
-              type="button"
-              onClick={closeAuthModal}
-              aria-label="Đóng cửa sổ xác thực"
-              className="absolute right-4 top-4 rounded-md px-2 py-1 text-lg text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-900"
-            >
-              ×
-            </button>
 
             {showSignIn ? (
               <SignInForm onClose={closeAuthModal} onSwitchToRegister={openRegisterModal} />
@@ -210,6 +202,15 @@ export default function TopAppBar() {
             {showRegister ? (
               <RegisterForm onClose={closeAuthModal} onSwitchToSignIn={openSignInModal} />
             ) : null}
+
+            <button
+              type="button"
+              onClick={closeAuthModal}
+              aria-label="Đóng cửa sổ xác thực"
+              className="absolute right-4 top-4 z-50 rounded-md px-2 py-1 text-2xl text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-900"
+            >
+              ×
+            </button>
           </div>
         </div>
       ) : null}

@@ -12,6 +12,7 @@
     "generate:types": "cross-env NODE_OPTIONS=--no-deprecation payload generate:types",
     "lint": "cross-env NODE_OPTIONS=--no-deprecation eslint .",
     "payload": "cross-env NODE_OPTIONS=--no-deprecation payload",
+    "seed:properties-full": "cross-env NODE_OPTIONS=--no-deprecation node --import=tsx/esm ./scripts/seedPropertiesFull.ts",
     "seed:listings-projects": "cross-env NODE_OPTIONS=--no-deprecation node --import=tsx/esm ./scripts/seedListingsProjects.ts",
     "seed:projects30": "cross-env NODE_OPTIONS=--no-deprecation node --import=tsx/esm ./scripts/seedProjects30.ts",
     "start": "cross-env NODE_OPTIONS=--no-deprecation next start",
@@ -20,6 +21,7 @@
     "test:int": "cross-env NODE_OPTIONS=--no-deprecation vitest run --config ./vitest.config.mts"
   },
   "dependencies": {
+    "@hookform/resolvers": "^5.2.2",
     "@payloadcms/db-postgres": "3.81.0",
     "@payloadcms/next": "3.81.0",
     "@payloadcms/richtext-lexical": "3.81.0",
@@ -38,10 +40,12 @@
     "qs": "^6.15.1",
     "react": "19.2.4",
     "react-dom": "19.2.4",
+    "react-hook-form": "^7.72.1",
     "react-redux": "^9.2.0",
     "rss-parser": "^3.13.0",
     "sharp": "0.34.2",
-    "tailwind-scrollbar-hide": "^4.0.0"
+    "tailwind-scrollbar-hide": "^4.0.0",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@playwright/test": "1.58.2",

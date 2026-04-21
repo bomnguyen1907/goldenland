@@ -1,6 +1,7 @@
 'use client'
 import type { Property } from '@/payload-types'
 import { fetchNewProperties } from '@/app/services/properties'
+import divisions from '@/app/data/vietnam-divisions.json'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 
@@ -18,6 +19,45 @@ const PAGE_SIZE = 8
 const MAX_FETCH_COUNT = 2
 const FALLBACK_IMAGE =
   'https://images.unsplash.com/photo-1600585154526-990dced4db0d?auto=format&fit=crop&w=1400&q=80'
+
+type DivisionProvince = {
+  Code: string
+  FullName: string
+  Wards: Array<{
+    Code: string
+    FullName: string
+    ProvinceCode: string
+  }>
+}
+
+const divisionData = divisions as DivisionProvince[]
+
+const normalizeCode = (value: unknown): string => {
+  if (value === null || value === undefined) return ''
+
+  const raw = String(value).trim()
+  if (!raw) return ''
+
+  const trimmed = raw.replace(/^0+/, '')
+  return trimmed || '0'
+}
+
+const provinceNameByCode = new Map<string, string>()
+const wardNameByProvinceAndCode = new Map<string, string>()
+
+for (const province of divisionData) {
+  const provinceKey = normalizeCode(province.Code)
+  if (!provinceKey) continue
+
+  provinceNameByCode.set(provinceKey, province.FullName)
+
+  for (const ward of province.Wards) {
+    const wardKey = normalizeCode(ward.Code)
+    if (!wardKey) continue
+
+    wardNameByProvinceAndCode.set(`${provinceKey}:${wardKey}`, ward.FullName)
+  }
+}
 
 // Removed hasUrl because images are strings now
 
@@ -38,7 +78,8 @@ function formatPrice(property: Property): string {
     amountStr = `${millions.toFixed(millions % 1 === 0 ? 0 : 1).replace('.0', '')} triệu`
   } else {
     // Fallback logic for legacy data or small numbers
-    amountStr = price >= 1000 ? `${(price / 1000).toFixed(1).replace('.0', '')} tỷ` : `${price} triệu`
+    amountStr =
+      price >= 1000 ? `${(price / 1000).toFixed(1).replace('.0', '')} tỷ` : `${price} triệu`
   }
 
   if (property.priceUnit === 'per_month') {
@@ -52,6 +93,19 @@ function formatPrice(property: Property): string {
   return amountStr
 }
 
+function formatLocation(property: Property): string {
+  const provinceKey = normalizeCode(property.provinceCode)
+  const wardKey = normalizeCode(property.wardCode)
+
+  const provinceName = provinceKey ? provinceNameByCode.get(provinceKey) : undefined
+  const wardName =
+    provinceKey && wardKey ? wardNameByProvinceAndCode.get(`${provinceKey}:${wardKey}`) : undefined
+
+  const mappedLocation = [wardName, provinceName].filter(Boolean).join(', ')
+
+  return mappedLocation || property.address || 'Đang cập nhật'
+}
+
 // Function to map a Property object to a PropertyItem object, extracting the necessary fields and formatting them for display
 function mapPropertyToItem(property: Property): PropertyItem {
   const firstImage = property.images?.[0]?.image
@@ -62,7 +116,7 @@ function mapPropertyToItem(property: Property): PropertyItem {
     title: property.title,
     price: formatPrice(property),
     area: property.area ? `${property.area} m²` : 'Đang cập nhật',
-    location: property.address ?? 'Đang cập nhật',
+    location: formatLocation(property),
     image,
     imageAlt: property.title,
   }
