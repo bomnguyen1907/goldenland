@@ -1,7 +1,22 @@
-import { fetchFeaturedProjects } from '@/app/services/projects'
+import { getPayload } from 'payload'
+import configPromise from '@payload-config'
+import type { Project } from '@/payload-types'
 
 export async function FeaturedProjectsSection() {
-  const { data: projects } = await fetchFeaturedProjects()
+  const payload = await getPayload({ config: configPromise })
+  const response = await payload.find({
+    collection: 'projects',
+    sort: '-views',
+    limit: 4,
+    page: 1,
+    where: {
+      status: {
+        equals: 'active',
+      },
+    },
+  })
+  
+  const projects = response.docs as unknown as Project[]
 
   return (
     <section className="mx-auto max-w-screen-2xl px-8 pb-24">
