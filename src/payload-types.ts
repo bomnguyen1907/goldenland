@@ -484,9 +484,9 @@ export interface Article {
     [k: string]: unknown;
   };
   /**
-   * Ảnh đại diện bài viết
+   * URL Ảnh đại diện bài viết từ Supabase
    */
-  thumbnail?: (number | null) | Media;
+  thumbnailUrl?: string | null;
   category: number | ArticleCategory;
   /**
    * Nhập tags cách nhau bởi dấu phẩy
@@ -1169,7 +1169,7 @@ export interface ArticlesSelect<T extends boolean = true> {
   slug?: T;
   excerpt?: T;
   content?: T;
-  thumbnail?: T;
+  thumbnailUrl?: T;
   category?: T;
   tags?: T;
   isFeatured?: T;

@@ -77,10 +77,9 @@ export const Articles: CollectionConfig = {
                             required: true,
                         },
                         {
-                            name: 'thumbnail',
-                            type: 'upload',
-                            relationTo: 'media',
-                            admin: { description: 'Ảnh đại diện bài viết' },
+                            name: 'thumbnailUrl',
+                            type: 'text',
+                            admin: { description: 'URL Ảnh đại diện bài viết từ Supabase' },
                         },
                     ],
                 },
