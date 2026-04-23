@@ -3,6 +3,17 @@ import { getPayload } from 'payload'
 import configPromise from '@payload-config'
 import axios from 'axios'
 import * as cheerio from 'cheerio'
+import { createClient } from '@supabase/supabase-js'
+
+// ============================================================
+// SUPABASE CLIENT CHO STORAGE
+// ============================================================
+const supabase = createClient(
+  process.env.SUPABASE_URL || '',
+  process.env.SUPABASE_SERVICE_ROLE_KEY || '',
+)
+const SUPABASE_BUCKET = 'Thumbnail'
+const SUPABASE_BUCKET2 = 'ImagesOfContent'
 
 // ============================================================
 // CẤU HÌNH HEADERS GỌI API & CÀO DATA
@@ -103,35 +114,79 @@ function sleep(ms: number): Promise<void> {
 }
 
 // ============================================================
-// TẢI ẢNH TỪ URL VÀ UPLOAD LÊN PAYLOAD MEDIA
+// TẢI ẢNH TỪ URL (dùng chung)
 // ============================================================
-async function downloadAndUploadImage(imageUrl: string, altText: string, payload: any) {
+async function downloadImage(imageUrl: string): Promise<{ buffer: Buffer; contentType: string } | null> {
   try {
     if (!imageUrl || imageUrl.startsWith('data:')) return null
-
     const response = await axios.get(imageUrl, {
       responseType: 'arraybuffer',
       timeout: 10000,
-      headers: {
-        ...DEFAULT_HTTP_HEADERS,
-        'Referer': new URL(imageUrl).origin
-      }
+      headers: { ...DEFAULT_HTTP_HEADERS, 'Referer': new URL(imageUrl).origin },
     })
-
     const buffer = Buffer.from(response.data)
     if (buffer.byteLength < 5000) return null
+    return { buffer, contentType: response.headers['content-type'] || 'image/jpeg' }
+  } catch {
+    return null
+  }
+}
+async function uploadImageToSupabase(
+  imageUrl: string,
+  folderName: string,
+  fileName?: string
+): Promise<string | null> {
+  const img = await downloadImage(imageUrl)
+  if (!img) return null
 
-    const mediaDoc = await payload.create({
-      collection: 'media',
-      data: { alt: altText.substring(0, 150) },
-      file: {
-        data: buffer,
-        mimetype: response.headers['content-type'] || 'image/jpeg',
-        name: `crawled-${Date.now()}-${Math.floor(Math.random() * 1000)}.jpg`,
-      },
-    })
-    return mediaDoc.id
+  try {
+    const ext = img.contentType.includes('png')
+      ? 'png'
+      : img.contentType.includes('webp')
+      ? 'webp'
+      : 'jpg'
+
+    const finalName =
+      fileName || `img-${Date.now()}-${Math.random().toString(36).slice(2, 6)}.${ext}`
+
+    const filePath = `news/${folderName}/${finalName}`
+
+    const { error } = await supabase.storage
+      .from(SUPABASE_BUCKET2)
+      .upload(filePath, img.buffer, {
+        contentType: img.contentType,
+        upsert: true,
+      })
+
+    if (error) {
+      console.error(`❌ Upload lỗi: ${error.message}`)
+      return null
+    }
+
+    const { data } = supabase.storage
+      .from(SUPABASE_BUCKET2)
+      .getPublicUrl(filePath)
+
+    return data.publicUrl
+  } catch {
+    return null
+  }
+}
+
+// Upload thumbnail lên Supabase Storage (Bucket/folderName/thumbnail.ext)
+async function uploadThumbnailToSupabase(imageUrl: string, folderName: string): Promise<string | null> {
+  const img = await downloadImage(imageUrl)
+  if (!img) return null
+  try {
+    const ext = img.contentType.includes('png') ? 'png' : img.contentType.includes('webp') ? 'webp' : 'jpg'
+    const filePath = `${folderName}/thumbnail.${ext}`
+    const { error } = await supabase.storage.from(SUPABASE_BUCKET).upload(filePath, img.buffer, { contentType: img.contentType, upsert: true })
+    if (error) { console.error(`[Crawl] ❌ Upload Supabase lỗi: ${error.message}`); return null }
+    const { data } = supabase.storage.from(SUPABASE_BUCKET).getPublicUrl(filePath)
+    console.log(`[Crawl] ✅ Thumbnail → ${data.publicUrl}`)
+    return data.publicUrl
   } catch (e) {
+    console.error(`[Crawl] ❌ Upload thumbnail lỗi: ${e instanceof Error ? e.message : 'Unknown'}`)
     return null
   }
 }
@@ -208,14 +263,13 @@ function createLinkNode(url: string, children: LexicalNode[]): LexicalNode {
   }
 }
 
-/** Tạo upload node (ảnh đã upload lên Payload) */
-function createUploadNode(mediaId: string): LexicalNode {
+/** Tạo upload node (ảnh đã upload lên Supabase Storage) */
+function createImageNode(src: string): LexicalNode {
   return {
-    type: 'upload',
-    version: 4,
-    format: '',
-    value: mediaId,
-    relationTo: 'media',
+    type: 'image',
+    version: 1,
+    src,
+    altText: '',
   }
 }
 
@@ -313,7 +367,7 @@ function parseInlineChildren($: cheerio.CheerioAPI, element: cheerio.Cheerio<any
 function htmlToLexicalBlocks(
   $: cheerio.CheerioAPI,
   container: cheerio.Cheerio<any>,
-  imageIds: Map<string, string>,
+  imageMap: Map<string, string>
 ): LexicalNode[] {
   const blocks: LexicalNode[] = []
 
@@ -345,9 +399,9 @@ function htmlToLexicalBlocks(
       }
 
       if (imgSrc) {
-        const mediaId = imageIds.get(imgSrc)
-        if (mediaId) {
-          blocks.push(createUploadNode(mediaId))
+        const publicUrl = imageMap.get(imgSrc)
+        if (publicUrl) {
+          blocks.push(createImageNode(publicUrl))
         }
       }
 
@@ -386,7 +440,7 @@ function htmlToLexicalBlocks(
 
     // ---- DIV / SECTION (container) — đệ quy vào trong ----
     if (['div', 'section', 'article', 'main'].includes(tagName)) {
-      const innerBlocks = htmlToLexicalBlocks($, el, imageIds)
+      const innerBlocks = htmlToLexicalBlocks($, el, imageMap)
       blocks.push(...innerBlocks)
       return
     }
@@ -410,16 +464,16 @@ function htmlToLexicalBlocks(
     // Xử lý <p> và các tag khác
     const inlineChildren = parseInlineChildren($, el)
 
-    // Kiểm tra ảnh inline trong paragraph
-    el.find('img').each((_j, img) => {
-      const imgSrc = $(img).attr('data-src') || $(img).attr('src') || ''
-      if (imgSrc) {
-        const mediaId = imageIds.get(imgSrc)
-        if (mediaId) {
-          blocks.push(createUploadNode(mediaId))
-        }
-      }
-    })
+    // // Kiểm tra ảnh inline trong paragraph
+    // el.find('img').each((_j, img) => {
+    //   const imgSrc = $(img).attr('data-src') || $(img).attr('src') || ''
+    //   if (imgSrc) {
+    //     const publicUrl = imageMap.get(imgSrc)
+    //     if (publicUrl) {
+    //       blocks.push(createImageNode(publicUrl))
+    //     }
+    //   }
+    // })
 
     if (inlineChildren.length > 0) {
       blocks.push(createParagraphNode(inlineChildren))
@@ -428,6 +482,7 @@ function htmlToLexicalBlocks(
 
   return blocks
 }
+
 
 // ============================================================
 // DEBUG: TÌM SELECTOR CHỨA NỘI DUNG NHIỀU NHẤT
@@ -474,16 +529,16 @@ function findBestContentSelector($: cheerio.CheerioAPI): { selector: string; ele
 
 interface FullArticleData {
   lexicalBlocks: LexicalNode[]
-  thumbnailId: string | null
+  thumbnailUrl: string | null
   author: string | null
 }
 
 async function scrapeFullArticle(
-
   url: string,
   sourceConfig: (typeof RSS_SOURCES)[0],
   rssItem: any,
   payload: any,
+  articleSlug: string,
 ): Promise<FullArticleData | null> {
   try {
     // Fetch trang bài viết
@@ -550,32 +605,36 @@ async function scrapeFullArticle(
     }
 
     // Tải ảnh song song (tối đa 6 ảnh trong bài + 1 thumbnail)
-    const imageIds = new Map<string, string>()
+    const imageMap = new Map<string, string>()
     const allImageUrls = [...new Set(imageUrls)].slice(0, 6) // Giới hạn 6 ảnh
 
     console.log(`[Crawl] Đang tải ${allImageUrls.length} ảnh trong bài...`)
 
     await Promise.all(
-      allImageUrls.map(async (imgUrl) => {
-        const mediaId = await downloadAndUploadImage(imgUrl, rssItem.title || 'Ảnh bài viết', payload)
-        if (mediaId) {
-          imageIds.set(imgUrl, mediaId)
+    allImageUrls.map(async (imgUrl, index) => {
+        const publicUrl = await uploadImageToSupabase(
+          imgUrl,
+          articleSlug,
+          `img-${index + 1}`
+        )
+        if (publicUrl) {
+          imageMap.set(imgUrl, publicUrl)
         }
-      }),
+      })
     )
 
-    // Tải thumbnail riêng
-    let thumbnailId: string | null = null
+    // Upload thumbnail lên Supabase Storage
+    let supabaseThumbnailUrl: string | null = null
     if (thumbnailUrl) {
-      thumbnailId = await downloadAndUploadImage(thumbnailUrl, rssItem.title || 'Thumbnail', payload)
+      supabaseThumbnailUrl = await uploadThumbnailToSupabase(thumbnailUrl, articleSlug)
     }
-    // Nếu không có thumbnail riêng, dùng ảnh đầu tiên trong bài
-    if (!thumbnailId && imageIds.size > 0) {
-      thumbnailId = imageIds.values().next().value ?? null
+    // Nếu không có thumbnail từ RSS, thử dùng ảnh đầu tiên trong bài
+    if (!supabaseThumbnailUrl && imageUrls.length > 0) {
+      supabaseThumbnailUrl = await uploadThumbnailToSupabase(imageUrls[0], articleSlug)
     }
 
     // ---- CHUYỂN ĐỔI HTML → LEXICAL ----
-    const lexicalBlocks = htmlToLexicalBlocks($, contentElement, imageIds)
+    const lexicalBlocks = htmlToLexicalBlocks($, contentElement, imageMap)
 
     // Nếu không trích xuất được gì, fallback về text thuần
     if (lexicalBlocks.length === 0) {
@@ -604,7 +663,7 @@ async function scrapeFullArticle(
 
     return {
       lexicalBlocks,
-      thumbnailId,
+      thumbnailUrl: supabaseThumbnailUrl,
       author,
     }
   } catch (error) {
@@ -702,7 +761,7 @@ export async function GET(request: Request) {
           try {
             // ===== CÀO NỘI DUNG ĐẦY ĐỦ =====
             console.log(`[Crawl] 🔍 Đang cào chi tiết: ${item.title}`)
-            const fullData = await scrapeFullArticle(item.link, source, item, payload)
+            const fullData = await scrapeFullArticle(item.link, source, item, payload, slug)
 
             let lexicalContent: any
 
@@ -762,8 +821,8 @@ export async function GET(request: Request) {
                 slug,
                 excerpt: excerpt.substring(0, 500),
                 content: lexicalContent,
-                thumbnail: (fullData?.thumbnailId as any) || null,
-                status: 'published',
+                thumbnailUrl: fullData?.thumbnailUrl || null,
+                status: 'draft',
                 author: authorId,
                 category: finalCategoryId,
                 publishedAt: item.pubDate

@@ -80,9 +80,10 @@ export default async function NewsPage({
   const mostViewedArticles = topViewedArticles
 
   // Helper để lấy url hình ảnh
-  const getImageUrl = (thumbnail: any) => {
-    if (thumbnail && typeof thumbnail === 'object' && thumbnail.url) {
-      return thumbnail.url
+  const getImageUrl = (thumbnailUrl: any) => {
+    if (typeof thumbnailUrl === 'string') return thumbnailUrl
+    if (thumbnailUrl && typeof thumbnailUrl === 'object' && thumbnailUrl.url) {
+      return thumbnailUrl.url
     }
     return '' // Bỏ trống url nếu không có
   }
@@ -126,9 +127,9 @@ export default async function NewsPage({
                 {featuredArticle && (
                   <div className="news-featured">
                     <div className="image-wrapper">
-                      {getImageUrl(featuredArticle.thumbnail) && (
+                      {getImageUrl(featuredArticle.thumbnailUrl) && (
                         <img
-                          src={getImageUrl(featuredArticle.thumbnail)}
+                          src={getImageUrl(featuredArticle.thumbnailUrl)}
                           alt={featuredArticle.title}
                         />
                       )}
@@ -156,8 +157,8 @@ export default async function NewsPage({
                       <div key={article.id} className="news-list-item">
                         <div className="image-wrapper">
                           <span className="news-badge">TIN TỨC</span>
-                          {getImageUrl(article.thumbnail) && (
-                            <img src={getImageUrl(article.thumbnail)} alt={article.title} />
+                          {getImageUrl(article.thumbnailUrl) && (
+                            <img src={getImageUrl(article.thumbnailUrl)} alt={article.title} />
                           )}
                         </div>
                         <div className="content">
