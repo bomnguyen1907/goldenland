@@ -1,5 +1,6 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit'
 import * as authService from '@/app/services/auth'
+import { clear } from 'console'
 
 export type UserState = {
   id?: string | number
@@ -50,6 +51,8 @@ export const signInThunk = createAsyncThunk(
   },
 )
 
+
+// After registration, automatically sign in and fetch profile
 export const registerThunk = createAsyncThunk(
   'auth/register',
   async (payload: authService.RegisterPayload, { rejectWithValue }) => {
@@ -64,6 +67,7 @@ export const registerThunk = createAsyncThunk(
   },
 )
 
+// Sign out and clear user/profile from state
 export const signOutThunk = createAsyncThunk(
   'auth/signOut',
   async (_, { rejectWithValue }) => {
@@ -92,6 +96,7 @@ export const hydrateAuthThunk = createAsyncThunk(
   },
 )
 
+// Create the auth slice
 const authSlice = createSlice({
   name: 'auth',
   initialState,

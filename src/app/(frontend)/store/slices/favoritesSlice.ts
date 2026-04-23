@@ -6,6 +6,7 @@ import {
   removeFavorite,
 } from '@/app/services/favorites'
 
+// Key used for persisting favorites in local storage for guest users
 export const FAVORITES_STORAGE_KEY = 'guest_favorite_property_ids'
 
 type FavoritesState = {
@@ -25,6 +26,9 @@ type RollbackPayload = {
   previousWasFavorite: boolean
 }
 
+
+// Normalizes a property ID to an integer.
+// Returns null if the value is not a valid positive integer.
 const normalizePropertyId = (value: unknown): number | null => {
   const parsed = Number(value)
 
@@ -35,6 +39,7 @@ const normalizePropertyId = (value: unknown): number | null => {
   return parsed
 }
 
+// Filters and returns unique favorite property IDs from a raw array.
 const uniquePropertyIds = (rawIds: unknown[]): number[] => {
   const idSet = new Set<number>()
 
@@ -47,8 +52,11 @@ const uniquePropertyIds = (rawIds: unknown[]): number[] => {
   return Array.from(idSet)
 }
 
+
+// Checks if a user is currently logged in based on the auth state.
 const isLoggedIn = (state: any): boolean => Boolean(state?.auth?.user?.id)
 
+// Reads guest favorite IDs from local storage.
 const readGuestFavoriteIds = (): number[] => {
   if (typeof window === 'undefined') {
     return []
@@ -66,6 +74,8 @@ const readGuestFavoriteIds = (): number[] => {
   }
 }
 
+
+// Persists guest favorite IDs to local storage.
 const persistGuestFavoriteIds = (ids: number[]): void => {
   if (typeof window === 'undefined') {
     return
@@ -74,6 +84,8 @@ const persistGuestFavoriteIds = (ids: number[]): void => {
   window.localStorage.setItem(FAVORITES_STORAGE_KEY, JSON.stringify(uniquePropertyIds(ids)))
 }
 
+
+// Clears guest favorite IDs from local storage.
 const clearGuestFavoriteIds = (): void => {
   if (typeof window === 'undefined') {
     return
@@ -82,6 +94,8 @@ const clearGuestFavoriteIds = (): void => {
   window.localStorage.removeItem(FAVORITES_STORAGE_KEY)
 }
 
+
+// Fetches favorite property IDs for the authenticated user from the server.
 export const fetchFavoritesThunk = createAsyncThunk<number[], void, { rejectValue: string }>(
   'favorites/fetchFavorites',
   async (_, { rejectWithValue }) => {
@@ -94,6 +108,9 @@ export const fetchFavoritesThunk = createAsyncThunk<number[], void, { rejectValu
   },
 )
 
+
+// Initializes favorites on app start.
+// Loads from local storage for guests or from the server for logged-in users.
 export const bootstrapFavoritesThunk = createAsyncThunk<
   number[],
   void,
@@ -111,6 +128,7 @@ export const bootstrapFavoritesThunk = createAsyncThunk<
   }
 })
 
+// Merges guest favorites from local storage into the user's account upon login.
 export const mergeGuestFavoritesOnLoginThunk = createAsyncThunk<
   number[],
   void,
@@ -136,6 +154,9 @@ export const mergeGuestFavoritesOnLoginThunk = createAsyncThunk<
   }
 })
 
+
+// Toggles a property as favorite.
+// Handles local state updates immediately (optimistic update) and syncs with the server if logged in.
 export const toggleFavoriteThunk = createAsyncThunk<
   { propertyId: number; previousWasFavorite: boolean },
   number | string,
@@ -185,10 +206,13 @@ const favoritesSlice = createSlice({
   name: 'favorites',
   initialState,
   reducers: {
+    // Replaces the entire list of favorite IDs.
     setFavorites: (state, action: PayloadAction<number[]>) => {
       state.ids = uniquePropertyIds(action.payload)
       state.error = null
     },
+
+    // Toggles a single property ID in the local state.
     toggleFavorite: (state, action: PayloadAction<number>) => {
       const propertyId = action.payload
       const index = state.ids.indexOf(propertyId)
@@ -201,6 +225,8 @@ const favoritesSlice = createSlice({
 
       state.ids = uniquePropertyIds(state.ids)
     },
+
+    // Reverts a favorite toggle operation if the server request fails.
     rollbackFavorite: (state, action: PayloadAction<RollbackPayload>) => {
       const { propertyId, previousWasFavorite } = action.payload
       const hasNow = state.ids.includes(propertyId)
@@ -215,6 +241,8 @@ const favoritesSlice = createSlice({
 
       state.ids = uniquePropertyIds(state.ids)
     },
+
+     // Clears any existing error message from the state.
     clearFavoritesError: (state) => {
       state.error = null
     },
@@ -233,6 +261,7 @@ const favoritesSlice = createSlice({
         state.loading = false
         state.error = action.payload || 'Failed to fetch favorites'
       })
+
       .addCase(bootstrapFavoritesThunk.pending, (state) => {
         state.loading = true
         state.error = null
@@ -245,6 +274,7 @@ const favoritesSlice = createSlice({
         state.loading = false
         state.error = action.payload || 'Failed to bootstrap favorites'
       })
+
       .addCase(mergeGuestFavoritesOnLoginThunk.pending, (state) => {
         state.loading = true
         state.error = null
@@ -253,6 +283,7 @@ const favoritesSlice = createSlice({
         state.loading = false
         state.ids = uniquePropertyIds(action.payload)
       })
+
       .addCase(mergeGuestFavoritesOnLoginThunk.rejected, (state, action) => {
         state.loading = false
         state.error = action.payload || 'Failed to sync guest favorites'
@@ -270,12 +301,19 @@ export const { clearFavoritesError, rollbackFavorite, setFavorites, toggleFavori
 
 export default favoritesSlice.reducer
 
+// Selects the array of favorite property IDs from the state.
 export const selectFavoriteIds = (state: { favorites: FavoritesState }) => state.favorites.ids
+
+// Selects the loading status of favorite operations.
 export const selectFavoritesLoading = (state: { favorites: FavoritesState }) => state.favorites.loading
+
+// Selects any error message encountered during favorite operations.
 export const selectFavoritesError = (state: { favorites: FavoritesState }) => state.favorites.error
 
+// Creates a memoized selector that returns a Set of favorite property IDs for efficient lookups.
 export const selectFavoriteIdSet = createSelector([selectFavoriteIds], (ids) => new Set(ids))
 
+// Returns a selector to check if a specific property ID is in the favorites list.
 export const selectIsFavorite = (propertyId: number | string) => (state: { favorites: FavoritesState }) => {
   const normalizedPropertyId = normalizePropertyId(propertyId)
   if (!normalizedPropertyId) return false
