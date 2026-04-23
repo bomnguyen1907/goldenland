@@ -95,7 +95,7 @@ export default async function NewsPage({
           <p>
             Thông tin mới, đầy đủ, hấp dẫn về thị trường bất động sản Việt Nam thông qua dữ liệu lớn
             về giá, giao dịch, nguồn cung - cầu và khảo sát thực tế của đội ngũ phóng viên, biên tập
-            của Batdongsan.com.vn.
+            của Golden Land
           </p>
         </header>
 
