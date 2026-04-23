@@ -88,7 +88,12 @@ export default function MapSection({ lat, lng, name }: { lat: number; lng: numbe
         setPlaces([])
 
         const [key, val] = tab.query.split('=')
-        const overpassQuery = `[out:json][timeout:10];(node["${key}"="${val}"](around:2000,${lat},${lng});way["${key}"="${val}"](around:2000,${lat},${lng}););out center 8;`
+        const overpassQuery = `[out:json][timeout:10];
+        (
+        node["${key}"="${val}"](around:2000,${lat},${lng});
+        way["${key}"="${val}"](around:2000,${lat},${lng});
+        );
+        out center 8;`
 
         fetch('https://overpass-api.de/api/interpreter', {
             method: 'POST',
