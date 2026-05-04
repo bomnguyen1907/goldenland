@@ -134,7 +134,7 @@ function ProjectsPageInner() {
         setKeywordInput('')
         setFilters(DEFAULT)
     }
-
+/// comment
     const hasFilter = !!(filters.keyword || filters.province || filters.propertyType ||
         filters.status || filters.minPrice || filters.maxPrice)
 
