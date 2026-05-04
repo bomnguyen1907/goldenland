@@ -1,4 +1,5 @@
 import { createAsyncThunk, createSelector, createSlice, type PayloadAction } from '@reduxjs/toolkit'
+import { signOutThunk } from './authSlice'
 import {
   addFavorite,
   bulkMergeFavorites,
@@ -51,7 +52,6 @@ const uniquePropertyIds = (rawIds: unknown[]): number[] => {
 
   return Array.from(idSet)
 }
-
 
 // Checks if a user is currently logged in based on the auth state.
 const isLoggedIn = (state: any): boolean => Boolean(state?.auth?.user?.id)
@@ -135,6 +135,7 @@ export const mergeGuestFavoritesOnLoginThunk = createAsyncThunk<
   { state: any; rejectValue: string }
 >('favorites/mergeGuestOnLogin', async (_, { getState, rejectWithValue }) => {
   try {
+    // If user is not logged in, return guest favorite IDs
     if (!isLoggedIn(getState())) {
       return readGuestFavoriteIds()
     }
@@ -162,20 +163,27 @@ export const toggleFavoriteThunk = createAsyncThunk<
   number | string,
   { state: any; rejectValue: string }
 >('favorites/toggleFavorite', async (rawPropertyId, { dispatch, getState, rejectWithValue }) => {
+  // 1. Normalize the property ID to ensure it's a valid integer
   const propertyId = normalizePropertyId(rawPropertyId)
 
   if (!propertyId) {
     return rejectWithValue('Invalid property id')
   }
 
+  // 2. Capture the current state to know if we are adding or removing
   const previousState = getState() as any
   const previousWasFavorite = Boolean(previousState?.favorites?.ids?.includes(propertyId))
 
+  // 3. Optimistic Update: Dispatch the local toggle action immediately
+  // This updates the UI without waiting for the server response
   dispatch(toggleFavorite(propertyId))
 
   try {
+    // 4. Handle Guest User (Not Logged In)
     if (!isLoggedIn(getState())) {
+      // Get the updated list of IDs from the state after the local toggle
       const currentIds = (getState() as any)?.favorites?.ids || []
+      // Save the updated list to localStorage
       persistGuestFavoriteIds(currentIds)
 
       return {
@@ -184,9 +192,13 @@ export const toggleFavoriteThunk = createAsyncThunk<
       }
     }
 
+    // 5. Handle Authenticated User
+    // Sync the change with the server via API
     if (previousWasFavorite) {
+      // If it was already a favorite, call API to remove it
       await removeFavorite(propertyId)
     } else {
+      // If it wasn't a favorite, call API to add it
       await addFavorite(propertyId)
     }
 
@@ -195,6 +207,7 @@ export const toggleFavoriteThunk = createAsyncThunk<
       previousWasFavorite,
     }
   } catch (error: unknown) {
+    // 6. Rollback: If the API call fails, revert the local state to its previous value
     dispatch(rollbackFavorite({ propertyId, previousWasFavorite }))
 
     const message = error instanceof Error ? error.message : 'Failed to toggle favorite'
@@ -293,6 +306,12 @@ const favoritesSlice = createSlice({
       })
       .addCase(toggleFavoriteThunk.rejected, (state, action) => {
         state.error = action.payload || 'Failed to toggle favorite'
+      })
+
+      // Sign out
+      .addCase(signOutThunk.fulfilled, (state) => {
+        state.ids = []
+        clearGuestFavoriteIds()
       })
   },
 })
