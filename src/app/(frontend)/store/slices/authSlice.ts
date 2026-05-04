@@ -1,6 +1,6 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit'
 import * as authService from '@/app/services/auth'
-import { clear } from 'console'
+import { clearSearchHistory } from '@/app/lib/hybridSearch'
 
 export type UserState = {
   id?: string | number
@@ -51,7 +51,6 @@ export const signInThunk = createAsyncThunk(
   },
 )
 
-
 // After registration, automatically sign in and fetch profile
 export const registerThunk = createAsyncThunk(
   'auth/register',
@@ -68,17 +67,15 @@ export const registerThunk = createAsyncThunk(
 )
 
 // Sign out and clear user/profile from state
-export const signOutThunk = createAsyncThunk(
-  'auth/signOut',
-  async (_, { rejectWithValue }) => {
-    try {
-      await authService.signOut()
-      return null
-    } catch (err: any) {
-      return rejectWithValue(err.message || 'Sign out failed')
-    }
-  },
-)
+export const signOutThunk = createAsyncThunk('auth/signOut', async (_, { rejectWithValue }) => {
+  try {
+    await authService.signOut()
+    clearSearchHistory()
+    return null
+  } catch (err: any) {
+    return rejectWithValue(err.message || 'Sign out failed')
+  }
+})
 
 // Hydrate user & profile from server session
 export const hydrateAuthThunk = createAsyncThunk(
