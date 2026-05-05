@@ -13,7 +13,7 @@ import {
 import {
   bootstrapFavoritesThunk,
   FAVORITES_STORAGE_KEY,
-  mergeGuestFavoritesOnLoginThunk,
+  prepareGuestFavoritesOnLoginThunk,
 } from './slices/favoritesSlice'
 import type { AppDispatch, RootState } from './index'
 
@@ -23,15 +23,15 @@ import type { AppDispatch, RootState } from './index'
 // of favorite properties.
 function ReduxInitializer({ user }: { user: UserState | null }) {
   const dispatch = useDispatch<AppDispatch>()
-  
+
   // Selectors to monitor auth state
   const isLoggedIn = useSelector((state: RootState) => selectIsLoggedIn(state as any))
   const authLoading = useSelector((state: RootState) => selectAuthLoading(state as any))
-  
+
   // Refs to track status without triggering re-renders
   const hasBootstrappedFavoritesRef = useRef(false) // Ensures favorites are only bootstrapped once on mount
-  const previousLoggedInRef = useRef(false)       // Tracks login state changes (login/logout)
-  const isMergingFavoritesRef = useRef(false)      // Prevents multiple concurrent merge operations
+  const previousLoggedInRef = useRef(false) // Tracks login state changes (login/logout)
+  const isMergingFavoritesRef = useRef(false) // Prevents multiple concurrent merge operations
 
   // Effect 1: Auth Hydration
   // Synchronizes the user data from the server (passed via props) into the Redux store.
@@ -57,8 +57,8 @@ function ReduxInitializer({ user }: { user: UserState | null }) {
     // Detects transition from logged-out to logged-in
     if (!previousLoggedInRef.current && isLoggedIn && !isMergingFavoritesRef.current) {
       isMergingFavoritesRef.current = true
-      // Merge guest favorites (from localStorage) into the user's account
-      void dispatch(mergeGuestFavoritesOnLoginThunk()).finally(() => {
+      // Prepare guest favorites for confirmation without saving to the server
+      void dispatch(prepareGuestFavoritesOnLoginThunk()).finally(() => {
         isMergingFavoritesRef.current = false
       })
     }

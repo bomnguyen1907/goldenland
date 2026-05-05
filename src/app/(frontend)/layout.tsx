@@ -7,6 +7,7 @@ import config from '@/payload.config' // Payload configuration
 import './styles.css'
 import Footer from './components/Footer'
 import Header from './components/Header'
+import PendingFavoriteToast from './home/components/PendingFavoriteToast'
 import ReduxProvider from './store/provider'
 
 // SEO metadata for the app
@@ -73,6 +74,7 @@ export default async function RootLayout(props: { children: React.ReactNode }) {
         <ReduxProvider user={currentUser}>
           {/* No user prop to Header anymore */}
           <Header />
+          <PendingFavoriteToast />
 
           {/* Render page content */}
           <main>{children}</main>
