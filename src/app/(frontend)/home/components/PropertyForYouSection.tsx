@@ -107,7 +107,8 @@ function formatLocation(property: Property): string {
   const wardName =
     provinceKey && wardKey ? wardNameByProvinceAndCode.get(`${provinceKey}:${wardKey}`) : undefined
 
-  const mappedLocation = [wardName, provinceName].filter(Boolean).join(', ')
+  const street = property.street?.trim()
+  const mappedLocation = [street, wardName, provinceName].filter(Boolean).join(', ')
 
   return mappedLocation || property.address || 'Đang cập nhật'
 }
@@ -245,19 +246,17 @@ export function PropertyForYouSection() {
 
                   <button
                     aria-label={`${isFavorite ? 'Bỏ khỏi' : 'Thêm vào'} danh sách yêu thích: ${property.title}`}
-                    className={`flex h-8 w-8 items-center justify-center rounded-full border transition-colors ${
-                      isFavorite
-                        ? 'border-red-300 bg-red-50 hover:border-red-400 hover:bg-red-100'
-                        : 'border-outline-variant/30 hover:border-primary hover:bg-primary/10'
-                    }`}
+                    className="favorite-toggle inline-flex h-8 w-8 items-center justify-center"
                     onClick={() => {
                       void dispatch(toggleFavoriteThunk(property.id))
                     }}
                     type="button"
                   >
                     <span
-                      className={`material-symbols-outlined text-lg transition-colors ${
-                        isFavorite ? 'text-red-500' : 'text-secondary hover:text-primary'
+                      className={`material-symbols-outlined text-lg transition-all duration-100 ${
+                        isFavorite
+                          ? 'material-symbols-filled text-red-500 scale-125'
+                          : 'text-zinc-500 hover:text-red-500 hover:scale-125'
                       }`}
                     >
                       {isFavorite ? 'favorite' : 'favorite_border'}

@@ -12,12 +12,14 @@ export const FAVORITES_STORAGE_KEY = 'guest_favorite_property_ids'
 
 type FavoritesState = {
   ids: number[]
+  pendingIds: number[]
   loading: boolean
   error: string | null
 }
 
 const initialState: FavoritesState = {
   ids: [],
+  pendingIds: [],
   loading: false,
   error: null,
 }
@@ -94,6 +96,19 @@ const clearGuestFavoriteIds = (): void => {
   window.localStorage.removeItem(FAVORITES_STORAGE_KEY)
 }
 
+// Removes a single favorite ID from guest storage.
+const removeGuestFavoriteId = (propertyId: number): void => {
+  const currentIds = readGuestFavoriteIds()
+  const nextIds = currentIds.filter((id) => id !== propertyId)
+
+  if (nextIds.length === 0) {
+    clearGuestFavoriteIds()
+    return
+  }
+
+  persistGuestFavoriteIds(nextIds)
+}
+
 
 // Fetches favorite property IDs for the authenticated user from the server.
 export const fetchFavoritesThunk = createAsyncThunk<number[], void, { rejectValue: string }>(
@@ -151,6 +166,61 @@ export const mergeGuestFavoritesOnLoginThunk = createAsyncThunk<
     return await fetchFavoritePropertyIds()
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Failed to sync guest favorites'
+    return rejectWithValue(message)
+  }
+})
+
+// Prepares guest favorites on login without saving them to the server.
+export const prepareGuestFavoritesOnLoginThunk = createAsyncThunk<
+  { favorites: number[]; pending: number[] },
+  void,
+  { state: any; rejectValue: string }
+>('favorites/prepareGuestOnLogin', async (_, { getState, rejectWithValue }) => {
+  try {
+    if (!isLoggedIn(getState())) {
+      return { favorites: readGuestFavoriteIds(), pending: [] }
+    }
+
+    const guestFavoriteIds = readGuestFavoriteIds()
+    const serverFavoriteIds = await fetchFavoritePropertyIds()
+
+    const serverSet = new Set(serverFavoriteIds)
+    const pending = guestFavoriteIds.filter((id) => !serverSet.has(id))
+    const favorites = uniquePropertyIds(serverFavoriteIds)
+
+    return { favorites, pending }
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Failed to prepare guest favorites'
+    return rejectWithValue(message)
+  }
+})
+
+// Resolves a pending favorite decision after login.
+export const resolvePendingFavoriteThunk = createAsyncThunk<
+  { propertyId: number; decision: 'save' | 'discard' },
+  { propertyId: number; decision: 'save' | 'discard' },
+  { state: any; rejectValue: string }
+>('favorites/resolvePending', async ({ propertyId, decision }, { getState, rejectWithValue }) => {
+  const normalizedId = normalizePropertyId(propertyId)
+
+  if (!normalizedId) {
+    return rejectWithValue('Invalid property id')
+  }
+
+  if (!isLoggedIn(getState())) {
+    return rejectWithValue('User must be logged in to resolve favorites')
+  }
+
+  try {
+    if (decision === 'save') {
+      await addFavorite(normalizedId)
+    }
+
+    removeGuestFavoriteId(normalizedId)
+
+    return { propertyId: normalizedId, decision }
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Failed to resolve favorite'
     return rejectWithValue(message)
   }
 })
@@ -255,6 +325,16 @@ const favoritesSlice = createSlice({
       state.ids = uniquePropertyIds(state.ids)
     },
 
+    // Replaces pending favorite IDs.
+    setPendingFavorites: (state, action: PayloadAction<number[]>) => {
+      state.pendingIds = uniquePropertyIds(action.payload)
+    },
+
+    // Removes a single favorite ID from the state list.
+    removeFavoriteId: (state, action: PayloadAction<number>) => {
+      state.ids = state.ids.filter((id) => id !== action.payload)
+    },
+
      // Clears any existing error message from the state.
     clearFavoritesError: (state) => {
       state.error = null
@@ -301,6 +381,38 @@ const favoritesSlice = createSlice({
         state.loading = false
         state.error = action.payload || 'Failed to sync guest favorites'
       })
+      .addCase(prepareGuestFavoritesOnLoginThunk.pending, (state) => {
+        state.loading = true
+        state.error = null
+      })
+      .addCase(prepareGuestFavoritesOnLoginThunk.fulfilled, (state, action) => {
+        state.loading = false
+        state.ids = uniquePropertyIds(action.payload.favorites)
+        state.pendingIds = uniquePropertyIds(action.payload.pending)
+      })
+      .addCase(prepareGuestFavoritesOnLoginThunk.rejected, (state, action) => {
+        state.loading = false
+        state.error = action.payload || 'Failed to prepare guest favorites'
+      })
+      .addCase(resolvePendingFavoriteThunk.fulfilled, (state, action) => {
+        const { propertyId, decision } = action.payload
+
+        state.pendingIds = state.pendingIds.filter((id) => id !== propertyId)
+
+        if (decision === 'save') {
+          if (!state.ids.includes(propertyId)) {
+            state.ids.push(propertyId)
+          }
+          state.ids = uniquePropertyIds(state.ids)
+        }
+
+        if (decision === 'discard') {
+          state.ids = state.ids.filter((id) => id !== propertyId)
+        }
+      })
+      .addCase(resolvePendingFavoriteThunk.rejected, (state, action) => {
+        state.error = action.payload || 'Failed to resolve favorite'
+      })
       .addCase(toggleFavoriteThunk.pending, (state) => {
         state.error = null
       })
@@ -311,17 +423,29 @@ const favoritesSlice = createSlice({
       // Sign out
       .addCase(signOutThunk.fulfilled, (state) => {
         state.ids = []
+        state.pendingIds = []
         clearGuestFavoriteIds()
       })
   },
 })
 
-export const { clearFavoritesError, rollbackFavorite, setFavorites, toggleFavorite } = favoritesSlice.actions
+export const {
+  clearFavoritesError,
+  rollbackFavorite,
+  setFavorites,
+  setPendingFavorites,
+  removeFavoriteId,
+  toggleFavorite,
+} = favoritesSlice.actions
 
 export default favoritesSlice.reducer
 
 // Selects the array of favorite property IDs from the state.
 export const selectFavoriteIds = (state: { favorites: FavoritesState }) => state.favorites.ids
+
+// Selects pending favorite IDs that need confirmation after login.
+export const selectPendingFavoriteIds = (state: { favorites: FavoritesState }) =>
+  state.favorites.pendingIds
 
 // Selects the loading status of favorite operations.
 export const selectFavoritesLoading = (state: { favorites: FavoritesState }) => state.favorites.loading
