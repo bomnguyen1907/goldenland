@@ -144,7 +144,7 @@ export default function MapSection({ lat, lng, name }: { lat: number; lng: numbe
     return (
         <div>
             {/* Map */}
-            <div className="w-full rounded-xl overflow-hidden shadow-sm" style={{ height: 400 }}>
+            <div className="w-full rounded-xl overflow-hidden shadow-sm" style={{ height: 400, isolation: 'isolate' }}>
                 <div ref={mapRef} style={{ height: '100%', width: '100%' }} />
             </div>
 
