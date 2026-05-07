@@ -10,9 +10,10 @@ import type { RootState, AppDispatch } from '@/app/store'
 type SignInFormProps = {
   onClose: () => void
   onSwitchToRegister: () => void
+  onSuccess?: () => void
 }
 
-export function SignInForm({ onClose, onSwitchToRegister }: SignInFormProps) {
+export function SignInForm({ onClose, onSwitchToRegister, onSuccess }: SignInFormProps) {
   const router = useRouter()
   const dispatch = useDispatch<AppDispatch>()
   const loading = useSelector((state: RootState) => selectAuthLoading(state as any))
@@ -37,7 +38,11 @@ export function SignInForm({ onClose, onSwitchToRegister }: SignInFormProps) {
         return
       }
 
-      router.refresh()
+      if (onSuccess) {
+        onSuccess()
+      } else {
+        router.refresh()
+      }
     }
   }
 
