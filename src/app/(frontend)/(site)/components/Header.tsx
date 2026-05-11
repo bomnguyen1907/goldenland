@@ -225,7 +225,7 @@ export default function Header() {
             )}
 
             <button className="editorial-gradient scale-95 rounded-md px-4 py-2 text-sm font-semibold text-white transition-transform active:scale-100 sm:px-6">
-              <Link href="/dang-tin">Đăng tin</Link>
+              <Link href="../../account">Đăng tin</Link>
             </button>
           </div>
         </div>
