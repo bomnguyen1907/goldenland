@@ -4,7 +4,7 @@ type PropertiesHeaderProps = {
 
 export function PropertiesHeader({ totalDocs }: PropertiesHeaderProps) {
   return (
-    <section className="mb-8">
+    <section className="mb-8 mt-20">
       <nav className="flex text-xs text-secondary gap-2 mb-4 font-body">
         <a href="/" className="hover:text-primary transition-colors">
           Trang chủ

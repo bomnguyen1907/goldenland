@@ -1,4 +1,5 @@
-import type { Property } from '@/payload-types'
+import type { Property, User } from '@/payload-types'
+import type { Payload } from 'payload'
 import type { AxiosRequestConfig } from 'axios'
 import { buildQuery } from '@/app/lib/query'
 import { getJSON } from '@/app/lib/http'
@@ -60,13 +61,94 @@ export async function fetchProperties(config?: AxiosRequestConfig): Promise<Prop
 }
 // Exporting property detail by id.
 export async function fetchPropertyDetail(id: string, config?: AxiosRequestConfig): Promise<PropertyDetailResponse> {
-  const response = await getJSON<Property | PropertyDetailResponse>(`/api/properties/${id}`, config)
+  const query = buildQuery({
+    depth: 2, // Get associated user/project data
+  })
+  const response = await getJSON<Property | PropertyDetailResponse>(`/api/properties/${id}${query ? `?${query}` : ''}`, config)
 
   if (response && typeof response === 'object' && 'property' in response) {
     return response as PropertyDetailResponse
   }
 
   return { property: response as Property }
+}
+
+export async function fetchForYouProperties(
+  property: Property,
+  limit = 6,
+  config?: AxiosRequestConfig,
+): Promise<Property[]> {
+  const baseQuery: any = {
+    where: {
+      and: [
+        {
+          id: {
+            not_equals: property.id,
+          },
+        },
+        {
+          status: {
+            equals: 'active',
+          },
+        },
+      ],
+    },
+  }
+
+  if (property.wardCode) {
+    baseQuery.where.and.push({
+      or: [
+        { wardCode: { equals: property.wardCode } },
+        { provinceCode: { equals: property.provinceCode } },
+      ],
+    })
+  } else if (property.provinceCode) {
+    baseQuery.where.and.push({
+      provinceCode: {
+        equals: property.provinceCode,
+      },
+    })
+  }
+
+  // Get VIP properties first
+  const vipQuery = buildQuery({
+    ...baseQuery,
+    where: {
+      and: [...baseQuery.where.and, { postType: { equals: 'vip' } }],
+    },
+    sort: '-createdAt',
+    limit,
+    depth: 2,
+  })
+
+  const vipResponse = await getJSON<PayloadFindResponse<Property>>(
+    `/api/properties${vipQuery}`,
+    config,
+  )
+
+  const remaining = Math.max(limit - vipResponse.docs.length, 0)
+
+  if (remaining === 0) {
+    return vipResponse.docs
+  }
+
+  // Get normal properties for the remaining slots
+  const normalQuery = buildQuery({
+    ...baseQuery,
+    where: {
+      and: [...baseQuery.where.and, { postType: { not_equals: 'vip' } }],
+    },
+    sort: '-createdAt',
+    limit: remaining,
+    depth: 2,
+  })
+
+  const normalResponse = await getJSON<PayloadFindResponse<Property>>(
+    `/api/properties${normalQuery}`,
+    config,
+  )
+
+  return [...vipResponse.docs, ...normalResponse.docs]
 }
 
 // Exporting new properties base on createdAt field, sorted by createdAt in descending order, limit to 8 properties. Client can sent limit = 8 to get next 8 properties, and so on. If limit is not sent, default to 8 properties.
@@ -81,6 +163,7 @@ export async function fetchNewProperties(
     sort: '-createdAt',
     limit: typeof params?.limit === 'number' ? params.limit : 8,
     page: typeof params?.page === 'number' ? params.page : 1,
+    depth: 2, // Ensure we get the associated user data
   })
 
   const response = await getJSON<PayloadFindResponse<Property>>(`/api/properties${query}`, config)

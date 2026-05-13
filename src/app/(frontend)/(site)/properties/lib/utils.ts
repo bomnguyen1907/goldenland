@@ -69,10 +69,9 @@ export function formatLocation(property: Property): string {
   const provinceName = provinceKey ? provinceNameByCode.get(provinceKey) : undefined
   const wardName = provinceKey && wardKey ? wardNameByProvinceAndCode.get(`${provinceKey}:${wardKey}`) : undefined
 
-  const street = property.street?.trim()
-  const mappedLocation = [street, wardName, provinceName].filter(Boolean).join(', ')
+  const mappedLocation = [wardName, provinceName].filter(Boolean).join(', ')
 
-  return mappedLocation || property.address || 'Đang cập nhật'
+  return mappedLocation || 'Đang cập nhật'
 }
 
 export function formatProvince(property: Property): string {

@@ -16,6 +16,7 @@ export function PropertiesFilterBar({
 }: FilterBarProps) {
   const containerRef = useRef<HTMLDivElement | null>(null)
   const [openPanel, setOpenPanel] = useState<null | 'type' | 'price' | 'area' | 'region'>(null)
+  const [isSticky, setIsSticky] = useState(false)
   const [selectedTypes, setSelectedTypes] = useState<string[]>([])
   const [selectedPrices, setSelectedPrices] = useState<string[]>([])
   const [selectedAreas, setSelectedAreas] = useState<string[]>([])
@@ -79,6 +80,23 @@ export function PropertiesFilterBar({
   const regionCount = selectedRegions.length
 
   useEffect(() => {
+    const stickyEnter = 220
+    const stickyExit = 160
+
+    const handleScroll = () => {
+      if (!containerRef.current) return
+
+      setIsSticky((current) =>
+        current ? window.scrollY >= stickyExit : window.scrollY >= stickyEnter,
+      )
+    }
+
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    handleScroll()
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
+
+  useEffect(() => {
     if (!openPanel) return
 
     const handleOutsideClick = (event: MouseEvent) => {
@@ -94,22 +112,45 @@ export function PropertiesFilterBar({
   }, [openPanel])
 
   return (
-    <section className="bg-white shadow-[0px_12px_32px_rgba(27,28,28,0.06)] rounded-xl p-2 mb-10 sticky top-20 z-40 border border-outline-variant/10">
+    <section
+      ref={containerRef}
+      className="bg-white shadow-[0px_12px_32px_rgba(27,28,28,0.06)] rounded-xl p-2 mb-10 sticky top-20 z-40 border border-outline-variant/10 transition-all duration-300"
+    >
       <div className="flex flex-col gap-4 p-2">
-        <div className="flex gap-3">
-          <div className="flex-1 relative flex items-center bg-white border border-outline-variant/50 rounded-lg overflow-hidden h-14">
-            <span className="material-symbols-outlined absolute left-4 text-secondary">search</span>
-            <input
-              className="w-full h-full pl-12 pr-32 border-none focus:ring-0 text-on-surface"
-              placeholder="Tìm kiếm nhà đất..."
-              type="text"
-            />
-            <button className="absolute right-2 bg-primary text-white px-6 py-2 rounded font-bold text-sm hover:opacity-90">
-              Tìm kiếm
-            </button>
+        {!isSticky && (
+          <div className="flex gap-3 animate-in fade-in slide-in-from-top-2 duration-300">
+            <div className="flex-1 relative flex items-center bg-white border border-outline-variant/50 rounded-lg overflow-hidden h-14">
+              <span className="material-symbols-outlined absolute left-4 text-secondary">
+                search
+              </span>
+              <input
+                className="w-full h-full pl-12 pr-32 border-none focus:ring-0 text-on-surface"
+                id="properties-search"
+                name="search"
+                placeholder="Tìm kiếm nhà đất..."
+                type="text"
+              />
+              <button className="absolute right-2 bg-primary text-white px-6 py-2 rounded font-bold text-sm hover:opacity-90">
+                Tìm kiếm
+              </button>
+            </div>
           </div>
-        </div>
-        <div className="flex flex-wrap items-center gap-3" ref={containerRef}>
+        )}
+        <div className="flex flex-wrap items-center gap-3">
+          {isSticky && (
+            <div className="flex-1 min-w-[200px] relative flex items-center bg-white border border-outline-variant/50 rounded-lg overflow-hidden h-10 animate-in fade-in slide-in-from-left-2 duration-300">
+              <span className="material-symbols-outlined absolute left-3 text-secondary text-base">
+                search
+              </span>
+              <input
+                className="w-full h-full pl-10 pr-4 border-none focus:ring-0 text-sm text-on-surface"
+                id="properties-search-sticky"
+                name="search"
+                placeholder="Tìm kiếm..."
+                type="text"
+              />
+            </div>
+          )}
           <button className="flex items-center gap-2 px-4 py-2 border border-outline-variant/50 rounded-lg text-sm font-medium text-on-surface bg-white hover:bg-surface-container-low transition-colors">
             <span className="material-symbols-outlined text-lg">tune</span>
             Lọc
@@ -125,7 +166,12 @@ export function PropertiesFilterBar({
               Tin xác thực
             </span>
             <label className="relative inline-flex items-center cursor-pointer">
-              <input className="sr-only peer" type="checkbox" />
+              <input
+                className="sr-only peer"
+                id="verified-only"
+                name="verifiedOnly"
+                type="checkbox"
+              />
               <div className="w-9 h-5 bg-zinc-300 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
             </label>
           </div>

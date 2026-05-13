@@ -149,15 +149,15 @@ export default function PropertiesPage() {
   })()
 
   return (
-    <main className="pt-24 pb-16 max-w-screen-2xl mx-auto px-8">
-      <PropertiesHeader totalDocs={totalDocs} />
-
+    <main className="pt-8 pb-16 max-w-screen-2xl mx-auto px-8">
       <PropertiesFilterBar
         propertyTypes={propertyTypes}
         priceRanges={priceRanges}
         areaRanges={areaRanges}
         regions={regions}
       />
+
+      <PropertiesHeader totalDocs={totalDocs} />
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
         <div className="lg:col-span-8">
