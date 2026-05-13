@@ -1,8 +1,24 @@
-import type { Property } from '@/payload-types'
-import { formatLocation, formatPrice, FALLBACK_IMAGE } from '../lib/utils'
+import type { Project, Property } from '@/payload-types'
+import { formatLocation, formatPrice } from '../lib/utils'
 import { notFound } from 'next/navigation'
-import { getPayload } from 'payload'
-import config from '@payload-config'
+import { Breadcrumb, HeaderActions, LocationLine, PropertyStats } from './components/DetailHeader'
+import { PropertyGallery } from './components/PropertyGallery'
+import {
+  DescriptionSection,
+  FeaturesSection,
+  MapSection,
+  MetaInfo,
+  ProjectSection,
+  type FeatureItem,
+  type MetaItem,
+} from './components/DetailSections'
+import { ConsultationForm, ContactCard } from './components/DetailSidebar'
+import { ForYouSection } from './components/ForYouSection'
+import {
+  fetchForYouProperties,
+  fetchPropertyDetail,
+  type PropertyDetailResponse,
+} from '@/app/services/properties'
 
 type PageProps = {
   params: Promise<{
@@ -10,12 +26,143 @@ type PageProps = {
   }>
 }
 
-function getImageUrl(value: unknown): string {
-  return typeof value === 'string' && value.length > 0 ? value : FALLBACK_IMAGE
-}
-
 function formatArea(property: Property): string {
   return property.area ? `${property.area} m²` : 'Đang cập nhật'
+}
+
+function formatDate(value?: string | null): string {
+  if (!value) return 'Đang cập nhật'
+  return new Date(value).toLocaleDateString('vi-VN', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  })
+}
+
+const PROPERTY_TYPE_LABELS: Record<string, string> = {
+  house: 'Nhà riêng',
+  apartment: 'Chung cư',
+  land: 'Đất nền',
+  villa: 'Biệt thự',
+  townhouse: 'Nhà phố',
+  shophouse: 'Shophouse',
+  penthouse: 'Penthouse',
+  condotel: 'Condotel',
+  warehouse: 'Kho/Xưởng',
+  commercial: 'Mặt bằng',
+}
+
+const DIRECTION_LABELS: Record<string, string> = {
+  east: 'Đông',
+  west: 'Tây',
+  south: 'Nam',
+  north: 'Bắc',
+  northeast: 'Đông Bắc',
+  southeast: 'Đông Nam',
+  northwest: 'Tây Bắc',
+  southwest: 'Tây Nam',
+}
+
+const LEGAL_STATUS_LABELS: Record<string, string> = {
+  red_book: 'Sổ đỏ/Sổ hồng',
+  sale_contract: 'Hợp đồng mua bán',
+  pending: 'Đang chờ sổ',
+  other: 'Giấy tờ khác',
+}
+
+const FURNITURE_STATUS_LABELS: Record<string, string> = {
+  luxury: 'Nội thất cao cấp',
+  full: 'Nội thất đầy đủ',
+  basic: 'Nội thất cơ bản',
+  none: 'Không nội thất',
+}
+
+const LISTING_TYPE_LABELS: Record<string, string> = {
+  sale: 'Bán',
+  rent: 'Cho thuê',
+}
+
+const POST_TYPE_LABELS: Record<string, string> = {
+  normal: 'Tin thường',
+  vip: 'Tin VIP',
+}
+
+const PROJECT_SALE_STATUS_LABELS: Record<string, string> = {
+  active: 'Đang mở bán',
+  upcoming: 'Sắp mở bán',
+  completed: 'Đã bàn giao',
+}
+
+function buildFeatureItems(property: Property): FeatureItem[] {
+  const items: FeatureItem[] = []
+
+  const pushItem = (label: string, value: string | number | null | undefined, icon: string) => {
+    if (value === null || value === undefined) return
+    const text = String(value).trim()
+    if (!text) return
+    items.push({ label, value: text, icon })
+  }
+
+  pushItem('Loại giao dịch', LISTING_TYPE_LABELS[property.listingType], 'sell')
+  pushItem('Loại bất động sản', PROPERTY_TYPE_LABELS[property.propertyType], 'home_work')
+  pushItem('Diện tích', property.area ? `${property.area} m²` : null, 'aspect_ratio')
+  pushItem('Phòng ngủ', property.bedrooms, 'bed')
+  pushItem('Phòng tắm', property.bathrooms, 'bathtub')
+  pushItem('Đường rộng', property.roadWidth ? `${property.roadWidth} m` : null, 'swap_horiz')
+  pushItem('Mặt tiền', property.facadeWidth ? `${property.facadeWidth} m` : null, 'straighten')
+  pushItem(
+    'Hướng cửa chính',
+    property.direction ? DIRECTION_LABELS[property.direction] : null,
+    'explore',
+  )
+  pushItem(
+    'Pháp lý',
+    property.legalStatus ? LEGAL_STATUS_LABELS[property.legalStatus] : null,
+    'description',
+  )
+  pushItem(
+    'Nội thất',
+    property.furnitureStatus ? FURNITURE_STATUS_LABELS[property.furnitureStatus] : null,
+    'chair',
+  )
+
+  return items
+}
+
+function buildProjectInfo(project: Project): FeatureItem[] {
+  const items: FeatureItem[] = []
+
+  const pushItem = (label: string, value: string | number | null | undefined, icon: string) => {
+    if (value === null || value === undefined) return
+    const text = String(value).trim()
+    if (!text) return
+    items.push({ label, value: text, icon })
+  }
+
+  const priceFrom = project.priceFrom ? `${project.priceFrom} triệu` : ''
+  const priceTo = project.priceTo ? `${project.priceTo} triệu` : ''
+  const priceRange = priceFrom && priceTo ? `${priceFrom} - ${priceTo}` : priceFrom || priceTo
+
+  pushItem(
+    'Chủ đầu tư',
+    project.investor && typeof project.investor === 'object' ? project.investor.name : null,
+    'apartment',
+  )
+  pushItem('Địa chỉ', project.address, 'location_on')
+  pushItem('Tổng diện tích', project.totalArea ? `${project.totalArea} ha` : null, 'square_foot')
+  pushItem('Tổng số căn/lô', project.totalUnits, 'home')
+  pushItem('Giá', priceRange, 'payments')
+  pushItem(
+    'Trạng thái mở bán',
+    project.saleStatus ? PROJECT_SALE_STATUS_LABELS[project.saleStatus] : null,
+    'calendar_today',
+  )
+
+  return items
+}
+
+function getProjectTitle(project: Project): string {
+  return project.name || 'Dự án liên quan'
 }
 
 export default async function PropertyDetailPage({ params }: PageProps) {
@@ -79,223 +226,81 @@ export default async function PropertyDetailPage({ params }: PageProps) {
   const areaText = formatArea(property)
   const bedrooms = property.bedrooms ?? 0
   const bathrooms = property.bathrooms ?? 0
-  const images = Array.isArray(property.images) ? property.images : []
-  const primaryImage = images[0]?.image
-  const galleryImages = images.slice(1, 5)
-  const extraCount = Math.max(images.length - 5, 0)
+  const images: NonNullable<Property['images']> = Array.isArray(property.images)
+    ? property.images
+    : []
+  const featureItems = buildFeatureItems(property)
+
+  const metaItems: MetaItem[] = [
+    { label: 'Ngày đăng', value: formatDate(property.createdAt) },
+    {
+      label: 'Ngày hết hạn',
+      value: property.status === 'expired' ? formatDate(property.updatedAt) : 'Đang cập nhật',
+    },
+    {
+      label: 'Loại tin',
+      value: property.postType ? POST_TYPE_LABELS[property.postType] : 'Đang cập nhật',
+    },
+    { label: 'Mã tin', value: `#${property.id}` },
+  ]
+
+  const project = typeof property.project === 'object' ? property.project : null
+  const projectItems = project ? buildProjectInfo(project) : []
+  const projectTitle = project ? getProjectTitle(project) : ''
+
+  const headerActions = (
+    <>
+      <button
+        aria-label="Share"
+        className="p-2 rounded-full hover:bg-surface-container-high transition-colors text-on-surface-variant flex items-center justify-center w-10 h-10"
+        type="button"
+      >
+        <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 0" }}>
+          share
+        </span>
+      </button>
+      <button
+        aria-label="Report"
+        className="p-2 rounded-full hover:bg-surface-container-high transition-colors text-on-surface-variant flex items-center justify-center w-10 h-10"
+        type="button"
+      >
+        <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 0" }}>
+          flag
+        </span>
+      </button>
+      <button
+        aria-label="Favorite"
+        className="p-2 rounded-full hover:bg-surface-container-high transition-colors text-on-surface-variant flex items-center justify-center w-10 h-10"
+        type="button"
+      >
+        <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 0" }}>
+          favorite
+        </span>
+      </button>
+    </>
+  )
 
   return (
     <main className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8 mt-8">
-      <nav
-        aria-label="Breadcrumb"
-        className="flex text-sm text-on-secondary-container mb-6 font-label"
-      >
-        <ol className="inline-flex items-center space-x-1 md:space-x-3">
-          <li className="inline-flex items-center">
-            <a className="hover:text-primary transition-colors" href="/properties">
-              Nhà đất bán
-            </a>
-          </li>
-          <li>
-            <div className="flex items-center">
-              <span className="material-symbols-outlined text-sm mx-1">chevron_right</span>
-              <span className="text-on-surface font-medium">{property.title}</span>
-            </div>
-          </li>
-        </ol>
-      </nav>
-
-      <div className="mb-6">
-        <div className="flex justify-between items-start gap-4">
-          <h1 className="text-[2rem] leading-tight font-headline font-bold text-on-background tracking-tighter max-w-3xl">
-            {property.title}
-          </h1>
-          <div className="flex gap-2 shrink-0 mt-2">
-            <button
-              aria-label="Share"
-              className="p-2 rounded-full hover:bg-surface-container-high transition-colors text-on-surface-variant flex items-center justify-center w-10 h-10"
-              type="button"
-            >
-              <span
-                className="material-symbols-outlined"
-                style={{ fontVariationSettings: "'FILL' 0" }}
-              >
-                share
-              </span>
-            </button>
-            <button
-              aria-label="Report"
-              className="p-2 rounded-full hover:bg-surface-container-high transition-colors text-on-surface-variant flex items-center justify-center w-10 h-10"
-              type="button"
-            >
-              <span
-                className="material-symbols-outlined"
-                style={{ fontVariationSettings: "'FILL' 0" }}
-              >
-                flag
-              </span>
-            </button>
-            <button
-              aria-label="Favorite"
-              className="p-2 rounded-full hover:bg-surface-container-high transition-colors text-on-surface-variant flex items-center justify-center w-10 h-10"
-              type="button"
-            >
-              <span
-                className="material-symbols-outlined"
-                style={{ fontVariationSettings: "'FILL' 0" }}
-              >
-                favorite
-              </span>
-            </button>
-          </div>
-        </div>
-        <p className="text-on-secondary-container flex items-center gap-2 font-body text-base mt-2">
-          <span className="material-symbols-outlined text-lg">location_on</span>
-          {locationText}
-        </p>
-      </div>
-
-      <div className="flex flex-wrap gap-8 py-6 mb-8 border-y border-outline-variant/20 bg-surface-container-lowest">
-        <div>
-          <p className="text-sm text-on-secondary-container font-label mb-1">Mức giá</p>
-          <div className="flex items-baseline gap-2">
-            <p className="text-2xl font-headline font-bold text-primary">{priceText}</p>
-          </div>
-        </div>
-        <div className="w-px bg-outline-variant/30 hidden sm:block"></div>
-        <div>
-          <p className="text-sm text-on-secondary-container font-label mb-1">Diện tích</p>
-          <p className="text-xl font-headline font-semibold text-on-surface">{areaText}</p>
-        </div>
-        <div className="w-px bg-outline-variant/30 hidden sm:block"></div>
-        <div className="flex gap-6">
-          <div>
-            <p className="text-sm text-on-secondary-container font-label mb-1">Phòng ngủ</p>
-            <p className="text-xl font-headline font-semibold text-on-surface flex items-center gap-1">
-              {bedrooms}{' '}
-              <span className="material-symbols-outlined text-lg text-on-surface-variant">bed</span>
-            </p>
-          </div>
-          <div>
-            <p className="text-sm text-on-secondary-container font-label mb-1">Phòng tắm</p>
-            <p className="text-xl font-headline font-semibold text-on-surface flex items-center gap-1">
-              {bathrooms}{' '}
-              <span className="material-symbols-outlined text-lg text-on-surface-variant">
-                bathtub
-              </span>
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <div className="mb-10">
-        <div className="rounded-xl overflow-hidden relative w-full h-[500px] mb-4 group">
-          <img
-            alt={property.title}
-            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-            src={getImageUrl(primaryImage)}
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-on-background/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-          <button
-            className="absolute bottom-6 right-6 bg-surface/90 backdrop-blur-md text-on-surface px-4 py-2 rounded-lg font-lexend text-sm font-medium flex items-center gap-2 hover:bg-white transition-colors shadow-lg z-10"
-            type="button"
-          >
-            <span className="material-symbols-outlined text-lg">map</span>
-            View Map
-          </button>
-        </div>
-        <div className="grid grid-cols-4 gap-4 h-32">
-          {galleryImages.map((image, index) => {
-            const imageUrl = getImageUrl(image?.image)
-            const showExtra = index === 3 && extraCount > 0
-
-            return (
-              <div key={index} className="rounded-xl overflow-hidden relative group cursor-pointer">
-                <img
-                  alt={`${property.title} ${index + 2}`}
-                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                  src={imageUrl}
-                />
-                {showExtra && (
-                  <div className="absolute inset-0 bg-on-background/50 flex items-center justify-center transition-colors hover:bg-on-background/40">
-                    <span className="text-white font-headline text-xl font-medium tracking-tight">
-                      +{extraCount} ảnh
-                    </span>
-                  </div>
-                )}
-              </div>
-            )
-          })}
-          {galleryImages.length < 4 &&
-            Array.from({ length: 4 - galleryImages.length }).map((_, index) => (
-              <div key={`placeholder-${index}`} className="rounded-xl bg-surface-container" />
-            ))}
-        </div>
-      </div>
+      <Breadcrumb title={property.title} />
+      <HeaderActions title={property.title} actions={headerActions} />
+      <LocationLine locationText={locationText} />
+      <PropertyStats
+        priceText={priceText}
+        areaText={areaText}
+        bedrooms={bedrooms}
+        bathrooms={bathrooms}
+      />
+      <PropertyGallery title={property.title} images={images} />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
         <div className="lg:col-span-2 space-y-12">
-          <section>
-            <h2 className="text-2xl font-headline font-semibold tracking-tight text-on-background mb-6">
-              Thông tin mô tả
-            </h2>
-            <div className="prose prose-lg text-on-surface max-w-none font-body leading-relaxed space-y-4">
-              <p>{property.description || 'Đang cập nhật mô tả chi tiết.'}</p>
-            </div>
-          </section>
-
-          <section>
-            <h2 className="text-2xl font-headline font-semibold tracking-tight text-on-background mb-6">
-              Đặc điểm bất động sản
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 bg-surface-container-lowest p-6 rounded-xl border border-outline-variant/15 shadow-[0px_4px_24px_rgba(27,28,28,0.02)]">
-              <div className="flex justify-between py-3 border-b border-outline-variant/20">
-                <span className="text-on-secondary-container font-body flex items-center gap-2">
-                  <span className="material-symbols-outlined text-sm">chair</span> Nội thất
-                </span>
-                <span className="font-medium text-on-surface font-body">
-                  {property.furnitureStatus || 'Đang cập nhật'}
-                </span>
-              </div>
-              <div className="flex justify-between py-3 border-b border-outline-variant/20">
-                <span className="text-on-secondary-container font-body flex items-center gap-2">
-                  <span className="material-symbols-outlined text-sm">description</span> Pháp lý
-                </span>
-                <span className="font-medium text-on-surface font-body">
-                  {property.legalStatus || 'Đang cập nhật'}
-                </span>
-              </div>
-              <div className="flex justify-between py-3 border-b border-outline-variant/20">
-                <span className="text-on-secondary-container font-body flex items-center gap-2">
-                  <span className="material-symbols-outlined text-sm">aspect_ratio</span> Diện tích
-                </span>
-                <span className="font-medium text-on-surface font-body">{areaText}</span>
-              </div>
-              <div className="flex justify-between py-3 border-b border-outline-variant/20">
-                <span className="text-on-secondary-container font-body flex items-center gap-2">
-                  <span className="material-symbols-outlined text-sm">door_front</span> Hướng cửa
-                  chính
-                </span>
-                <span className="font-medium text-on-surface font-body">
-                  {property.direction || 'Đang cập nhật'}
-                </span>
-              </div>
-            </div>
-          </section>
-
-          <section>
-            <h2 className="text-2xl font-headline font-semibold tracking-tight text-on-background mb-6">
-              Bản đồ
-            </h2>
-            <div className="h-80 bg-surface-container rounded-xl overflow-hidden shadow-[0px_4px_24px_rgba(27,28,28,0.02)] border border-outline-variant/15 relative">
-              <div
-                className="absolute inset-0 flex items-center justify-center bg-surface-container-low text-on-surface-variant font-medium"
-                data-location={locationText}
-              >
-                Map Embed Placeholder: {locationText}
-              </div>
-            </div>
-          </section>
+          <DescriptionSection description={property.description} />
+          <FeaturesSection items={featureItems} />
+          <MapSection locationText={locationText} />
+          <MetaInfo items={metaItems} />
+          <ForYouSection properties={forYouProperties} />
+          {project && <ProjectSection title={projectTitle} items={projectItems} />}
         </div>
 
         <div className="lg:col-span-1">
