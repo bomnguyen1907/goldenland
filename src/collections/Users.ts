@@ -1,6 +1,6 @@
 import type { CollectionConfig } from 'payload'
 
-import { adminOnly, adminOnlyField, checkAdmin, selfOrAdminByID } from '@/access'
+import { adminOnly, adminOnlyField, checkAdmin, selfOrAdminByID, anyone } from '@/access'
 
 export const Users: CollectionConfig = {
   slug: 'users',
@@ -11,16 +11,7 @@ export const Users: CollectionConfig = {
   access: {
     admin: ({ req: { user } }) => user?.role === 'admin',
     create: () => true,
-    read: ({ req: { user } }) => {
-      if (!user) return false
-      if (user.role === 'admin') return true
-
-      return {
-        id: {
-          equals: user.id,
-        },
-      }
-    },
+    read: anyone,
     update: ({ req: { user } }) => {
       if (!user) return false
       if (user.role === 'admin') return true

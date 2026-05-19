@@ -104,3 +104,5 @@ export const selfOrAdminByID = ({ req: { user }, doc }: any): boolean => {
 }
 
 export const adminOnlyField = ({ req: { user } }: any): boolean => isAdmin(user as UserLike)
+
+export const anyone: Access = () => true

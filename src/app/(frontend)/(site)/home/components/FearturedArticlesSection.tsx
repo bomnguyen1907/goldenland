@@ -1,20 +1,12 @@
 'use client'
 
+import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import {
   fetchFeaturedArticlesBasedOnCategoryId,
   fetchTopViewedRealEstateNews,
 } from '../services/articles'
-
-type Article = {
-  id: string | number
-  title: string
-  summary: string
-  date: string
-  readTime: string
-  image: string
-  label: string
-}
+import { ArticleHeroItem, ArticleListItem, type Article } from './ArticleItems'
 
 type ArticlesCategory = {
   id: number | 'top-viewed'
@@ -110,7 +102,9 @@ export function FeaturedArticlesSection() {
         const nextCategories: ArticlesCategory[] = []
 
         if (topViewedResult.status === 'fulfilled') {
-          nextCategories.push(buildCategory('top-viewed', categoryLabels['top-viewed'], topViewedResult.value))
+          nextCategories.push(
+            buildCategory('top-viewed', categoryLabels['top-viewed'], topViewedResult.value),
+          )
         }
 
         if (haNoiResult.status === 'fulfilled') {
@@ -136,7 +130,6 @@ export function FeaturedArticlesSection() {
           haNoi: haNoiResult,
           tpHcm: tpHcmResult,
         })
-        
       } catch {
         if (isMounted) {
           // Keep empty tab shells if the request fails.
@@ -210,7 +203,7 @@ export function FeaturedArticlesSection() {
             })}
           </div>
         </div>
-        <a
+        <Link
           className="group mb-2 flex items-center gap-1 font-semibold text-primary"
           href="/articles"
         >
@@ -218,74 +211,22 @@ export function FeaturedArticlesSection() {
           <span className="material-symbols-outlined transition-transform group-hover:translate-x-1">
             arrow_forward
           </span>
-        </a>
+        </Link>
       </div>
 
       <div className="grid grid-cols-1 gap-10 lg:grid-cols-12">
-        <div
-          className={`group cursor-pointer transition-all duration-300 ease-out lg:col-span-8 ${
-            isHeroFading ? 'translate-y-1 opacity-0' : 'translate-y-0 opacity-100'
-          }`}
-        >
-          <div className="relative mb-6 overflow-hidden rounded-full">
-            <img
-              alt={heroArticle.title}
-              className="aspect-[16/9] w-full object-cover transition-transform duration-700 group-hover:scale-105"
-              src={heroArticle.image}
-            />
-            <div className="absolute left-6 top-6">
-              <span className="bg-primary px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-white">
-                {heroArticle.label}
-              </span>
-            </div>
-          </div>
-          <h3 className="mb-4 text-2xl font-bold leading-snug transition-colors group-hover:text-primary">
-            {heroArticle.title}
-          </h3>
-          <p className="mb-4 leading-relaxed text-secondary">{heroArticle.summary}</p>
-          <div className="flex items-center gap-4 text-xs text-secondary">
-            <span className="flex items-center gap-1">
-              <span className="material-symbols-outlined text-sm">calendar_today</span>
-              {heroArticle.date}
-            </span>
-            <span className="flex items-center gap-1">
-              <span className="material-symbols-outlined text-sm">schedule</span>
-              {heroArticle.readTime}
-            </span>
-          </div>
-        </div>
+        <ArticleHeroItem article={heroArticle} isFading={isHeroFading} />
 
         <div className="space-y-8 lg:col-span-4">
-          {currentCategory.articles.map((article, index) => {
-            const isActive = index === activeArticleIndex
-
-            return (
-              <div
-                key={article.id}
-                className={`group -mx-2 flex cursor-pointer gap-4 rounded-lg px-2 py-2 transition-all duration-300 ease-out hover:-translate-y-0.5 hover:bg-surface-container-low ${
-                  isActive ? 'bg-surface-container-low' : ''
-                } ${
-                  index < currentCategory.articles.length - 1
-                    ? 'border-b border-outline-variant/10 pb-6'
-                    : ''
-                }`}
-                onFocus={() => setActiveArticleIndex(index)}
-                onMouseEnter={() => setActiveArticleIndex(index)}
-                role="button"
-                tabIndex={0}
-              >
-                {/* Small thumbnail can be enabled again when needed. */}
-                <div className="space-y-1">
-                  <h4 className="text-sm font-bold leading-tight transition-colors group-hover:text-primary">
-                    {article.title}
-                  </h4>
-                  {/* <span className="text-[10px] font-bold uppercase text-secondary">
-                    {article.summary}
-                  </span> */}
-                </div>
-              </div>
-            )
-          })}
+          {currentCategory.articles.map((article, index) => (
+            <ArticleListItem
+              key={article.id}
+              article={article}
+              isActive={index === activeArticleIndex}
+              isLast={index === currentCategory.articles.length - 1}
+              onActivate={() => setActiveArticleIndex(index)}
+            />
+          ))}
           {/* Empty state for a tab without items. */}
           {currentCategory.articles.length === 0 && (
             <p className="text-sm text-secondary">Chua co bai viet cho danh muc nay.</p>
