@@ -58,6 +58,14 @@ export const Orders: CollectionConfig = {
             },
         },
         {
+            name: 'durationMonths',
+            type: 'number',
+            admin: {
+                description: 'Số tháng đăng ký (nếu mua gói có nhiều tùy chọn)',
+                condition: (data) => data?.orderType === 'package',
+            },
+        },
+        {
             name: 'postingPrice',
             type: 'relationship',
             relationTo: 'posting-prices',
@@ -82,6 +90,12 @@ export const Orders: CollectionConfig = {
             relationTo: 'vouchers',
             admin: { description: 'Voucher đã áp dụng (nếu có)' },
         },
+        {
+            name: 'promotion',
+            type: 'relationship',
+            relationTo: 'promotions',
+            admin: { description: 'Khuyen mai da ap dung (neu co)' },
+        },
 
         // Tài chính
         {
@@ -100,6 +114,13 @@ export const Orders: CollectionConfig = {
                     defaultValue: 0,
                     min: 0,
                     admin: { description: 'Giảm giá (VNĐ)' },
+                },
+                {
+                    name: 'promotionDiscount',
+                    type: 'number',
+                    defaultValue: 0,
+                    min: 0,
+                    admin: { description: 'So tien giam tu khuyen mai (VND)' },
                 },
                 {
                     name: 'totalAmount',
@@ -133,7 +154,7 @@ export const Orders: CollectionConfig = {
         {
             name: 'status',
             type: 'select',
-            defaultValue: 'pending',
+            defaultValue: 'paid',
             required: true,
             options: [
                 { label: 'Chờ thanh toán', value: 'pending' },
@@ -168,7 +189,7 @@ export const Orders: CollectionConfig = {
                 }
                 // Tính thành tiền
                 if (data?.originalAmount !== undefined) {
-                    data.totalAmount = (data.originalAmount || 0) - (data.discountAmount || 0)
+                    data.totalAmount = (data.originalAmount || 0) - (data.discountAmount || 0) - (data.promotionDiscount || 0)
                     if (data.totalAmount < 0) data.totalAmount = 0
                 }
                 return data

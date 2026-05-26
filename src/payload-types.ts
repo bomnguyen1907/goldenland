@@ -86,6 +86,7 @@ export interface Config {
     favorites: Favorite;
     'view-history': ViewHistory;
     'spam-blacklist': SpamBlacklist;
+    promotions: Promotion;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -112,6 +113,7 @@ export interface Config {
     favorites: FavoritesSelect<false> | FavoritesSelect<true>;
     'view-history': ViewHistorySelect<false> | ViewHistorySelect<true>;
     'spam-blacklist': SpamBlacklistSelect<false> | SpamBlacklistSelect<true>;
+    promotions: PromotionsSelect<false> | PromotionsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -233,6 +235,38 @@ export interface Package {
    * Giá gốc (hiển thị gạch ngang)
    */
   originalPrice?: number | null;
+  /**
+   * Các tùy chọn thời gian của gói
+   */
+  durationOptions?:
+    | {
+        /**
+         * Số tháng (vd: 1, 3, 6)
+         */
+        months: number;
+        /**
+         * Giá bán thực tế (VNĐ)
+         */
+        price: number;
+        /**
+         * Giá gốc trước khi giảm (VNĐ)
+         */
+        originalPrice?: number | null;
+        /**
+         * Số lượt đăng tin riêng cho mốc này (nếu trống sẽ dùng giá trị mặc định ở ngoài)
+         */
+        totalProperties?: number | null;
+        /**
+         * Phần trăm giảm giá (%)
+         */
+        discount?: number | null;
+        /**
+         * Tiết kiệm mỗi tháng (VNĐ)
+         */
+        savePerMonth?: number | null;
+        id?: string | null;
+      }[]
+    | null;
   /**
    * Số lượt đăng tin
    */
@@ -786,6 +820,10 @@ export interface Order {
   user: number | User;
   orderType: 'package' | 'single_post' | 'top_up';
   package?: (number | null) | Package;
+  /**
+   * Số tháng đăng ký (nếu mua gói có nhiều tùy chọn)
+   */
+  durationMonths?: number | null;
   postingPrice?: (number | null) | PostingPrice;
   /**
    * Tin đăng liên quan (nếu đăng tin lẻ)
@@ -796,6 +834,10 @@ export interface Order {
    */
   voucher?: (number | null) | Voucher;
   /**
+   * Khuyen mai da ap dung (neu co)
+   */
+  promotion?: (number | null) | Promotion;
+  /**
    * Giá gốc (VNĐ)
    */
   originalAmount: number;
@@ -803,6 +845,10 @@ export interface Order {
    * Giảm giá (VNĐ)
    */
   discountAmount?: number | null;
+  /**
+   * So tien giam tu khuyen mai (VND)
+   */
+  promotionDiscount?: number | null;
   /**
    * Thành tiền (VNĐ)
    */
@@ -818,6 +864,30 @@ export interface Order {
    * Ghi chú nội bộ
    */
   adminNote?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "promotions".
+ */
+export interface Promotion {
+  id: number;
+  name: string;
+  description?: string | null;
+  /**
+   * Ma khuyen mai nguoi dung nhap khi mua goi
+   */
+  code: string;
+  discountType: 'percent' | 'fixed';
+  discountValue: number;
+  maxDiscount?: number | null;
+  appliesToPackages: (number | Package)[];
+  startDate: string;
+  endDate: string;
+  allowVoucherStacking?: boolean | null;
+  priority?: number | null;
+  isActive?: boolean | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -980,6 +1050,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'spam-blacklist';
         value: number | SpamBlacklist;
+      } | null)
+    | ({
+        relationTo: 'promotions';
+        value: number | Promotion;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -1301,6 +1375,17 @@ export interface PackagesSelect<T extends boolean = true> {
   isBestSeller?: T;
   price?: T;
   originalPrice?: T;
+  durationOptions?:
+    | T
+    | {
+        months?: T;
+        price?: T;
+        originalPrice?: T;
+        totalProperties?: T;
+        discount?: T;
+        savePerMonth?: T;
+        id?: T;
+      };
   totalProperties?: T;
   durationDays?: T;
   propertyDurationDays?: T;
@@ -1365,11 +1450,14 @@ export interface OrdersSelect<T extends boolean = true> {
   user?: T;
   orderType?: T;
   package?: T;
+  durationMonths?: T;
   postingPrice?: T;
   property?: T;
   voucher?: T;
+  promotion?: T;
   originalAmount?: T;
   discountAmount?: T;
+  promotionDiscount?: T;
   totalAmount?: T;
   paymentMethod?: T;
   paymentRef?: T;
@@ -1422,6 +1510,26 @@ export interface SpamBlacklistSelect<T extends boolean = true> {
   type?: T;
   value?: T;
   reason?: T;
+  isActive?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "promotions_select".
+ */
+export interface PromotionsSelect<T extends boolean = true> {
+  name?: T;
+  description?: T;
+  code?: T;
+  discountType?: T;
+  discountValue?: T;
+  maxDiscount?: T;
+  appliesToPackages?: T;
+  startDate?: T;
+  endDate?: T;
+  allowVoucherStacking?: T;
+  priority?: T;
   isActive?: T;
   updatedAt?: T;
   createdAt?: T;

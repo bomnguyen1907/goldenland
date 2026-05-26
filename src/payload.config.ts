@@ -25,10 +25,12 @@ import { Notifications } from './collections/Notifications'
 import { Favorites } from './collections/Favorites'
 import { ViewHistory } from './collections/ViewHistory'
 import { SpamBlacklist } from './collections/SpamBlacklist'
+import { Promotions } from './collections/Promotions'
 
 import { Settings } from './app/globals/Settings'
 
 import { divisionEndpoints } from './endpoints/divisions'
+import { calculatePackagePrice } from './endpoints/calculatePackagePrice'
 import { purchasePackage } from './endpoints/purchasePackage'
 import { topUp } from './endpoints/topUp'
 import { payosWebhook } from './endpoints/payosWebhook'
@@ -68,6 +70,7 @@ export default buildConfig({
   globals: [Settings],
   endpoints: [
     ...divisionEndpoints,
+    calculatePackagePrice,
     purchasePackage,
     topUp,
     payosWebhook,
@@ -92,7 +95,7 @@ export default buildConfig({
     adminDashboardStats,
   ],
   collections: [Users, Profiles, Properties, Projects, Media, Investors, Articles, ArticleCategories, Banners, Contacts, Reports, Packages, PostingPrices, Vouchers, Orders,
-    Notifications, Favorites, ViewHistory, SpamBlacklist
+    Notifications, Favorites, ViewHistory, SpamBlacklist, Promotions
   ],
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || '',
