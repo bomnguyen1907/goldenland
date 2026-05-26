@@ -54,6 +54,51 @@ export const Packages: CollectionConfig = {
             ],
         },
         {
+            name: 'durationOptions',
+            type: 'array',
+            admin: { description: 'Các tùy chọn thời gian của gói' },
+            fields: [
+                {
+                    name: 'months',
+                    type: 'number',
+                    required: true,
+                    min: 1,
+                    admin: { description: 'Số tháng (vd: 1, 3, 6)' },
+                },
+                {
+                    name: 'price',
+                    type: 'number',
+                    required: true,
+                    min: 0,
+                    admin: { description: 'Giá bán thực tế (VNĐ)' },
+                },
+                {
+                    name: 'originalPrice',
+                    type: 'number',
+                    min: 0,
+                    admin: { description: 'Giá gốc trước khi giảm (VNĐ)' },
+                },
+                {
+                    name: 'totalProperties',
+                    type: 'number',
+                    admin: { description: 'Số lượt đăng tin riêng cho mốc này (nếu trống sẽ dùng giá trị mặc định ở ngoài)' }
+                },
+                {
+                    name: 'discount',
+                    type: 'number',
+                    min: 0,
+                    max: 100,
+                    admin: { description: 'Phần trăm giảm giá (%)' },
+                },
+                {
+                    name: 'savePerMonth',
+                    type: 'number',
+                    min: 0,
+                    admin: { description: 'Tiết kiệm mỗi tháng (VNĐ)' },
+                },
+            ],
+        },
+        {
             type: 'row',
             fields: [
                 {
