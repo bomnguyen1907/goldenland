@@ -2,6 +2,47 @@ import type { CollectionConfig } from 'payload'
 
 import { authenticated, ownerOrAdmin, statusOrOwnerOrAdmin, adminOnlyField } from '@/access'
 
+const normalizeProjectID = (project: unknown): string | null => {
+    if (typeof project === 'string' || typeof project === 'number') return String(project)
+    if (project && typeof project === 'object' && 'id' in project) {
+        const id = (project as { id?: unknown }).id
+        if (typeof id === 'string' || typeof id === 'number') return String(id)
+    }
+    return null
+}
+
+const extractStreetFromAddress = (address: string | null | undefined): string | null => {
+    const firstSegment = address
+        ?.split(',')
+        .map((segment) => segment.trim())
+        .find(Boolean)
+
+    if (!firstSegment) return null
+
+    const normalized = firstSegment
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/đ/g, 'd')
+
+    if (
+        normalized.startsWith('phuong ') ||
+        normalized.startsWith('xa ') ||
+        normalized.startsWith('thi tran ') ||
+        normalized.startsWith('thi xa ') ||
+        normalized.startsWith('dac khu ') ||
+        normalized.startsWith('quan ') ||
+        normalized.startsWith('huyen ') ||
+        normalized.startsWith('thanh pho ') ||
+        normalized.startsWith('tp ') ||
+        normalized.startsWith('tinh ')
+    ) {
+        return null
+    }
+
+    return firstSegment
+}
+
 export const Properties: CollectionConfig = {
     slug: 'properties',
     admin: {
@@ -419,7 +460,7 @@ export const Properties: CollectionConfig = {
     // ============================
     hooks: {
         beforeChange: [
-            ({ data }) => {
+            async ({ data, originalDoc, req }) => {
                 // Tự sinh slug từ title
                 if (data?.title && !data?.slug) {
                     data.slug = data.title
@@ -430,6 +471,37 @@ export const Properties: CollectionConfig = {
                         .replace(/[^a-z0-9]+/g, '-')
                         .replace(/(^-|-$)/g, '')
                 }
+
+                const projectId = normalizeProjectID(data?.project ?? originalDoc?.project)
+                if (!projectId) return data
+
+                const project = await req.payload.findByID({
+                    collection: 'projects',
+                    id: projectId,
+                    depth: 0,
+                    overrideAccess: false,
+                    req,
+                    select: {
+                        provinceCode: true,
+                        wardCode: true,
+                        address: true,
+                        latitude: true,
+                        longitude: true,
+                    },
+                })
+
+                data.provinceCode = project.provinceCode || null
+                data.wardCode = project.wardCode || null
+                data.street = extractStreetFromAddress(project.address) || null
+                data.address = project.address || null
+
+                if (typeof project.latitude === 'number') {
+                    data.latitude = project.latitude
+                }
+                if (typeof project.longitude === 'number') {
+                    data.longitude = project.longitude
+                }
+
                 return data
             },
         ],
