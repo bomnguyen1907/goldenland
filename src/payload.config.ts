@@ -56,6 +56,7 @@ import { myDashboard } from './endpoints/myDashboard'
 import { meProfile } from './endpoints/me'
 import { projectDetail, projects } from './endpoints/projects'
 import { adminDashboardStats } from './endpoints/adminDashboard'
+import { submitProperty } from './endpoints/submitProperty'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -90,6 +91,7 @@ export default buildConfig({
     countUnreadNotifications,
     myDashboard,
     meProfile,
+    submitProperty,
     projects,
     projectDetail,
     adminDashboardStats,

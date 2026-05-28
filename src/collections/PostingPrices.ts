@@ -19,7 +19,7 @@ export const PostingPrices: CollectionConfig = {
             name: 'name',
             type: 'text',
             required: true,
-            admin: { description: 'VD: Tin thường 7 ngày, Tin VIP 30 ngày' },
+            admin: { description: 'VD: Tin thường 15 ngày, Tin VIP vàng 30 ngày' },
         },
         {
             name: 'postType',
@@ -27,7 +27,9 @@ export const PostingPrices: CollectionConfig = {
             required: true,
             options: [
                 { label: 'Tin thường', value: 'normal' },
-                { label: 'Tin VIP', value: 'vip' },
+                { label: 'VIP bạc', value: 'silver' },
+                { label: 'VIP vàng', value: 'gold' },
+                { label: 'VIP kim cương', value: 'diamond' },
             ],
         },
         {

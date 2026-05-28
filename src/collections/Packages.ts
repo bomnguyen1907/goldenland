@@ -149,8 +149,9 @@ export const Packages: CollectionConfig = {
                     type: 'select',
                     options: [
                         { label: 'Tin thường', value: 'normal' },
-                        { label: 'Tin VIP', value: 'vip' },
-                        { label: 'Tin đặc biệt', value: 'special' },
+                        { label: 'VIP bạc', value: 'silver' },
+                        { label: 'VIP vàng', value: 'gold' },
+                        { label: 'VIP kim cương', value: 'diamond' },
                     ],
                     admin: { description: 'Loại tin được áp dụng voucher' },
                 },
@@ -180,7 +181,9 @@ export const Packages: CollectionConfig = {
             defaultValue: 'normal',
             options: [
                 { label: 'Tin thường', value: 'normal' },
-                { label: 'Tin VIP', value: 'vip' },
+                { label: 'VIP bạc', value: 'silver' },
+                { label: 'VIP vàng', value: 'gold' },
+                { label: 'VIP kim cương', value: 'diamond' },
             ],
             admin: { description: 'Loại tin được đăng từ gói này' },
         },

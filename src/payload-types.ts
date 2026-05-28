@@ -295,7 +295,7 @@ export interface Package {
         /**
          * Loại tin được áp dụng voucher
          */
-        appliedFor?: ('normal' | 'vip' | 'special') | null;
+        appliedFor?: ('normal' | 'silver' | 'gold' | 'diamond') | null;
         id?: string | null;
       }[]
     | null;
@@ -311,7 +311,7 @@ export interface Package {
   /**
    * Loại tin được đăng từ gói này
    */
-  postType?: ('normal' | 'vip') | null;
+  postType?: ('normal' | 'silver' | 'gold' | 'diamond') | null;
   sort?: number | null;
   isActive?: boolean | null;
   updatedAt: string;
@@ -349,8 +349,7 @@ export interface Property {
    */
   slug?: string | null;
   description: string;
-  listingType: 'sale' | 'rent';
-  postType?: ('normal' | 'vip') | null;
+  postType?: ('normal' | 'silver' | 'gold' | 'diamond') | null;
   price: number;
   priceUnit?: ('total' | 'per_m2' | 'per_month' | 'negotiable') | null;
   propertyType:
@@ -408,7 +407,18 @@ export interface Property {
    */
   videoUrl?: string | null;
   status: 'draft' | 'pending' | 'active' | 'expired' | 'sold' | 'rejected';
-  label?: ('normal' | 'vip' | 'hot' | 'premium') | null;
+  /**
+   * Số ngày hiển thị của tin đăng
+   */
+  durationDays?: number | null;
+  /**
+   * Tin pending sẽ tự chuyển active khi tới thời điểm này
+   */
+  scheduledPublishAt?: string | null;
+  /**
+   * Tin active sẽ tự chuyển expired khi quá thời điểm này
+   */
+  expiresAt?: string | null;
   /**
    * Tin đã xác thực
    */
@@ -418,9 +428,6 @@ export interface Property {
    */
   verifiedBy?: (number | null) | User;
   verifiedAt?: string | null;
-  /**
-   * Lý do từ chối
-   */
   rejectionReason?: string | null;
   seoTitle?: string | null;
   seoDescription?: string | null;
@@ -750,10 +757,10 @@ export interface Report {
 export interface PostingPrice {
   id: number;
   /**
-   * VD: Tin thường 7 ngày, Tin VIP 30 ngày
+   * VD: Tin thường 15 ngày, Tin VIP vàng 30 ngày
    */
   name: string;
-  postType: 'normal' | 'vip';
+  postType: 'normal' | 'silver' | 'gold' | 'diamond';
   /**
    * Số ngày hiển thị
    */
@@ -1157,7 +1164,6 @@ export interface PropertiesSelect<T extends boolean = true> {
   title?: T;
   slug?: T;
   description?: T;
-  listingType?: T;
   postType?: T;
   price?: T;
   priceUnit?: T;
@@ -1185,7 +1191,9 @@ export interface PropertiesSelect<T extends boolean = true> {
       };
   videoUrl?: T;
   status?: T;
-  label?: T;
+  durationDays?: T;
+  scheduledPublishAt?: T;
+  expiresAt?: T;
   isVerified?: T;
   verifiedBy?: T;
   verifiedAt?: T;
