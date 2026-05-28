@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState, type Dispatch, type SetStateAction } from 'react'
+import { useEffect, useMemo, useRef, useState, type Dispatch, type SetStateAction } from 'react'
 import type { PostDraft } from './postFlowTypes'
 
 type Province = { code: string; name: string }
@@ -62,6 +62,8 @@ const DIRECTIONS = [
 
 const selectClassName =
   'w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 outline-none transition focus:border-red-400 focus:ring-2 focus:ring-red-100'
+
+const MAP_LOOKUP_DELAY_MS = 2000
 
 const extractStreetFromAddress = (address?: string | null): string => {
   if (!address) return ''
@@ -140,6 +142,9 @@ export default function PostPopUp1({ draft, onChange, onClose, onNext }: PostPop
   const [unlockedBlock3, setUnlockedBlock3] = useState(false)
   const [unlockedBlock4, setUnlockedBlock4] = useState(false)
   const [streetError, setStreetError] = useState('')
+  const [mapPreviewSrc, setMapPreviewSrc] = useState('')
+  const divisionsRef = useRef({ provinces, wards })
+  const lastLocationLookupKeyRef = useRef('')
 
   useEffect(() => {
     fetch('/api/divisions/provinces')
@@ -194,15 +199,35 @@ export default function PostPopUp1({ draft, onChange, onClose, onNext }: PostPop
   }, [draft.provinceCode, draft.wardCode])
 
   useEffect(() => {
+    divisionsRef.current = { provinces, wards }
+  }, [provinces, wards])
+
+  useEffect(() => {
+    const locationLookupKey = [
+      draft.project,
+      draft.street.trim(),
+      draft.provinceCode,
+      draft.wardCode,
+    ].join('|')
+
+    if (locationLookupKey === lastLocationLookupKeyRef.current) return
+    lastLocationLookupKeyRef.current = locationLookupKey
+
+    const street = draft.street.trim()
+
     if (draft.project) {
       setStreetError('')
       return
     }
-    if (!draft.street.trim() || !draft.provinceCode || !draft.wardCode) return
+    if (!street || !draft.provinceCode || !draft.wardCode) {
+      setStreetError('')
+      return
+    }
 
-    const provinceName = provinces.find((p) => p.code === draft.provinceCode)?.name || ''
-    const wardName = wards.find((w) => w.code === draft.wardCode)?.name || ''
-    const query = [draft.street.trim(), wardName, provinceName, 'Việt Nam'].filter(Boolean).join(', ')
+    const { provinces: currentProvinces, wards: currentWards } = divisionsRef.current
+    const provinceName = currentProvinces.find((p) => p.code === draft.provinceCode)?.name || ''
+    const wardName = currentWards.find((w) => w.code === draft.wardCode)?.name || ''
+    const query = [street, wardName, provinceName, 'Việt Nam'].filter(Boolean).join(', ')
 
     const timer = window.setTimeout(async () => {
       try {
@@ -214,10 +239,15 @@ export default function PostPopUp1({ draft, onChange, onClose, onNext }: PostPop
           q: query,
         })
         const res = await fetch(`https://nominatim.openstreetmap.org/search?${params.toString()}`)
+        if (!res.ok) {
+          setStreetError('')
+          return
+        }
+
         const data = await res.json()
         const first = Array.isArray(data) ? data[0] : null
         if (!first) {
-          setStreetError('Không tìm thấy đường trong khu vực đã chọn. Vui lòng nhập lại street.')
+          setStreetError('')
           onChange((prev) => ({ ...prev, latitude: null, longitude: null }))
           return
         }
@@ -233,7 +263,7 @@ export default function PostPopUp1({ draft, onChange, onClose, onNext }: PostPop
           (geocodedWardNormalized.includes(selectedWardNormalized) ||
             selectedWardNormalized.includes(geocodedWardNormalized))
         if (!wardMatched) {
-          setStreetError('Street không khớp với phường/xã đã chọn. Vui lòng nhập lại street.')
+          setStreetError('')
           onChange((prev) => ({ ...prev, latitude: null, longitude: null }))
           return
         }
@@ -246,12 +276,12 @@ export default function PostPopUp1({ draft, onChange, onClose, onNext }: PostPop
           longitude: Number.isFinite(longitude as number) ? longitude : null,
         }))
       } catch {
-        setStreetError('Không thể kiểm tra street lúc này. Vui lòng thử lại.')
+        setStreetError('')
       }
-    }, 700)
+    }, MAP_LOOKUP_DELAY_MS)
 
     return () => window.clearTimeout(timer)
-  }, [draft, onChange, provinces, wards])
+  }, [draft.project, draft.street, draft.provinceCode, draft.wardCode])
 
   const update = <K extends keyof PostDraft>(key: K, value: PostDraft[K]) => {
     onChange((prev) => ({ ...prev, [key]: value }))
@@ -261,7 +291,7 @@ export default function PostPopUp1({ draft, onChange, onClose, onNext }: PostPop
     draft.provinceCode &&
       draft.wardCode &&
       draft.address.trim() &&
-      (draft.project ? true : draft.street.trim() && !streetError),
+      (draft.project ? true : draft.street.trim()),
   )
   const pricingDone = Boolean(draft.propertyType && draft.area > 0 && draft.price > 0)
   const attributesDone = Boolean(draft.legalStatus && draft.furnitureStatus)
@@ -284,6 +314,46 @@ export default function PostPopUp1({ draft, onChange, onClose, onNext }: PostPop
     return draft.address
   }, [locationDone, draft.address])
 
+  useEffect(() => {
+    if (draft.project) {
+      if (typeof draft.latitude === 'number' && typeof draft.longitude === 'number') {
+        setMapPreviewSrc(
+          `https://maps.google.com/maps?q=${draft.latitude},${draft.longitude}&z=15&output=embed`,
+        )
+      } else {
+        setMapPreviewSrc('')
+      }
+      return
+    }
+
+    const street = draft.street.trim()
+    if (!street || !draft.provinceCode || !draft.wardCode) {
+      setMapPreviewSrc('')
+      return
+    }
+
+    const provinceName = provinces.find((p) => p.code === draft.provinceCode)?.name || ''
+    const wardName = wards.find((w) => w.code === draft.wardCode)?.name || ''
+    const mapQuery = [street, wardName, provinceName, 'Việt Nam'].filter(Boolean).join(', ')
+
+    const timer = window.setTimeout(() => {
+      setMapPreviewSrc(
+        `https://maps.google.com/maps?q=${encodeURIComponent(mapQuery)}&z=15&output=embed`,
+      )
+    }, MAP_LOOKUP_DELAY_MS)
+
+    return () => window.clearTimeout(timer)
+  }, [
+    draft.project,
+    draft.street,
+    draft.provinceCode,
+    draft.wardCode,
+    draft.latitude,
+    draft.longitude,
+    provinces,
+    wards,
+  ])
+
   const pricingSummary = useMemo(() => {
     if (!pricingDone) return 'Chưa hoàn tất thông tin chính'
     return `${formatMoney(draft.price)} đ • ${draft.area} m²`
@@ -302,11 +372,12 @@ export default function PostPopUp1({ draft, onChange, onClose, onNext }: PostPop
   const pricePerM2 = draft.area > 0 ? draft.price / draft.area : 0
 
   return (
-    <div className="space-y-4">
-      <div>
+    <div className="flex min-h-full flex-col">
+      <div className="flex-1 space-y-4 pb-5">
+        <div>
         <p className="text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500">Golden Land</p>
-        <h2 className="mt-2 text-2xl font-bold text-zinc-900">Phase 1: Thông tin tin đăng</h2>
-      </div>
+        <h2 className="mt-2 text-2xl font-bold text-zinc-900">Bước 1: Thông tin tin đăng</h2>
+        </div>
 
       <Block
         title="Block 1: Vị trí"
@@ -314,10 +385,10 @@ export default function PostPopUp1({ draft, onChange, onClose, onNext }: PostPop
         onToggle={() => setActiveBlock((prev) => (prev === 1 ? null : 1))}
         summary={locationSummary}
         collapsedContent={
-          typeof draft.latitude === 'number' && typeof draft.longitude === 'number' ? (
+          mapPreviewSrc ? (
             <iframe
               title="map-preview-collapsed"
-              src={`https://maps.google.com/maps?q=${draft.latitude},${draft.longitude}&z=15&output=embed`}
+              src={mapPreviewSrc}
               className="h-44 w-full rounded-lg border-0"
               loading="lazy"
             />
@@ -454,10 +525,10 @@ export default function PostPopUp1({ draft, onChange, onClose, onNext }: PostPop
           />
         </div>
 
-        {typeof draft.latitude === 'number' && typeof draft.longitude === 'number' ? (
+        {mapPreviewSrc ? (
           <iframe
             title="map-preview"
-            src={`https://maps.google.com/maps?q=${draft.latitude},${draft.longitude}&z=15&output=embed`}
+            src={mapPreviewSrc}
             className="h-52 w-full rounded-lg border-0"
             loading="lazy"
           />
@@ -631,7 +702,7 @@ export default function PostPopUp1({ draft, onChange, onClose, onNext }: PostPop
         </Block>
       ) : null}
 
-      {unlockedBlock4 ? (
+        {unlockedBlock4 ? (
         <Block
           title="Block 4: Tiêu đề và mô tả"
           open={activeBlock === 4}
@@ -658,12 +729,13 @@ export default function PostPopUp1({ draft, onChange, onClose, onNext }: PostPop
           </div>
         </Block>
       ) : null}
+      </div>
 
-      <div className="flex items-center justify-between gap-3 pt-2">
+      <div className="sticky bottom-0 -mx-6 -mb-6 flex items-center justify-between gap-3 border-t border-zinc-100 bg-white px-6 py-4">
         <button
           type="button"
           onClick={onClose}
-          className="rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50"
+          className="rounded-full border border-zinc-300 px-6 py-3 text-sm font-bold text-zinc-700 transition hover:bg-zinc-50"
         >
           Đóng
         </button>
@@ -671,9 +743,9 @@ export default function PostPopUp1({ draft, onChange, onClose, onNext }: PostPop
           type="button"
           onClick={onNext}
           disabled={!canGoPhase2}
-          className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-700 disabled:opacity-60"
+          className="rounded-full bg-red-600 px-8 py-3 text-sm font-bold text-white transition hover:bg-red-700 disabled:opacity-60"
         >
-          Qua Phase 2
+          Tiếp theo
         </button>
       </div>
     </div>
