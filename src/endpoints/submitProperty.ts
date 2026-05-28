@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
 import sharp from 'sharp'
 import type { Endpoint } from 'payload'
+import type { Property } from '@/payload-types'
 
 const PROPERTIES_BUCKET = 'Properties'
 const MIN_IMAGES = 3
@@ -59,6 +60,13 @@ const NORMAL_DURATIONS = [15, 30, 60]
 const VIP_DURATIONS = [7, 15, 30]
 const VIP_PACKAGE_IDS = new Set(['2', '3'])
 
+const POST_TYPE_PRICING: Record<PostType, { dailyPrice: number; recommendedDuration: number }> = {
+  diamond: { dailyPrice: 321_100, recommendedDuration: 7 },
+  gold: { dailyPrice: 120_900, recommendedDuration: 7 },
+  silver: { dailyPrice: 66_000, recommendedDuration: 7 },
+  normal: { dailyPrice: 3_000, recommendedDuration: 15 },
+}
+
 const isPostType = (value: unknown): value is PostType => {
   return typeof value === 'string' && POST_TYPE_OPTIONS.includes(value as PostType)
 }
@@ -100,6 +108,12 @@ const getScheduledPublishAt = (value: unknown, canUseScheduledHour: boolean) => 
   return startOfDay(requested)
 }
 
+const getDiscountRate = (durationDays: number, recommendedDuration: number) => {
+  if (durationDays <= recommendedDuration) return 1
+  if (durationDays <= recommendedDuration * 2) return 0.95
+  return 0.9
+}
+
 export const submitProperty: Endpoint = {
   path: '/post-flow/submit',
   method: 'post',
@@ -135,9 +149,7 @@ export const submitProperty: Endpoint = {
       const isVipPost = postType !== 'normal'
       const allowedDurations = isVipPost ? VIP_DURATIONS : NORMAL_DURATIONS
       const requestedDuration = Number(draft.durationDays)
-      const durationDays = allowedDurations.includes(requestedDuration)
-        ? requestedDuration
-        : 15
+      const durationDays = allowedDurations.includes(requestedDuration) ? requestedDuration : 15
 
       const currentUser = await payload.findByID({
         collection: 'users',
@@ -147,10 +159,14 @@ export const submitProperty: Endpoint = {
         req,
         select: {
           activePackage: true,
+          package_id: true,
+          balance: true,
         },
       })
       const activePackageID = getRelationshipID(currentUser.activePackage)
-      const canUseScheduledHour = isVipPost && VIP_PACKAGE_IDS.has(activePackageID)
+      const userPackageID = getRelationshipID((currentUser as { package_id?: unknown }).package_id)
+      const canUseScheduledHour =
+        isVipPost || VIP_PACKAGE_IDS.has(activePackageID) || VIP_PACKAGE_IDS.has(userPackageID)
       const scheduledPublishAt = getScheduledPublishAt(
         draft.scheduledPublishAt,
         canUseScheduledHour,
@@ -160,53 +176,140 @@ export const submitProperty: Endpoint = {
       const status = scheduledPublishAt > new Date() ? 'pending' : 'active'
 
       if (imageFiles.length < MIN_IMAGES) {
-        return Response.json({ error: `Vui lòng tải lên tối thiểu ${MIN_IMAGES} ảnh` }, { status: 400 })
+        return Response.json(
+          { error: `Vui lòng tải lên tối thiểu ${MIN_IMAGES} ảnh` },
+          { status: 400 },
+        )
       }
 
       if (imageFiles.length > MAX_IMAGES) {
-        return Response.json({ error: `Chỉ được tải lên tối đa ${MAX_IMAGES} ảnh` }, { status: 400 })
+        return Response.json(
+          { error: `Chỉ được tải lên tối đa ${MAX_IMAGES} ảnh` },
+          { status: 400 },
+        )
       }
 
-      if (!draft.title?.trim() || !draft.description?.trim() || !draft.propertyType || !draft.price) {
+      if (
+        !draft.title?.trim() ||
+        !draft.description?.trim() ||
+        !draft.propertyType ||
+        !draft.price
+      ) {
         return Response.json({ error: 'Dữ liệu tin đăng chưa đầy đủ' }, { status: 400 })
       }
 
-      const property = await payload.create({
-        collection: 'properties',
-        data: {
-          title: draft.title.trim(),
-          description: draft.description.trim(),
-          propertyType: draft.propertyType,
-          price: Number(draft.price),
-          priceUnit: 'total',
-          area: toNumberOrUndefined(draft.area),
-          bedrooms: toNumberOrUndefined(draft.bedrooms),
-          bathrooms: toNumberOrUndefined(draft.bathrooms),
-          direction: toOptionalString(draft.direction),
-          legalStatus: toOptionalString(draft.legalStatus),
-          furnitureStatus: toOptionalString(draft.furnitureStatus),
-          provinceCode: toOptionalString(draft.provinceCode),
-          wardCode: toOptionalString(draft.wardCode),
-          street: toOptionalString(draft.street),
-          address: toOptionalString(draft.address),
-          project: toOptionalRelationshipID(draft.project),
-          latitude: typeof draft.latitude === 'number' ? draft.latitude : undefined,
-          longitude: typeof draft.longitude === 'number' ? draft.longitude : undefined,
-          postType,
-          durationDays,
-          scheduledPublishAt: scheduledPublishAt.toISOString(),
-          expiresAt: expiresAt.toISOString(),
-          status,
-          user: user.id,
-        } as any,
+      const postingPriceResult = await payload.find({
+        collection: 'posting-prices',
+        where: {
+          and: [
+            { postType: { equals: postType } },
+            { durationDays: { equals: durationDays } },
+            { isActive: { equals: true } },
+          ],
+        },
+        limit: 1,
         overrideAccess: false,
         req,
       })
 
+      const postingPrice = postingPriceResult.docs[0]
+      const pricingConfig = POST_TYPE_PRICING[postType]
+
+      const originalAmount = postingPrice
+        ? Number(postingPrice.price || 0)
+        : Math.round(
+            pricingConfig.dailyPrice *
+              getDiscountRate(durationDays, pricingConfig.recommendedDuration) *
+              durationDays,
+          )
+      const totalAmount = Math.max(0, originalAmount)
+
+      if (!postingPrice && originalAmount <= 0) {
+        return Response.json({ error: 'Không tìm thấy giá đăng tin phù hợp' }, { status: 400 })
+      }
+      const currentBalance = Number(currentUser.balance || 0)
+
+      if (currentBalance < totalAmount) {
+        return Response.json(
+          { error: 'Số dư không đủ', required: totalAmount, balance: currentBalance },
+          { status: 400 },
+        )
+      }
+
       const supabase = createClient(supabaseUrl, supabaseKey)
       const uploadedPaths: string[] = []
+      let orderId: number | null = null
+      let propertyId: number | null = null
+      let balanceDeducted = false
 
       try {
+        const order = await payload.create({
+          collection: 'orders',
+          data: {
+            orderCode: '',
+            user: user.id,
+            orderType: 'single_post',
+            ...(postingPrice ? { postingPrice: postingPrice.id } : {}),
+            originalAmount,
+            discountAmount: 0,
+            promotionDiscount: 0,
+            totalAmount,
+            paymentMethod: 'balance',
+            status: 'paid',
+            paidAt: new Date().toISOString(),
+          },
+          draft: false,
+          overrideAccess: false,
+          req,
+        })
+        orderId = order.id
+
+        await payload.update({
+          collection: 'users',
+          id: user.id,
+          data: {
+            balance: currentBalance - totalAmount,
+          },
+          overrideAccess: true,
+          req,
+        })
+        balanceDeducted = true
+
+        const property = await payload.create({
+          collection: 'properties',
+          data: {
+            title: draft.title.trim(),
+            description: draft.description.trim(),
+            propertyType: draft.propertyType as Property['propertyType'],
+            price: Number(draft.price),
+            priceUnit: 'total',
+            area: toNumberOrUndefined(draft.area),
+            bedrooms: toNumberOrUndefined(draft.bedrooms),
+            bathrooms: toNumberOrUndefined(draft.bathrooms),
+            direction: toOptionalString(draft.direction) as Property['direction'] | undefined,
+            legalStatus: toOptionalString(draft.legalStatus) as Property['legalStatus'] | undefined,
+            furnitureStatus: toOptionalString(draft.furnitureStatus) as
+              | Property['furnitureStatus']
+              | undefined,
+            provinceCode: toOptionalString(draft.provinceCode),
+            wardCode: toOptionalString(draft.wardCode),
+            street: toOptionalString(draft.street),
+            address: toOptionalString(draft.address),
+            project: toOptionalRelationshipID(draft.project),
+            latitude: typeof draft.latitude === 'number' ? draft.latitude : undefined,
+            longitude: typeof draft.longitude === 'number' ? draft.longitude : undefined,
+            postType,
+            durationDays,
+            scheduledPublishAt: scheduledPublishAt.toISOString(),
+            expiresAt: expiresAt.toISOString(),
+            status,
+            user: user.id,
+          },
+          overrideAccess: false,
+          req,
+        })
+        propertyId = property.id
+
         const images = await Promise.all(
           imageFiles.map(async (file, index) => {
             const arrayBuffer = await file.arrayBuffer()
@@ -246,18 +349,55 @@ export const submitProperty: Endpoint = {
           req,
         })
 
+        await payload.update({
+          collection: 'orders',
+          id: order.id,
+          data: {
+            property: property.id,
+          },
+          overrideAccess: true,
+          req,
+        })
+
         return Response.json({ property: updatedProperty })
       } catch (uploadError) {
         if (uploadedPaths.length > 0) {
           await supabase.storage.from(PROPERTIES_BUCKET).remove(uploadedPaths)
         }
 
-        await payload.delete({
-          collection: 'properties',
-          id: property.id,
-          overrideAccess: false,
-          req,
-        })
+        if (propertyId) {
+          await payload.delete({
+            collection: 'properties',
+            id: propertyId,
+            overrideAccess: false,
+            req,
+          })
+        }
+
+        if (balanceDeducted) {
+          await payload.update({
+            collection: 'users',
+            id: user.id,
+            data: {
+              balance: currentBalance,
+            },
+            overrideAccess: true,
+            req,
+          })
+        }
+
+        if (orderId) {
+          await payload.update({
+            collection: 'orders',
+            id: orderId,
+            data: {
+              status: balanceDeducted ? 'refunded' : 'cancelled',
+              adminNote: 'Rollback do tao tin dang khong thanh cong',
+            },
+            overrideAccess: true,
+            req,
+          })
+        }
 
         throw uploadError
       }

@@ -412,6 +412,21 @@ export const Properties: CollectionConfig = {
                                 condition: (data) => data?.status === 'rejected',
                             },
                         },
+                        {
+                            name: 'label',
+                            type: 'select',
+                            defaultValue: 'normal',
+                            admin: {
+                                hidden: true,
+                                description: 'Deprecated: giữ cột cũ để tránh xoá dữ liệu, dùng postType thay thế.',
+                            },
+                            options: [
+                                { label: 'Thường', value: 'normal' },
+                                { label: 'VIP', value: 'vip' },
+                                { label: 'Hot', value: 'hot' },
+                                { label: 'Premium', value: 'premium' },
+                            ],
+                        },
                     ],
                 },
 

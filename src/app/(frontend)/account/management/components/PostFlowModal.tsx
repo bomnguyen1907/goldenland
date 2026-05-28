@@ -37,16 +37,23 @@ export default function PostFlowModal({ isOpen, onClose }: PostFlowModalProps) {
     }
   }, [])
 
+  useEffect(() => {
+    if (!isOpen) return
+
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+
+    return () => {
+      document.body.style.overflow = previousOverflow
+    }
+  }, [isOpen])
+
   if (!isOpen) return null
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/45 p-4">
-      <div className="flex h-[90vh] w-full max-w-2xl flex-col rounded-2xl border border-zinc-200 bg-white p-6 shadow-2xl">
+      <div className="flex h-[90vh] w-[min(96vw,1400px)] flex-col overflow-x-hidden rounded-2xl border border-zinc-200 bg-white p-6 shadow-2xl">
         <div className="mb-5 space-y-2">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-[0.16em] text-zinc-500">Tiến trình</span>
-            <span className="text-xs font-semibold uppercase tracking-[0.16em] text-zinc-500">Phase {step}/3</span>
-          </div>
           <div className="h-1.5 w-full overflow-hidden rounded-full bg-zinc-200">
             <div
               className={`h-full bg-red-600 transition-all ${
@@ -56,7 +63,7 @@ export default function PostFlowModal({ isOpen, onClose }: PostFlowModalProps) {
           </div>
         </div>
 
-        <div className="min-h-0 flex-1 overflow-y-auto pr-1">
+        <div className="min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto pr-1">
           {step === 1 ? (
             <PostPopUp1
               draft={draft}

@@ -67,25 +67,26 @@ export default function PostPopUp2({ draft, onChange, onBack, onClose, onNext }:
   }
 
   return (
-    <div className="space-y-5">
-      <div>
+    <div className="flex min-h-full flex-col">
+      <div className="flex-1 space-y-5 pb-5">
+        <div>
         <p className="text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500">Golden Land</p>
         <h2 className="mt-2 text-2xl font-bold text-zinc-900">Bước 2: Hình ảnh</h2>
         <p className="mt-2 text-sm text-zinc-600">
           Tải ảnh từ máy tính để khách xem rõ tình trạng bất động sản trước khi liên hệ.
         </p>
-      </div>
+        </div>
 
-      <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4 text-sm text-zinc-700">
+        <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4 text-sm text-zinc-700">
         <p className="font-semibold text-zinc-900">Yêu cầu ảnh</p>
         <div className="mt-2 space-y-1">
           <p>- Tối thiểu {MIN_IMAGES} ảnh, tối đa {MAX_IMAGES} ảnh.</p>
           <p>- Ảnh đầu tiên sẽ là ảnh đại diện.</p>
           <p>- Hỗ trợ JPG, PNG, WEBP và các định dạng ảnh phổ biến.</p>
         </div>
-      </div>
+        </div>
 
-      <div>
+        <div>
         <div className="mb-2 flex items-center justify-between gap-3">
           <h3 className="text-sm font-semibold text-zinc-900">
             Ảnh đã tải lên <span className="font-normal text-zinc-500">({draft.images.length}/{MAX_IMAGES})</span>
@@ -127,7 +128,7 @@ export default function PostPopUp2({ draft, onChange, onBack, onClose, onNext }:
           >
             <ImagePlus className="h-10 w-10 text-zinc-400" />
             <span className="mt-3 text-sm font-semibold text-zinc-700">Chọn ảnh từ máy</span>
-            <span className="mt-1 text-xs text-zinc-500">Cần ít nhất {MIN_IMAGES} ảnh để sang Phase 3</span>
+            <span className="mt-1 text-xs text-zinc-500">Cần ít nhất {MIN_IMAGES} ảnh để sang bước tiếp theo</span>
           </button>
         ) : (
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
@@ -167,26 +168,27 @@ export default function PostPopUp2({ draft, onChange, onBack, onClose, onNext }:
         {error ? <p className="mt-2 text-sm text-red-600">{error}</p> : null}
         {!canGoPhase3 ? (
           <p className="mt-2 text-xs text-zinc-500">
-            Cần thêm {Math.max(MIN_IMAGES - draft.images.length, 0)} ảnh để mở Phase 3.
+            Cần thêm {Math.max(MIN_IMAGES - draft.images.length, 0)} ảnh để mở bước tiếp theo.
           </p>
         ) : (
-          <p className="mt-2 text-xs font-medium text-emerald-600">Đủ ảnh, bạn có thể sang Phase 3.</p>
+          <p className="mt-2 text-xs font-medium text-emerald-600">Đủ ảnh, bạn có thể tiếp tục.</p>
         )}
+        </div>
       </div>
 
-      <div className="flex items-center justify-between gap-3 pt-2">
+      <div className="sticky bottom-0 -mx-6 -mb-6 flex items-center justify-between gap-3 border-t border-zinc-100 bg-white px-6 py-4">
         <div className="flex items-center gap-2">
           <button
             type="button"
             onClick={onBack}
-            className="rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50"
+            className="rounded-full border border-zinc-300 px-6 py-3 text-sm font-bold text-zinc-700 transition hover:bg-zinc-50"
           >
             Quay lại
           </button>
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50"
+            className="rounded-full border border-zinc-300 px-6 py-3 text-sm font-bold text-zinc-700 transition hover:bg-zinc-50"
           >
             Đóng
           </button>
@@ -195,9 +197,9 @@ export default function PostPopUp2({ draft, onChange, onBack, onClose, onNext }:
           type="button"
           onClick={onNext}
           disabled={!canGoPhase3}
-          className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:bg-zinc-200 disabled:text-zinc-500"
+          className="rounded-full bg-red-600 px-8 py-3 text-sm font-bold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:bg-zinc-200 disabled:text-zinc-500"
         >
-          Qua Phase 3
+          Tiếp theo
         </button>
       </div>
     </div>
