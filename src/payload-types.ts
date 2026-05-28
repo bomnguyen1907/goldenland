@@ -429,6 +429,10 @@ export interface Property {
   verifiedBy?: (number | null) | User;
   verifiedAt?: string | null;
   rejectionReason?: string | null;
+  /**
+   * Deprecated: giữ cột cũ để tránh xoá dữ liệu, dùng postType thay thế.
+   */
+  label?: ('normal' | 'vip' | 'hot' | 'premium') | null;
   seoTitle?: string | null;
   seoDescription?: string | null;
   seoKeywords?: string | null;
@@ -1198,6 +1202,7 @@ export interface PropertiesSelect<T extends boolean = true> {
   verifiedBy?: T;
   verifiedAt?: T;
   rejectionReason?: T;
+  label?: T;
   seoTitle?: T;
   seoDescription?: T;
   seoKeywords?: T;
