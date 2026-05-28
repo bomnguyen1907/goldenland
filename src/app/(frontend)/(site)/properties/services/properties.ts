@@ -3,6 +3,8 @@ import type { AxiosRequestConfig } from 'axios'
 import { buildQuery } from '@/app/lib/query'
 import { getJSON } from '@/app/lib/http'
 
+const VIP_POST_TYPES = ['silver', 'gold', 'diamond']
+
 type PayloadFindResponse<T> = {
   docs: T[]
 }
@@ -159,7 +161,7 @@ export async function fetchForYouProperties(
 
   const vipQuery = buildQuery({
     where: {
-      and: [...baseConditions, { postType: { equals: 'vip' } }],
+      and: [...baseConditions, { postType: { in: VIP_POST_TYPES } }],
     },
     sort: '-createdAt',
     limit,
@@ -179,7 +181,7 @@ export async function fetchForYouProperties(
 
   const normalQuery = buildQuery({
     where: {
-      and: [...baseConditions, { postType: { not_equals: 'vip' } }],
+      and: [...baseConditions, { postType: { equals: 'normal' } }],
     },
     sort: '-createdAt',
     limit: remaining,

@@ -1,3 +1,9 @@
+export type PostDraftImage = {
+  file: File
+  previewUrl: string
+  sort: number
+}
+
 export type PostDraft = {
   provinceCode: string
   wardCode: string
@@ -16,6 +22,7 @@ export type PostDraft = {
   bathrooms: number
   title: string
   description: string
+  images: PostDraftImage[]
 }
 
 export const INITIAL_POST_DRAFT: PostDraft = {
@@ -36,4 +43,5 @@ export const INITIAL_POST_DRAFT: PostDraft = {
   bathrooms: 0,
   title: '',
   description: '',
+  images: [],
 }

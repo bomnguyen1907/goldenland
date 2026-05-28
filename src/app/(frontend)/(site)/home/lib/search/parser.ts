@@ -187,7 +187,14 @@ export function parseSearch(input: string, tab: SearchTab): ParsedSearchResult {
     furnitureStatus: PROPERTY_ATTRIBUTE_TAGS.find(
       (tag) => tag.filter?.furnitureStatus === filters.furnitureStatus,
     )?.label,
-    postType: filters.postType === 'vip' ? 'Tin VIP' : undefined,
+    postType:
+      filters.postType === 'silver'
+        ? 'VIP bạc'
+        : filters.postType === 'gold'
+          ? 'VIP vàng'
+          : filters.postType === 'diamond'
+            ? 'VIP kim cương'
+            : undefined,
   }
 
   ;(

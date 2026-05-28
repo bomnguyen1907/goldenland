@@ -167,7 +167,10 @@ export const parseFurnitureStatus = (
 
 export const parsePostType = (normalizedInput: string): ParsedSearchFilters['postType'] => {
   const match = normalizedInput.match(POST_TYPE_PARSE_RE)?.[0] ?? ''
-  if (/vip/u.test(match)) return 'vip'
+  if (/kim\s*cuong|kim\s*cương/u.test(match)) return 'diamond'
+  if (/vang|vàng/u.test(match)) return 'gold'
+  if (/bac|bạc/u.test(match)) return 'silver'
+  if (/vip/u.test(match)) return 'diamond'
   return undefined
 }
 

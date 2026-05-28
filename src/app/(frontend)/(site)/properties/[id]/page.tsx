@@ -94,7 +94,9 @@ const FURNITURE_STATUS_LABELS: Record<string, string> = {
 
 const POST_TYPE_LABELS: Record<string, string> = {
   normal: 'Tin thường',
-  vip: 'Tin VIP',
+  silver: 'VIP bạc',
+  gold: 'VIP vàng',
+  diamond: 'VIP kim cương',
 }
 
 const PROJECT_SALE_STATUS_LABELS: Record<string, string> = {

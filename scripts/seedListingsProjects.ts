@@ -22,7 +22,7 @@ type SeedListing = {
   title: string
   slug: string
   description: string
-  postType: 'normal' | 'vip'
+  postType: 'normal' | 'silver' | 'gold' | 'diamond'
   price: number
   priceUnit: 'total' | 'per_m2' | 'per_month' | 'negotiable'
   propertyType:
@@ -44,7 +44,6 @@ type SeedListing = {
   wardCode: string
   address: string
   status: 'draft' | 'pending' | 'active' | 'expired' | 'sold' | 'rejected'
-  label: 'normal' | 'vip' | 'hot' | 'premium'
   projectSlug?: string
 }
 
@@ -106,7 +105,6 @@ const seedProjects = [
   },
 ] satisfies SeedProject[]
 
-const listingLabels: SeedListing['label'][] = ['normal', 'vip', 'hot', 'premium']
 
 const buildSeedListings = (projects: SeedProject[]): SeedListing[] => {
   const listings: SeedListing[] = []
@@ -119,7 +117,7 @@ const buildSeedListings = (projects: SeedProject[]): SeedListing[] => {
         title: `Can ho du an ${project.name} block ${String.fromCharCode(65 + i)}`,
         slug: `can-ho-${project.slug}-${i + 1}`,
         description: `Can ho thuoc du an ${project.name}, phu hop o va dau tu cho thue.`,
-        postType: i % 3 === 0 ? 'vip' : 'normal',
+        postType: i % 3 === 0 ? 'diamond' : 'normal',
         price: 2200 + apartmentCounter * 180,
         priceUnit: i % 2 === 0 ? 'total' : 'per_month',
         propertyType: 'apartment',
@@ -131,7 +129,6 @@ const buildSeedListings = (projects: SeedProject[]): SeedListing[] => {
         wardCode: project.wardCode,
         address: `${project.address} - Toa ${String.fromCharCode(65 + i)}`,
         status: 'active',
-        label: listingLabels[apartmentCounter % listingLabels.length],
         projectSlug: project.slug,
       })
 
@@ -173,7 +170,7 @@ const buildSeedListings = (projects: SeedProject[]): SeedListing[] => {
       title: `Nha pho trung tam khu vuc ${i + 1}`,
       slug: `nha-pho-tu-do-${i + 1}`,
       description: 'Nha pho khong thuoc du an, phap ly ro rang, giao thong thuan tien.',
-      postType: i % 4 === 0 ? 'vip' : 'normal',
+      postType: i % 4 === 0 ? 'gold' : 'normal',
       price: 4800 + i * 320,
       priceUnit: i % 3 === 0 ? 'per_month' : 'total',
       propertyType: 'house',
@@ -185,7 +182,6 @@ const buildSeedListings = (projects: SeedProject[]): SeedListing[] => {
       wardCode: location.wardCode,
       address: `${location.addressPrefix} - Tuyen duong so ${i + 1}`,
       status: 'active',
-      label: listingLabels[i % listingLabels.length],
     })
   }
 
@@ -196,7 +192,7 @@ const buildSeedListings = (projects: SeedProject[]): SeedListing[] => {
       title: `Dat nen phap ly day du khu ${i + 1}`,
       slug: `dat-nen-tu-do-${i + 1}`,
       description: 'Dat nen nha dat tu do, phu hop dau tu trung han va dai han.',
-      postType: i % 5 === 0 ? 'vip' : 'normal',
+      postType: i % 5 === 0 ? 'silver' : 'normal',
       price: 2800 + i * 260,
       priceUnit: 'total',
       propertyType: 'land',
@@ -208,7 +204,6 @@ const buildSeedListings = (projects: SeedProject[]): SeedListing[] => {
       wardCode: location.wardCode,
       address: `${location.addressPrefix} - Lo dat ${i + 11}`,
       status: 'active',
-      label: listingLabels[(i + 2) % listingLabels.length],
     })
   }
 

@@ -1,6 +1,10 @@
 import type { CollectionConfig } from 'payload'
 
 import { authenticated, ownerOrAdmin, statusOrOwnerOrAdmin, adminOnlyField } from '@/access'
+import {
+    refreshScheduledProperties,
+    SCHEDULE_CONTEXT_KEY,
+} from '@/hooks/refreshScheduledProperties'
 
 const normalizeProjectID = (project: unknown): string | null => {
     if (typeof project === 'string' || typeof project === 'number') return String(project)
@@ -91,7 +95,9 @@ export const Properties: CollectionConfig = {
                             defaultValue: 'normal',
                             options: [
                                 { label: 'Thường', value: 'normal' },
-                                { label: 'VIP', value: 'vip' },
+                                { label: 'VIP Bạc', value: 'silver' },
+                                { label: 'VIP Vàng', value: 'gold' },
+                                { label: 'VIP Kim Cương', value: 'diamond' },
                             ],
                         },
                         {
@@ -344,15 +350,36 @@ export const Properties: CollectionConfig = {
                                     ],
                                 },
                                 {
-                                    name: 'label',
-                                    type: 'select',
-                                    defaultValue: 'normal',
-                                    options: [
-                                        { label: 'Thường', value: 'normal' },
-                                        { label: 'VIP', value: 'vip' },
-                                        { label: 'Hot', value: 'hot' },
-                                        { label: 'Premium', value: 'premium' },
-                                    ],
+                                    name: 'durationDays',
+                                    type: 'number',
+                                    defaultValue: 15,
+                                    min: 1,
+                                    admin: { description: 'Số ngày hiển thị của tin đăng' },
+                                },
+                            ],
+                        },
+                        {
+                            type: 'row',
+                            fields: [
+                                {
+                                    name: 'scheduledPublishAt',
+                                    type: 'date',
+                                    admin: {
+                                        date: {
+                                            pickerAppearance: 'dayAndTime',
+                                        },
+                                        description: 'Tin pending sẽ tự chuyển active khi tới thời điểm này',
+                                    },
+                                },
+                                {
+                                    name: 'expiresAt',
+                                    type: 'date',
+                                    admin: {
+                                        date: {
+                                            pickerAppearance: 'dayAndTime',
+                                        },
+                                        description: 'Tin active sẽ tự chuyển expired khi quá thời điểm này',
+                                    },
                                 },
                             ],
                         },
@@ -383,7 +410,6 @@ export const Properties: CollectionConfig = {
                             type: 'textarea',
                             admin: {
                                 condition: (data) => data?.status === 'rejected',
-                                description: 'Lý do từ chối',
                             },
                         },
                     ],
@@ -398,12 +424,11 @@ export const Properties: CollectionConfig = {
                         {
                             name: 'seoTitle',
                             type: 'text',
-                            maxLength: 70,
+                            maxLength: 255,
                         },
                         {
                             name: 'seoDescription',
                             type: 'textarea',
-                            maxLength: 160,
                         },
                         {
                             name: 'seoKeywords',
@@ -445,6 +470,15 @@ export const Properties: CollectionConfig = {
     // Hooks
     // ============================
     hooks: {
+        beforeOperation: [
+            async ({ operation, req, context }) => {
+                if (context?.[SCHEDULE_CONTEXT_KEY]) return
+
+                if (operation === 'find' || operation === 'findByID' || operation === 'count') {
+                    await refreshScheduledProperties(req)
+                }
+            },
+        ],
         beforeChange: [
             async ({ data, originalDoc, req }) => {
                 // Tự sinh slug từ title

@@ -93,7 +93,7 @@ async function seed() {
         data: {
           title,
           description: `${getRandomItem(DESCRIPTIONS)} ${getRandomItem(DESCRIPTIONS)}`,
-          postType: getRandomBoolean() ? 'normal' : 'vip',
+          postType: getRandomBoolean() ? 'normal' : 'diamond',
           price,
           priceUnit,
           propertyType: propertyType as any,
@@ -107,7 +107,6 @@ async function seed() {
           furnitureStatus: getRandomItem(FURNITURE_STATUSES) as any,
           address: `Số ${getRandomInt(1, 100)}, Đường Mẫu, Quận Mẫu, TP Mẫu`,
           status: 'active',
-          label: getRandomItem(['normal', 'vip', 'hot', 'premium']) as any,
           user: userId,
           project: projectId,
           images,
