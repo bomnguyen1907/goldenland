@@ -75,14 +75,14 @@ export function PropertyCard({ property }: PropertyCardProps) {
           )}
         </div>
         <div className="w-1/3 flex flex-col gap-1">
-          {property.images?.slice(1, 3).map((img, idx) => (
+          {property.images?.slice(1, 3).map((image, idx) => (
             <div key={idx} className="h-1/2 relative">
               <Image
                 alt={`${property.title} ${idx + 2}`}
                 className="object-cover"
                 fill
                 sizes="(min-width: 768px) 23vw, 33vw"
-                src={typeof img.image === 'string' ? img.image : FALLBACK_IMAGE}
+                src={typeof image.image === 'string' ? image.image : FALLBACK_IMAGE}
                 unoptimized
               />
               {idx === 1 && (property.images?.length || 0) > 3 && (
