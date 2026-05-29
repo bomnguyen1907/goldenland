@@ -527,6 +527,37 @@ export default function PropertiesPage() {
     )
   }
 
+  const handleSidebarPriceRangeSelect = (rangeId: string) => {
+    setFilters((previous) => ({
+      ...previous,
+      priceRangeIds: [rangeId],
+      minPriceInput: '',
+      maxPriceInput: '',
+    }))
+    setPage(1)
+  }
+
+  const handleSidebarAreaRangeSelect = (rangeId: string) => {
+    setFilters((previous) => ({
+      ...previous,
+      areaRangeIds: [rangeId],
+      minAreaInput: '',
+      maxAreaInput: '',
+    }))
+    setPage(1)
+  }
+
+  const handleSidebarRegionSelect = (provinceCode: string) => {
+    setFilters((previous) => ({
+      ...previous,
+      provinceCodes: [provinceCode],
+      wardCodes: [],
+      streets: [],
+      projectIds: [],
+    }))
+    setPage(1)
+  }
+
   const handleSearch = () => {
     const parsed = parseSearch(keywordInput, 'property')
     const nextKeyword = parsed.keyword.trim()
@@ -635,10 +666,16 @@ export default function PropertiesPage() {
           />
         </div>
         <PropertiesSidebar
-          areaRanges={areaRangeOptions.map((range) => range.label)}
+          areaRanges={areaRangeOptions.map((range) => ({ id: range.id, label: range.label }))}
           news={newsItems}
-          priceRanges={priceRangeOptions.map((range) => range.label)}
-          regions={regionOptions.map((region) => region.label)}
+          onAreaRangeSelect={handleSidebarAreaRangeSelect}
+          onPriceRangeSelect={handleSidebarPriceRangeSelect}
+          onRegionSelect={handleSidebarRegionSelect}
+          priceRanges={priceRangeOptions.map((range) => ({ id: range.id, label: range.label }))}
+          regions={regionOptions.map((region) => ({ value: region.value, label: region.label }))}
+          selectedAreaRangeIds={filters.areaRangeIds}
+          selectedPriceRangeIds={filters.priceRangeIds}
+          selectedRegionCodes={filters.provinceCodes}
         />
       </div>
     </main>

@@ -1,7 +1,5 @@
 import type { Project, Property } from '@/payload-types'
 import { FALLBACK_IMAGE, formatLocation, formatLocationByCodes, formatPrice } from '../lib/utils'
-import config from '@payload-config'
-import { getPayload } from 'payload'
 import { notFound } from 'next/navigation'
 import { Breadcrumb, HeaderActions, LocationLine, PropertyStats } from './components/DetailHeader'
 import { PropertyGallery } from './components/PropertyGallery'
@@ -19,6 +17,7 @@ import { ForYouSection } from './components/ForYouSection'
 import { FavoriteActionButton } from './components/FavoriteActionButton'
 import type { PropertyItem } from '../../components/PropertyGridItem'
 import { fetchForYouProperties } from '../services/properties'
+import { fetchPropertyDetailData } from './services/propertyDetail'
 
 type PageProps = {
   params: Promise<{
@@ -194,43 +193,9 @@ export default async function PropertyDetailPage({ params }: PageProps) {
     | undefined
 
   try {
-    const payload = await getPayload({ config })
-    const foundProperty = await payload.findByID({
-      collection: 'properties',
-      id,
-      depth: 2,
-      overrideAccess: false,
-    })
-
-    property = foundProperty
-
-    const userId =
-      typeof foundProperty.user === 'object' && foundProperty.user
-        ? foundProperty.user.id
-        : foundProperty.user
-
-    if (userId) {
-      const user = await payload.findByID({
-        collection: 'users',
-        id: String(userId),
-        depth: 0,
-        // Intentional: property detail sidebar needs public contact info.
-        overrideAccess: true,
-        select: {
-          fullName: true,
-          phone: true,
-          avatar_id: true,
-          email: true,
-        },
-      })
-
-      sidebarUser = {
-        fullName: user.fullName,
-        phone: user.phone,
-        avatar_id: user.avatar_id,
-        email: user.email,
-      }
-    }
+    const detailData = await fetchPropertyDetailData(id)
+    property = detailData.property
+    sidebarUser = detailData.sidebarUser
   } catch {
     notFound()
   }
@@ -308,7 +273,7 @@ export default async function PropertyDetailPage({ params }: PageProps) {
   )
 
   return (
-    <main className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8 mt-8">
+    <main className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-8">
       <Breadcrumb title={property.title} />
       <HeaderActions title={property.title} actions={headerActions} />
       <LocationLine locationText={locationText} />
