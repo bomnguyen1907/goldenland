@@ -1,9 +1,10 @@
 'use client'
 
 import { useRouter, useSearchParams } from 'next/navigation'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { formatDateTime, relativeTime, reportReasonLabel } from '../../../lib/format'
 import ReportDetailDrawer from './ReportDetailDrawer'
+import type { ReportStatus } from '../actions'
 
 type ReportItem = {
   id: string | number
@@ -57,6 +58,13 @@ const statusLabels: Record<string, string> = {
   dismissed: 'Bỏ qua',
 }
 
+const actionFeedback: Record<ReportStatus, { msg: string; tab: ReportStatus; icon: string; color: string }> = {
+  reviewing: { msg: 'Đã chuyển sang Đang xem xét', tab: 'reviewing', icon: 'schedule', color: 'bg-blue-50 border-blue-200 text-blue-800' },
+  resolved:  { msg: 'Đã xử lý xong', tab: 'resolved',  icon: 'check_circle', color: 'bg-emerald-50 border-emerald-200 text-emerald-800' },
+  dismissed: { msg: 'Đã bỏ qua báo cáo', tab: 'dismissed', icon: 'do_not_disturb', color: 'bg-slate-50 border-slate-200 text-slate-700' },
+  pending:   { msg: '', tab: 'pending', icon: '', color: '' },
+}
+
 const reasonBadge: Record<string, string> = {
   scam: 'bg-rose-100 text-rose-700',
   wrong_info: 'bg-orange-100 text-orange-700',
@@ -72,8 +80,15 @@ export default function ReportsTable({
   const router = useRouter()
   const sp = useSearchParams()
   const [detailId, setDetailId] = useState<string | number | null>(null)
+  const [lastAction, setLastAction] = useState<ReportStatus | null>(null)
 
   const detailItem = detailId !== null ? items.find((i) => String(i.id) === String(detailId)) ?? null : null
+
+  useEffect(() => {
+    if (!lastAction) return
+    const t = setTimeout(() => setLastAction(null), 5000)
+    return () => clearTimeout(t)
+  }, [lastAction])
 
   const goToPage = (p: number) => {
     const next = new URLSearchParams(sp?.toString() || '')
@@ -88,9 +103,25 @@ export default function ReportsTable({
     router.push(`/quan-tri/bao-cao?${next.toString()}`)
   }
 
+  const feedback = lastAction && lastAction !== 'pending' ? actionFeedback[lastAction] : null
+
   if (items.length === 0) {
     return (
       <div className="space-y-3">
+        {feedback && (
+          <div className={`flex items-center justify-between px-4 py-2.5 rounded-lg border text-sm ${feedback.color}`}>
+            <div className="flex items-center gap-2">
+              <span className="material-symbols-outlined text-[18px]">{feedback.icon}</span>
+              <span>{feedback.msg} — Xem tại tab</span>
+              <a href={`/quan-tri/bao-cao?status=${feedback.tab}`} className="font-semibold underline underline-offset-2">
+                {statusLabels[feedback.tab]}
+              </a>
+            </div>
+            <button onClick={() => setLastAction(null)} className="opacity-60 hover:opacity-100">
+              <span className="material-symbols-outlined text-[16px]">close</span>
+            </button>
+          </div>
+        )}
         <div className="flex items-center justify-between">
           <select
             value={currentReason || ''}
@@ -113,6 +144,20 @@ export default function ReportsTable({
   return (
     <>
       <div className="space-y-3">
+        {feedback && (
+          <div className={`flex items-center justify-between px-4 py-2.5 rounded-lg border text-sm ${feedback.color}`}>
+            <div className="flex items-center gap-2">
+              <span className="material-symbols-outlined text-[18px]">{feedback.icon}</span>
+              <span>{feedback.msg} — Xem tại tab</span>
+              <a href={`/quan-tri/bao-cao?status=${feedback.tab}`} className="font-semibold underline underline-offset-2">
+                {statusLabels[feedback.tab]}
+              </a>
+            </div>
+            <button onClick={() => setLastAction(null)} className="opacity-60 hover:opacity-100">
+              <span className="material-symbols-outlined text-[16px]">close</span>
+            </button>
+          </div>
+        )}
         <div className="flex items-center justify-between">
           <select
             value={currentReason || ''}
@@ -226,8 +271,9 @@ export default function ReportsTable({
         <ReportDetailDrawer
           report={detailItem}
           onClose={() => setDetailId(null)}
-          onUpdated={() => {
+          onUpdated={(newStatus) => {
             setDetailId(null)
+            setLastAction(newStatus)
             router.refresh()
           }}
         />

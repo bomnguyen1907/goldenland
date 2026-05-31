@@ -23,3 +23,26 @@ export async function updateReportStatus(
   })
   revalidatePath('/quan-tri/bao-cao')
 }
+
+export async function hideProperty(propertyId: number | string) {
+  const payload = await getPayload({ config: await config })
+  await payload.update({
+    collection: 'properties',
+    id: propertyId,
+    data: { status: 'rejected' },
+    overrideAccess: true,
+  })
+  revalidatePath('/quan-tri/bao-cao')
+  revalidatePath('/quan-tri/tin-dang')
+}
+
+export async function deleteProperty(propertyId: number | string) {
+  const payload = await getPayload({ config: await config })
+  await payload.delete({
+    collection: 'properties',
+    id: propertyId,
+    overrideAccess: true,
+  })
+  revalidatePath('/quan-tri/bao-cao')
+  revalidatePath('/quan-tri/tin-dang')
+}
