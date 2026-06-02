@@ -119,9 +119,9 @@ export const Users: CollectionConfig = {
           type: 'select',
           options: [
             { label: 'Tin thường', value: 'normal' },
-            { label: 'VIP bạc', value: 'silver' },
-            { label: 'VIP vàng', value: 'gold' },
-            { label: 'VIP kim cương', value: 'diamond' },
+            { label: 'Tin Vip', value: 'vip' },
+            // { label: 'VIP vàng', value: 'gold' },
+            // { label: 'VIP kim cương', value: 'diamond' },
           ],
           admin: { description: 'Loại tin được áp dụng' },
         },

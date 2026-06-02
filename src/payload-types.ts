@@ -198,7 +198,7 @@ export interface User {
         /**
          * Loại tin được áp dụng
          */
-        appliedFor?: ('normal' | 'silver' | 'gold' | 'diamond') | null;
+        appliedFor?: ('normal' | 'vip') | null;
         id?: string | null;
       }[]
     | null;
@@ -303,7 +303,7 @@ export interface Package {
         /**
          * Loại tin được áp dụng voucher
          */
-        appliedFor?: ('normal' | 'silver' | 'gold' | 'diamond') | null;
+        appliedFor?: ('normal' | 'vip') | null;
         id?: string | null;
       }[]
     | null;
