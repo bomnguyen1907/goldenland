@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { CalendarDays, CheckCircle2, Clock3, Loader2 } from 'lucide-react'
+import { CalendarDays, CheckCircle2, ChevronDown, Clock3, Loader2 } from 'lucide-react'
 import { useSelector } from 'react-redux'
 import type { RootState } from '@/app/store'
 import { selectUser } from '@/app/store/slices/authSlice'
@@ -24,12 +24,10 @@ type DurationOption = {
 }
 
 type VoucherOption = {
-  id: number
-  code: string
-  discountType: 'fixed' | 'percent' | 'free_post'
-  discountValue?: number | null
-  maxDiscount?: number | null
-  expiresAt?: string | null
+  id: string
+  quantity: number
+  discountValue: number
+  appliedFor: 'normal' | 'vip'
 }
 
 type PostTypeOption = {
@@ -123,17 +121,22 @@ const mapPostingPriceToPostType = (doc: PostingPriceDoc): PostTypeOption | null 
   }
 }
 
-const formatVoucherLabel = (voucher: VoucherOption) => {
-  if (voucher.discountType === 'fixed') {
-    return `Giảm ${formatMoney(voucher.discountValue || 0)} đ`
-  }
+const getVoucherTypeLabel = (appliedFor: VoucherOption['appliedFor']) =>
+  appliedFor === 'vip' ? 'Tin VIP' : 'Tin thường'
 
-  if (voucher.discountType === 'percent') {
-    const maxDiscount = voucher.maxDiscount ? ` · Tối đa ${formatMoney(voucher.maxDiscount)} đ` : ''
-    return `Giảm ${voucher.discountValue || 0}%${maxDiscount}`
-  }
+const isVoucherApplicable = (voucher: VoucherOption, currentPostType: PostType | '') => {
+  if (voucher.quantity <= 0) return false
+  if (voucher.discountValue <= 0) return false
+  if (!currentPostType) return false
+  if (currentPostType === 'normal') return voucher.appliedFor === 'normal'
+  return true
+}
 
-  return 'Miễn phí 1 lượt đăng'
+const getVoucherDisabledReason = (voucher: VoucherOption, currentPostType: PostType | '') => {
+  if (voucher.quantity <= 0) return 'Đã hết lượt'
+  if (voucher.discountValue <= 0) return 'Không có giá trị giảm'
+  if (currentPostType === 'normal' && voucher.appliedFor === 'vip') return 'Chỉ dùng cho tin VIP'
+  return ''
 }
 
 const toDateInputValue = (date: Date) => {
@@ -189,6 +192,7 @@ export default function PostPopUp3({ draft, onBack, onClose }: PostPopUp3Props) 
   const [selectedVoucherId, setSelectedVoucherId] = useState('')
   const [voucherLoading, setVoucherLoading] = useState(false)
   const [voucherError, setVoucherError] = useState('')
+  const [showVoucherDropdown, setShowVoucherDropdown] = useState(false)
   const [showBalanceModal, setShowBalanceModal] = useState(false)
   const [balanceSnapshot, setBalanceSnapshot] = useState({ required: 0, balance: 0 })
 
@@ -233,25 +237,12 @@ export default function PostPopUp3({ draft, onBack, onClose }: PostPopUp3Props) 
   const subtotalAmount = discountedDailyPrice * durationDays
   const selectedVoucher =
     vouchers.find((voucher) => String(voucher.id) === selectedVoucherId) || null
-  const voucherDiscount = useMemo(() => {
-    if (!selectedVoucher) return 0
-
-    if (selectedVoucher.discountType === 'fixed') {
-      return Math.min(subtotalAmount, Number(selectedVoucher.discountValue || 0))
-    }
-
-    if (selectedVoucher.discountType === 'percent') {
-      const rawDiscount = (subtotalAmount * Number(selectedVoucher.discountValue || 0)) / 100
-      const cappedDiscount = selectedVoucher.maxDiscount
-        ? Math.min(rawDiscount, Number(selectedVoucher.maxDiscount))
-        : rawDiscount
-      return Math.min(subtotalAmount, Math.round(cappedDiscount))
-    }
-
-    if (selectedVoucher.discountType === 'free_post') return subtotalAmount
-
-    return 0
-  }, [selectedVoucher, subtotalAmount])
+  const selectedVoucherValid = selectedVoucher
+    ? isVoucherApplicable(selectedVoucher, activePostType?.value || '')
+    : false
+  const voucherDiscount = selectedVoucherValid
+    ? Math.min(subtotalAmount, selectedVoucher?.discountValue || 0)
+    : 0
   const totalAmount = Math.max(0, subtotalAmount - voucherDiscount)
 
   useEffect(() => {
@@ -380,28 +371,38 @@ export default function PostPopUp3({ draft, onBack, onClose }: PostPopUp3Props) 
       setVoucherError('')
 
       try {
-        const params = new URLSearchParams()
-        params.set('where[user][equals]', String(userId))
-        params.set('where[status][equals]', 'active')
-        params.set('sort', '-createdAt')
-        params.set('limit', '50')
-
-        const res = await fetch(`/api/vouchers?${params.toString()}`)
+        const res = await fetch('/api/users/me?depth=0')
         if (!res.ok) throw new Error('Không thể tải voucher')
 
         const data = await res.json()
-        const docs = Array.isArray(data?.docs) ? data.docs : []
-        const now = Date.now()
-        const activeVouchers: VoucherOption[] = docs.filter((voucher: VoucherOption) => {
-          if (!voucher?.expiresAt) return true
-          const expiresAt = new Date(voucher.expiresAt).getTime()
-          return Number.isNaN(expiresAt) ? true : expiresAt >= now
-        })
+        const me = data?.user ?? data
+        const docs = Array.isArray(me?.availableVouchers) ? me.availableVouchers : []
+        const availableVouchers: VoucherOption[] = docs
+          .map((voucher: {
+            id?: string | null
+            quantity?: number | null
+            discountValue?: number | null
+            appliedFor?: 'normal' | 'vip' | null
+          }, index: number): VoucherOption | null => {
+            const discountValue = Number(voucher.discountValue || 0)
+            const quantity = Number(voucher.quantity || 0)
+            const appliedFor = voucher.appliedFor === 'vip' ? 'vip' : 'normal'
+
+            if (!voucher.id || !Number.isFinite(discountValue)) return null
+
+            return {
+              id: String(voucher.id || index),
+              quantity: Number.isFinite(quantity) ? quantity : 0,
+              discountValue,
+              appliedFor,
+            }
+          })
+          .filter((voucher: VoucherOption | null): voucher is VoucherOption => Boolean(voucher))
 
         if (cancelled) return
-        setVouchers(activeVouchers)
+        setVouchers(availableVouchers)
         setSelectedVoucherId((prev) =>
-          activeVouchers.some((voucher) => String(voucher.id) === prev) ? prev : '',
+          availableVouchers.some((voucher) => String(voucher.id) === prev) ? prev : '',
         )
       } catch (err) {
         if (!cancelled) {
@@ -421,6 +422,13 @@ export default function PostPopUp3({ draft, onBack, onClose }: PostPopUp3Props) 
     }
   }, [userId])
 
+  useEffect(() => {
+    if (!selectedVoucher) return
+    if (isVoucherApplicable(selectedVoucher, activePostType?.value || '')) return
+
+    setSelectedVoucherId('')
+  }, [activePostType?.value, selectedVoucher])
+
   const handleSubmit = async () => {
     if (!canSubmit) return
     if (!activePostType) {
@@ -438,6 +446,7 @@ export default function PostPopUp3({ draft, onBack, onClose }: PostPopUp3Props) 
       postType: activePostType.value,
       durationDays,
       scheduledPublishAt: scheduledDate.toISOString(),
+      selectedVoucherId: selectedVoucherValid ? selectedVoucher?.id : undefined,
     }
 
     body.append('draft', JSON.stringify(submitPayload))
@@ -721,28 +730,108 @@ export default function PostPopUp3({ draft, onBack, onClose }: PostPopUp3Props) 
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <h3 className="font-headline text-lg font-bold text-zinc-900">Voucher giảm giá</h3>
-              <p className="mt-1 text-xs text-zinc-500">Chọn voucher áp dụng cho lượt đăng này.</p>
+              <p className="mt-1 text-xs text-zinc-500">
+                Voucher VIP dùng được cho VIP Bạc, VIP Vàng và VIP Kim cương.
+              </p>
             </div>
             <p className="text-xs text-zinc-500">
-              {voucherLoading ? 'Đang tải voucher...' : `${vouchers.length} voucher khả dụng`}
+              {voucherLoading ? 'Đang tải voucher...' : `${vouchers.length} voucher hiện có`}
             </p>
           </div>
 
           <div className="mt-4 grid grid-cols-1 gap-3 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
             <div className="min-w-0">
-              <select
-                value={selectedVoucherId}
-                onChange={(event) => setSelectedVoucherId(event.target.value)}
-                disabled={voucherLoading || vouchers.length === 0}
-                className="w-full rounded-xl border border-zinc-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-red-600 focus:ring-2 focus:ring-red-100 disabled:cursor-not-allowed disabled:bg-zinc-100"
+              <button
+                type="button"
+                onClick={() => setShowVoucherDropdown((value) => !value)}
+                disabled={voucherLoading}
+                className="flex w-full items-center justify-between gap-3 rounded-xl border border-zinc-200 bg-white px-4 py-3 text-left text-sm outline-none transition hover:border-zinc-300 focus:border-red-600 focus:ring-2 focus:ring-red-100 disabled:cursor-not-allowed disabled:bg-zinc-100"
               >
-                <option value="">Không dùng voucher</option>
-                {vouchers.map((voucher) => (
-                  <option key={voucher.id} value={voucher.id}>
-                    {voucher.code} · {formatVoucherLabel(voucher)}
-                  </option>
-                ))}
-              </select>
+                <span className="min-w-0">
+                  <span className="block truncate font-semibold text-zinc-900">
+                    {selectedVoucher
+                      ? `${getVoucherTypeLabel(selectedVoucher.appliedFor)} · Giảm ${formatMoney(selectedVoucher.discountValue)} đ`
+                      : 'Không dùng voucher'}
+                  </span>
+                  <span className="mt-0.5 block truncate text-xs text-zinc-500">
+                    {selectedVoucher
+                      ? `Còn ${selectedVoucher.quantity} lượt`
+                      : 'Chưa chọn voucher'}
+                  </span>
+                </span>
+                <ChevronDown className="h-4 w-4 shrink-0 text-zinc-400" />
+              </button>
+
+              {showVoucherDropdown ? (
+                <div className="mt-2 max-h-80 overflow-y-auto rounded-xl border border-zinc-200 bg-white p-2 shadow-lg">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedVoucherId('')
+                      setShowVoucherDropdown(false)
+                    }}
+                    className="flex w-full items-center gap-3 rounded-lg px-3 py-3 text-left text-sm transition hover:bg-zinc-50"
+                  >
+                    <span className="flex h-5 w-5 items-center justify-center rounded border border-zinc-300">
+                      {!selectedVoucher ? <CheckCircle2 className="h-4 w-4 text-red-600" /> : null}
+                    </span>
+                    <span>
+                      <span className="block font-semibold text-zinc-900">Không dùng voucher</span>
+                      <span className="block text-xs text-zinc-500">Thanh toán đủ giá đăng tin</span>
+                    </span>
+                  </button>
+
+                  {vouchers.length === 0 ? (
+                    <div className="mt-1 rounded-lg bg-zinc-50 px-3 py-4 text-sm text-zinc-500">
+                      Bạn chưa có voucher nào.
+                    </div>
+                  ) : (
+                    <div className="mt-1 space-y-2">
+                      {vouchers.map((voucher) => {
+                        const selected = selectedVoucherId === voucher.id
+                        const applicable = isVoucherApplicable(voucher, activePostType?.value || '')
+                        const reason = getVoucherDisabledReason(
+                          voucher,
+                          activePostType?.value || '',
+                        )
+
+                        return (
+                          <button
+                            key={voucher.id}
+                            type="button"
+                            disabled={!applicable}
+                            onClick={() => {
+                              setSelectedVoucherId(selected ? '' : voucher.id)
+                              setShowVoucherDropdown(false)
+                            }}
+                            className={`relative flex w-full items-start gap-3 rounded-lg border px-3 py-3 text-left text-sm transition ${
+                              selected
+                                ? 'border-red-200 bg-red-50'
+                                : 'border-zinc-100 bg-white hover:bg-zinc-50'
+                            } disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-white`}
+                          >
+                            <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded border border-zinc-300 bg-white">
+                              {selected ? <CheckCircle2 className="h-4 w-4 text-red-600" /> : null}
+                            </span>
+                            <span className="min-w-0 pr-8">
+                              <span className="block font-semibold text-zinc-900">
+                                {getVoucherTypeLabel(voucher.appliedFor)}
+                              </span>
+                              <span className="mt-1 block text-xs text-zinc-500">
+                                Giảm {formatMoney(voucher.discountValue)} đ
+                                {reason ? ` · ${reason}` : ''}
+                              </span>
+                            </span>
+                            <span className="absolute right-2 top-2 flex h-6 min-w-6 items-center justify-center rounded-full bg-zinc-900 px-1.5 text-[11px] font-bold text-white">
+                              {voucher.quantity}
+                            </span>
+                          </button>
+                        )
+                      })}
+                    </div>
+                  )}
+                </div>
+              ) : null}
               {voucherError ? <p className="mt-2 text-xs text-red-600">{voucherError}</p> : null}
             </div>
 
@@ -751,18 +840,13 @@ export default function PostPopUp3({ draft, onBack, onClose }: PostPopUp3Props) 
                 Đang chọn
               </p>
               <p className="mt-2 break-words font-semibold text-zinc-900">
-                {selectedVoucher ? selectedVoucher.code : 'Không dùng voucher'}
+                {selectedVoucher ? getVoucherTypeLabel(selectedVoucher.appliedFor) : 'Không dùng voucher'}
               </p>
               <p className="mt-1 text-xs text-zinc-500">
                 {selectedVoucher
-                  ? formatVoucherLabel(selectedVoucher)
+                  ? `Giảm ${formatMoney(selectedVoucher.discountValue)} đ · Còn ${selectedVoucher.quantity} lượt`
                   : 'Chọn voucher để giảm giá.'}
               </p>
-              {selectedVoucher?.expiresAt ? (
-                <p className="mt-2 text-xs text-zinc-400">
-                  Hết hạn: {new Date(selectedVoucher.expiresAt).toLocaleDateString('vi-VN')}
-                </p>
-              ) : null}
             </div>
           </div>
         </section>
@@ -796,9 +880,11 @@ export default function PostPopUp3({ draft, onBack, onClose }: PostPopUp3Props) 
               Tổng tiền
             </p>
             <p className="text-lg font-bold text-zinc-900">{formatMoney(totalAmount)} đ</p>
-            <p className="text-xs text-zinc-500">
-              Giảm voucher: {voucherDiscount > 0 ? `-${formatMoney(voucherDiscount)} đ` : '0 đ'}
-            </p>
+            <div className="mt-1 space-y-0.5 text-xs text-zinc-500">
+              <p>Giá gốc: {formatMoney(subtotalAmount)} đ</p>
+              <p>Giá giảm: {voucherDiscount > 0 ? `-${formatMoney(voucherDiscount)} đ` : '0 đ'}</p>
+              <p>Còn lại: {formatMoney(totalAmount)} đ</p>
+            </div>
           </div>
           <button
             type="button"

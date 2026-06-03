@@ -120,13 +120,7 @@ export default function PricingCard({ pkg }: { pkg: any }) {
                     <span className="font-medium">{formatMoney(v.discountValue)}</span> mỗi lần{' '}
                     {v.appliedFor === 'normal'
                       ? 'đăng Tin Thường'
-                      : v.appliedFor === 'silver'
-                        ? 'đăng VIP bạc'
-                        : v.appliedFor === 'gold'
-                          ? 'đăng VIP vàng'
-                          : v.appliedFor === 'diamond'
-                            ? 'đăng VIP kim cương'
-                        : 'đăng tin'}
+                      : 'đăng Tin VIP'}
                   </p>
                 </div>
               ))}

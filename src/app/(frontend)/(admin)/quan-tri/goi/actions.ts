@@ -7,6 +7,7 @@ import { revalidatePath } from 'next/cache'
 // ─── Shared ───────────────────────────────────────────────────────────────────
 
 export type PostType = 'normal' | 'silver' | 'gold' | 'diamond'
+export type VoucherAppliedFor = 'normal' | 'vip'
 
 // ─── Packages ─────────────────────────────────────────────────────────────────
 
@@ -22,7 +23,7 @@ export type PackageDurationOption = {
 export type PackageBonusVoucher = {
   quantity: number
   discountValue: number
-  appliedFor: PostType
+  appliedFor: VoucherAppliedFor
 }
 
 export type PackageFormData = {

@@ -7,6 +7,7 @@ import {
   savePackage,
   deletePackage,
   type PostType,
+  type VoucherAppliedFor,
   type PackageFormData,
   type PackageDurationOption,
   type PackageBonusVoucher,
@@ -27,7 +28,7 @@ type DurationOptionForm = {
 type BonusVoucherForm = {
   quantity: string
   discountValue: string
-  appliedFor: PostType
+  appliedFor: VoucherAppliedFor
 }
 
 type FormState = {
@@ -54,6 +55,14 @@ const POST_TYPES: { value: PostType; label: string }[] = [
   { value: 'gold', label: 'VIP Vàng' },
   { value: 'diamond', label: 'VIP Kim cương' },
 ]
+
+const VOUCHER_APPLIED_FOR_OPTIONS: { value: VoucherAppliedFor; label: string }[] = [
+  { value: 'normal', label: 'Tin thường' },
+  { value: 'vip', label: 'Tin VIP' },
+]
+
+const normalizeVoucherAppliedFor = (value?: string | null): VoucherAppliedFor =>
+  value === 'normal' || !value ? 'normal' : 'vip'
 
 const emptyForm = (): FormState => ({
   name: '',
@@ -101,7 +110,7 @@ function toForm(pkg: PackageItem): FormState {
       pkg.bonusVouchers?.map((v) => ({
         quantity: v.quantity?.toString() ?? '1',
         discountValue: v.discountValue?.toString() ?? '0',
-        appliedFor: (v.appliedFor as PostType) ?? 'normal',
+        appliedFor: normalizeVoucherAppliedFor(v.appliedFor),
       })) ?? [],
   }
 }
@@ -224,13 +233,13 @@ export default function PackageFormDrawer({ pkg, onClose }: Props) {
   const addVoucher = () =>
     set('bonusVouchers', [
       ...form.bonusVouchers,
-      { quantity: '1', discountValue: '0', appliedFor: 'normal' as PostType },
+      { quantity: '1', discountValue: '0', appliedFor: 'normal' },
     ])
   const removeVoucher = (i: number) =>
     set('bonusVouchers', form.bonusVouchers.filter((_, idx) => idx !== i))
   const updateVoucher = (i: number, k: keyof BonusVoucherForm, v: string) => {
     const next = [...form.bonusVouchers]
-    next[i] = { ...next[i], [k]: v as PostType }
+    next[i] = { ...next[i], [k]: v as VoucherAppliedFor }
     set('bonusVouchers', next)
   }
 
@@ -591,7 +600,7 @@ export default function PackageFormDrawer({ pkg, onClose }: Props) {
                           onChange={(e) => updateVoucher(i, 'appliedFor', e.target.value)}
                           className="w-full border border-amber-200 rounded px-2 py-1 text-sm bg-white focus:outline-none focus:ring-1 focus:ring-amber-400"
                         >
-                          {POST_TYPES.map((t) => (
+                          {VOUCHER_APPLIED_FOR_OPTIONS.map((t) => (
                             <option key={t.value} value={t.value}>
                               {t.label}
                             </option>
