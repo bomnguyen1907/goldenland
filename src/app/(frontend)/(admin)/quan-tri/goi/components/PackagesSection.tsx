@@ -45,7 +45,7 @@ const POST_TYPE_CONFIG: Record<PostType, { label: string; bg: string; text: stri
 }
 
 const appliedForLabel = (v?: string | null) =>
-  POST_TYPE_CONFIG[(v as PostType) ?? 'normal']?.label ?? v ?? '-'
+  v === 'normal' || !v ? 'Tin thường' : 'Tin VIP'
 
 function PackageCard({
   pkg,

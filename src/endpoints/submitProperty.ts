@@ -1,7 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
 import sharp from 'sharp'
 import type { Endpoint } from 'payload'
-import type { Property } from '@/payload-types'
+import type { Property, User } from '@/payload-types'
 
 const PROPERTIES_BUCKET = 'Properties'
 const MIN_IMAGES = 3
@@ -28,6 +28,7 @@ type SubmitDraft = {
   postType?: string
   durationDays?: number
   scheduledPublishAt?: string
+  selectedVoucherId?: string
 }
 
 type FormDataFile = {
@@ -75,6 +76,8 @@ type PostingPriceLike = {
   durationOptions?: unknown
 }
 
+type AvailableVoucher = NonNullable<User['availableVouchers']>[number]
+
 const FALLBACK_POSTING_PRICES: Record<PostType, PostingPriceConfig> = {
   diamond: {
     dailyPrice: 321_100,
@@ -116,6 +119,13 @@ const FALLBACK_POSTING_PRICES: Record<PostType, PostingPriceConfig> = {
 
 const isPostType = (value: unknown): value is PostType => {
   return typeof value === 'string' && POST_TYPE_OPTIONS.includes(value as PostType)
+}
+
+const isVoucherApplicable = (voucher: AvailableVoucher, postType: PostType) => {
+  if (!voucher.id || Number(voucher.quantity || 0) <= 0) return false
+  if (Number(voucher.discountValue || 0) <= 0) return false
+  if (postType === 'normal') return voucher.appliedFor === 'normal'
+  return voucher.appliedFor === 'normal' || voucher.appliedFor === 'vip'
 }
 
 const getRelationshipID = (value: unknown): string => {
@@ -254,7 +264,6 @@ export const submitProperty: Endpoint = {
       const originalAmount = Math.round(
         pricingConfig.dailyPrice * durationDays * (1 - discountPercent / 100),
       )
-      const totalAmount = Math.max(0, originalAmount)
 
       if (originalAmount <= 0) {
         return Response.json({ error: 'Không tìm thấy giá đăng tin phù hợp' }, { status: 400 })
@@ -270,8 +279,38 @@ export const submitProperty: Endpoint = {
           activePackage: true,
           package_id: true,
           balance: true,
+          availableVouchers: true,
         },
       })
+      const availableVouchers = Array.isArray(currentUser.availableVouchers)
+        ? currentUser.availableVouchers
+        : []
+      const selectedVoucher = draft.selectedVoucherId
+        ? availableVouchers.find((voucher) => String(voucher.id) === String(draft.selectedVoucherId))
+        : undefined
+
+      if (draft.selectedVoucherId && !selectedVoucher) {
+        return Response.json({ error: 'Voucher không tồn tại hoặc đã hết' }, { status: 400 })
+      }
+
+      if (selectedVoucher && !isVoucherApplicable(selectedVoucher, postType)) {
+        return Response.json(
+          { error: 'Voucher không áp dụng cho loại tin đã chọn' },
+          { status: 400 },
+        )
+      }
+
+      const voucherDiscount = selectedVoucher
+        ? Math.min(originalAmount, Number(selectedVoucher.discountValue || 0))
+        : 0
+      const totalAmount = Math.max(0, originalAmount - voucherDiscount)
+      const nextAvailableVouchers = selectedVoucher
+        ? availableVouchers.map((voucher) =>
+            String(voucher.id) === String(selectedVoucher.id)
+              ? { ...voucher, quantity: Math.max(0, Number(voucher.quantity || 0) - 1) }
+              : voucher,
+          )
+        : availableVouchers
       const activePackageID = getRelationshipID(currentUser.activePackage)
       const userPackageID = getRelationshipID((currentUser as { package_id?: unknown }).package_id)
       const canUseScheduledHour =
@@ -330,7 +369,7 @@ export const submitProperty: Endpoint = {
             orderType: 'single_post',
             ...(postingPrice ? { postingPrice: postingPrice.id } : {}),
             originalAmount,
-            discountAmount: 0,
+            discountAmount: voucherDiscount,
             promotionDiscount: 0,
             totalAmount,
             paymentMethod: 'balance',
@@ -348,6 +387,7 @@ export const submitProperty: Endpoint = {
           id: user.id,
           data: {
             balance: currentBalance - totalAmount,
+            ...(selectedVoucher ? { availableVouchers: nextAvailableVouchers } : {}),
           },
           overrideAccess: true,
           req,
@@ -459,6 +499,7 @@ export const submitProperty: Endpoint = {
             id: user.id,
             data: {
               balance: currentBalance,
+              ...(selectedVoucher ? { availableVouchers } : {}),
             },
             overrideAccess: true,
             req,

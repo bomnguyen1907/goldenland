@@ -8,6 +8,7 @@ export type PostDraft = {
   provinceCode: string
   wardCode: string
   project: string
+  houseNumber: string
   street: string
   address: string
   latitude: number | null
@@ -29,6 +30,7 @@ export const INITIAL_POST_DRAFT: PostDraft = {
   provinceCode: '',
   wardCode: '',
   project: '',
+  houseNumber: '',
   street: '',
   address: '',
   latitude: null,
