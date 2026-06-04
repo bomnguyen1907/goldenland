@@ -1,5 +1,6 @@
 // @ts-nocheck
 import type { Endpoint } from 'payload'
+import { PROPERTY_STATUS_OPTIONS } from '@/lib/propertyStatus'
 
 export const myDashboard: Endpoint = {
     path: '/my/dashboard',
@@ -13,53 +14,26 @@ export const myDashboard: Endpoint = {
 
         try {
             // Đếm tin đăng của tôi theo status
-            const [active, pending, expired, sold, drafts] = await Promise.all([
-                payload.find({
-                    collection: 'properties',
-                    where: {
-                        and: [{ user: { equals: user.id } }, { status: { equals: 'active' } }],
-                    },
-                    limit: 0,
-                    overrideAccess: false,
-                    req,
+            const statusCounts = await Promise.all(
+                PROPERTY_STATUS_OPTIONS.map(async (status) => {
+                    const result = await payload.find({
+                        collection: 'properties',
+                        where: {
+                            and: [{ user: { equals: user.id } }, { status: { equals: status.value } }],
+                        },
+                        limit: 0,
+                        overrideAccess: false,
+                        req,
+                    })
+
+                    return [status.value, result.totalDocs] as const
                 }),
-                payload.find({
-                    collection: 'properties',
-                    where: {
-                        and: [{ user: { equals: user.id } }, { status: { equals: 'pending' } }],
-                    },
-                    limit: 0,
-                    overrideAccess: false,
-                    req,
-                }),
-                payload.find({
-                    collection: 'properties',
-                    where: {
-                        and: [{ user: { equals: user.id } }, { status: { equals: 'expired' } }],
-                    },
-                    limit: 0,
-                    overrideAccess: false,
-                    req,
-                }),
-                payload.find({
-                    collection: 'properties',
-                    where: {
-                        and: [{ user: { equals: user.id } }, { status: { equals: 'sold' } }],
-                    },
-                    limit: 0,
-                    overrideAccess: false,
-                    req,
-                }),
-                payload.find({
-                    collection: 'properties',
-                    where: {
-                        and: [{ user: { equals: user.id } }, { status: { equals: 'draft' } }],
-                    },
-                    limit: 0,
-                    overrideAccess: false,
-                    req,
-                }),
-            ])
+            )
+            const propertiesByStatus = Object.fromEntries(statusCounts)
+            const totalProperties = Object.values(propertiesByStatus).reduce(
+                (sum, count) => sum + Number(count || 0),
+                0,
+            )
 
             // Đếm voucher còn hiệu lực
             const vouchers = await payload.find({
@@ -105,12 +79,9 @@ export const myDashboard: Endpoint = {
             return Response.json({
                 balance: user.balance || 0,
                 properties: {
-                    active: active.totalDocs,
-                    pending: pending.totalDocs,
-                    expired: expired.totalDocs,
-                    sold: sold.totalDocs,
-                    drafts: drafts.totalDocs,
-                    total: active.totalDocs + pending.totalDocs + expired.totalDocs + sold.totalDocs + drafts.totalDocs,
+                    ...propertiesByStatus,
+                    drafts: propertiesByStatus.draft || 0,
+                    total: totalProperties,
                 },
                 vouchersActive: vouchers.totalDocs,
                 favoriteProperties: favorites.totalDocs,

@@ -28,6 +28,7 @@ export type FilterState = {
 
 type Props = {
   isOpen: boolean
+  className?: string
   filters: FilterState
   draftFilters: FilterState | null
   onDraftChange: (next: FilterState | null) => void
@@ -66,6 +67,7 @@ const LEGAL_LABEL: Record<string, string> = {
 
 export function PropertiesAdvancedFilterPopup({
   isOpen,
+  className = 'left-0',
   filters,
   draftFilters,
   onDraftChange,
@@ -150,7 +152,9 @@ export function PropertiesAdvancedFilterPopup({
   )
 
   return (
-    <div className="absolute left-0 top-full z-50 mt-2 w-[min(92vw,760px)] rounded-xl border border-outline-variant/30 bg-white p-4 shadow-xl">
+    <div
+      className={`absolute top-full z-50 mt-2 w-[min(92vw,760px)] rounded-xl border border-outline-variant/30 bg-white p-4 shadow-xl ${className}`}
+    >
       <div className="mb-3 flex items-center justify-between">
         <h3 className="text-base font-semibold">Bộ lọc nâng cao</h3>
         <div className="flex items-center gap-2">

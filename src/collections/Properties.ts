@@ -6,6 +6,7 @@ import {
     refreshScheduledProperties,
     SCHEDULE_CONTEXT_KEY,
 } from '@/hooks/refreshScheduledProperties'
+import { PROPERTY_STATUS_OPTIONS } from '@/lib/propertyStatus'
 
 const PROPERTIES_BUCKET = 'Properties'
 
@@ -444,14 +445,7 @@ export const Properties: CollectionConfig = {
                                     type: 'select',
                                     defaultValue: 'draft',
                                     required: true,
-                                    options: [
-                                        { label: 'Nháp', value: 'draft' },
-                                        { label: 'Chờ duyệt', value: 'pending' },
-                                        { label: 'Đang hiển thị', value: 'active' },
-                                        { label: 'Hết hạn', value: 'expired' },
-                                        { label: 'Đã bán', value: 'sold' },
-                                        { label: 'Bị từ chối', value: 'rejected' },
-                                    ],
+                                    options: [...PROPERTY_STATUS_OPTIONS],
                                 },
                                 {
                                     name: 'durationDays',

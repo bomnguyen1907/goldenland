@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+
+<html lang="vi"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Quản lý tin - Batdongsan</title>
+<!-- Tailwind CSS CDN -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Google Fonts: Lexend for Estate Crimson Design System -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            'estate-crimson': '#E03C31',
+            'estate-dark': '#2C2C2C',
+            'estate-gray': '#F2F2F2',
+            'estate-text-gray': '#727272',
+          },
+          fontFamily: {
+            sans: ['Lexend', 'sans-serif'],
+          },
+        }
+      }
+    }
+  </script>
+<style data-purpose="custom-scrollbar">
+    /* Custom scrollbar for tab navigation */
+    .hide-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .hide-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+  </style>
+<style data-purpose="layout-tweaks">
+    .sidebar-item-active {
+      color: #E03C31;
+      border-right: 3px solid #E03C31;
+    }
+    .tab-active {
+      background-color: #2C2C2C;
+      color: white;
+    }
+  </style>
+</head>
+<body class="bg-[#F9F9F9] font-sans text-estate-dark">
+<div class="flex min-h-screen">
+<!-- BEGIN: LeftSidebar -->
+<aside class="w-20 lg:w-24 bg-white border-r border-gray-200 flex flex-col items-center py-6 sticky top-0 h-screen z-50">
+<!-- Logo -->
+<div class="mb-8">
+<img alt="Batdongsan Logo" class="w-10 h-10 object-contain" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCBvq9vH3yxYCqe0nAjshiFsRmLWUZVr2cQJ1VDgEuePyOX1efG_OPfyFqIx8k0SV3en4_EPEgrXqszfFN24gQICJ0I7Qvr1v1J1VEd7mSzQBo6dUcFposHWKIohHNiQrsAIz6QTIrnJLbOIyWaFtfEakxX3RmaMWXaNzwmwM-8g2__PEDfKxT1jF0ggEbYEPpAujTLqRgpb5smIuplBpSjuCHJ4G1J5bDTxj26vzBheM1gEHD-u4mFVPKb3UA7xTyiXKM_6GphsM3t"/>
+</div>
+<!-- Navigation Icons -->
+<nav class="flex flex-col space-y-8 w-full">
+<button class="flex flex-col items-center group">
+<div class="w-10 h-10 rounded-full bg-estate-crimson flex items-center justify-center text-white mb-1 shadow-md">
+<svg class="h-6 w-6" fill="none" stroke="currentColor" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M12 4v16m8-8H4" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</div>
+<span class="text-[10px] font-medium text-estate-crimson">Đăng tin</span>
+</button>
+<button class="flex flex-col items-center text-estate-text-gray hover:text-estate-crimson">
+<svg class="h-6 w-6 mb-1" fill="none" stroke="currentColor" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+<span class="text-[10px]">Tổng quan</span>
+</button>
+<button class="flex flex-col items-center sidebar-item-active">
+<svg class="h-6 w-6 mb-1" fill="none" stroke="currentColor" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+<span class="text-[10px] font-bold">Tin đăng</span>
+</button>
+<button class="flex flex-col items-center text-estate-text-gray hover:text-estate-crimson">
+<svg class="h-6 w-6 mb-1" fill="none" stroke="currentColor" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+<span class="text-[10px]">Khách hàng</span>
+</button>
+<div class="relative flex flex-col items-center">
+<div class="absolute -top-2 -right-1 bg-estate-crimson text-white text-[8px] px-1 rounded-sm font-bold">-39%</div>
+<button class="flex flex-col items-center text-estate-text-gray hover:text-estate-crimson">
+<svg class="h-6 w-6 mb-1" fill="none" stroke="currentColor" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+<span class="text-[10px]">Gói Hội viên</span>
+</button>
+</div>
+<button class="flex flex-col items-center text-estate-text-gray hover:text-estate-crimson">
+<svg class="h-6 w-6 mb-1" fill="none" stroke="currentColor" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+<span class="text-[10px]">Tài khoản</span>
+</button>
+</nav>
+</aside>
+<!-- END: LeftSidebar -->
+<!-- Main Content Area -->
+<main class="flex-1 flex flex-col min-w-0">
+<!-- BEGIN: TopHeader -->
+<header class="bg-white px-8 py-4 flex items-center justify-between border-b border-gray-100" data-purpose="main-header">
+<h1 class="text-2xl font-bold text-estate-dark">Quản lý tin</h1>
+<div class="flex items-center space-x-4">
+<!-- Balance Widget -->
+<div class="flex items-center bg-white border border-gray-200 rounded-full px-4 py-2 shadow-sm">
+<div class="bg-estate-crimson rounded-full p-1 mr-2">
+<svg class="h-3 w-3 text-white" fill="currentColor" viewbox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+<path d="M8.433 7.418c.155-.103.346-.196.567-.267v1.698a2.305 2.305 0 01-.567-.267C8.07 8.34 8 8.114 8 8c0-.114.07-.34.433-.582zM11 12.849v-1.698c.22.071.412.164.567.267.363.242.433.468.433.582 0 .114-.07.34-.433.582a2.305 2.305 0 01-.567.267z"></path>
+<path clip-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a1 1 0 10-2 0v.092a4.535 4.535 0 00-1.676.692C6.604 6.267 6 7.04 6 8c0 .96.604 1.733 1.324 2.216.445.298.937.522 1.45.674v1.868a4.535 4.535 0 00-1.676-.692 1 1 0 00-.248 1.984c.537.067 1.074.092 1.624.092a1 1 0 100-2h-.092a4.535 4.535 0 001.676-.692c.72-.483 1.324-1.256 1.324-2.216 0-.96-.604-1.733-1.324-2.216a4.535 4.535 0 00-1.45-.674V5.108c.537-.067 1.074-.092 1.624-.092a1 1 0 100-2h-.092z" fill-rule="evenodd"></path>
+</svg>
+</div>
+<span class="font-bold text-sm mr-1">0 đ</span>
+<svg class="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M19 9l-7 7-7-7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</div>
+<!-- Top-up Button -->
+<button class="bg-estate-dark text-white rounded-full px-6 py-2 text-sm font-medium flex items-center hover:bg-gray-800 transition-colors">
+<svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+            Nạp tiền
+          </button>
+<!-- Notifications -->
+<div class="relative p-2 rounded-full bg-gray-100 cursor-pointer">
+<svg class="h-6 w-6 text-estate-dark" fill="none" stroke="currentColor" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+<span class="absolute top-1 right-1 bg-estate-crimson text-white text-[10px] w-4 h-4 flex items-center justify-center rounded-full border-2 border-white">1</span>
+</div>
+<!-- User Profile -->
+<div class="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center font-bold text-estate-dark">U</div>
+</div>
+</header>
+<!-- END: TopHeader -->
+<!-- BEGIN: SearchAndFilters -->
+<section class="px-8 py-6 bg-white space-y-4 shadow-sm" data-purpose="filters-section">
+<div class="flex items-center space-x-3 max-w-4xl">
+<!-- Search Bar -->
+<div class="relative flex-1">
+<span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
+<svg class="h-5 w-5" fill="none" stroke="currentColor" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</span>
+<input class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-full leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-estate-crimson focus:border-estate-crimson sm:text-sm" placeholder="Nhập mã tin hoặc tiêu đề tin" type="text"/>
+</div>
+<!-- Filter Button -->
+<button class="flex items-center px-6 py-2 border border-gray-300 rounded-full text-sm font-medium hover:bg-gray-50">
+<svg class="h-5 w-5 mr-2 text-estate-dark" fill="none" stroke="currentColor" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+            Lọc
+          </button>
+</div>
+<!-- Status Tabs -->
+<div class="flex items-center space-x-2 overflow-x-auto hide-scrollbar pb-2">
+<button class="whitespace-nowrap px-4 py-2 rounded-full text-sm font-medium tab-active">Tất cả (0)</button>
+<button class="whitespace-nowrap px-4 py-2 rounded-full text-sm font-medium border border-gray-200 hover:bg-gray-50">Hết hạn (0)</button>
+<button class="whitespace-nowrap px-4 py-2 rounded-full text-sm font-medium border border-gray-200 hover:bg-gray-50">Sắp hết hạn (0)</button>
+<button class="whitespace-nowrap px-4 py-2 rounded-full text-sm font-medium border border-gray-200 hover:bg-gray-50">Đang hiển thị (0)</button>
+<button class="whitespace-nowrap px-4 py-2 rounded-full text-sm font-medium border border-gray-200 hover:bg-gray-50">Chờ hiển thị (0)</button>
+<button class="whitespace-nowrap px-4 py-2 rounded-full text-sm font-medium border border-gray-200 hover:bg-gray-50">Chờ duyệt (0)</button>
+<button class="whitespace-nowrap px-4 py-2 rounded-full text-sm font-medium border border-gray-200 hover:bg-gray-50">Chờ thanh toán (0)</button>
+<button class="whitespace-nowrap px-4 py-2 rounded-full text-sm font-medium border border-gray-200 hover:bg-gray-50">Không duyệt (0)</button>
+</div>
+</section>
+<!-- END: SearchAndFilters -->
+<!-- BEGIN: ContentArea -->
+<section class="flex-1 p-8" data-purpose="main-listing-area">
+<!-- Pink Background Container for Empty State -->
+<div class="bg-[#FFF8F7] rounded-3xl p-10 min-h-[500px] flex flex-col items-center justify-center relative overflow-hidden">
+<!-- Mockup listing card background decoration -->
+<div class="absolute top-10 w-[90%] max-w-3xl opacity-30 pointer-events-none transform translate-y-[-20%]">
+<div class="bg-white rounded-xl shadow-sm p-4 flex gap-4">
+<div class="w-32 h-24 bg-gray-100 rounded-lg flex items-center justify-center">
+<svg class="h-10 w-10 text-gray-300" fill="none" stroke="currentColor" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</div>
+<div class="flex-1 space-y-2">
+<div class="h-4 w-20 bg-green-100 rounded"></div>
+<div class="h-4 w-full bg-gray-100 rounded"></div>
+<div class="h-4 w-3/4 bg-gray-100 rounded"></div>
+</div>
+</div>
+</div>
+<!-- Gift Icon Centerpiece -->
+<div class="bg-white p-4 rounded-full shadow-lg z-10 mb-6">
+<div class="bg-estate-crimson/5 p-4 rounded-full">
+<svg class="h-10 w-10 text-estate-crimson" fill="none" stroke="currentColor" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</div>
+</div>
+<!-- New Customer Gift Message -->
+<h2 class="text-2xl font-bold text-center mb-6">Quà tặng khách hàng mới</h2>
+<div class="bg-white border-2 border-gray-200 rounded-2xl p-6 max-w-md w-full relative z-10 shadow-sm flex items-start space-x-4">
+<div class="bg-estate-crimson/10 p-3 rounded-full shrink-0">
+<svg class="h-6 w-6 text-estate-crimson" fill="none" stroke="currentColor" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</div>
+<div>
+<h3 class="font-bold text-lg leading-tight">Miễn phí 1 tin thường 15 ngày cho Khách hàng mới.</h3>
+<p class="text-estate-text-gray text-sm mt-1">Miễn phí 1 tin thường 15 ngày cho Khách hàng mới.</p>
+<div class="text-right mt-2">
+<span class="text-xs font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded">x1</span>
+</div>
+</div>
+</div>
+<!-- Reach stats text -->
+<p class="text-estate-text-gray text-center mt-12 max-w-lg">
+            Tin đăng của bạn sẽ được tiếp cận <span class="font-bold text-estate-dark">hơn 6 triệu người</span> tìm mua/thuê bất động sản mỗi tháng
+          </p>
+<!-- Action Buttons -->
+<div class="flex items-center space-x-4 mt-8">
+<button class="px-8 py-3 bg-white border border-estate-dark rounded-full font-bold text-sm hover:bg-gray-50 transition-colors">
+              Xem tất cả khuyến mãi
+            </button>
+<button class="px-8 py-3 bg-estate-crimson text-white rounded-full font-bold text-sm flex items-center hover:bg-red-700 transition-colors">
+              Đăng tin ngay
+              <svg class="h-4 w-4 ml-2" fill="none" stroke="currentColor" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M14 5l7 7m0 0l-7 7m7-7H3" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</button>
+</div>
+</div>
+</section>
+<!-- END: ContentArea -->
+</main>
+</div>
+<!-- Float Action Buttons (Feedback/Chat) -->
+<div class="fixed right-0 top-1/2 -translate-y-1/2 flex flex-col items-center bg-white border border-gray-200 rounded-l-lg py-4 px-2 shadow-md space-y-4 z-40">
+<div class="flex flex-col items-center cursor-pointer group">
+<span class="[writing-mode:vertical-lr] text-xs font-medium rotate-180 mb-2">Phản hồi</span>
+<svg class="h-5 w-5 text-gray-600 group-hover:text-estate-crimson" fill="none" stroke="currentColor" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</div>
+</div>
+<div class="fixed bottom-6 right-6 z-40">
+<button class="w-14 h-14 bg-estate-crimson rounded-full flex items-center justify-center text-white shadow-2xl hover:scale-105 transition-transform">
+<svg class="h-8 w-8" fill="none" stroke="currentColor" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</button>
+</div>
+</body></html>

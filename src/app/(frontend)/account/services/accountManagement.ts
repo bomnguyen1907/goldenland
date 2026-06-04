@@ -20,12 +20,9 @@ export type ManagedProperty = {
 }
 
 export type ManagedPropertyStats = {
-  active: number
-  pending: number
-  drafts: number
-  expired: number
-  sold: number
   total: number
+  drafts?: number
+  [status: string]: number | undefined
 }
 
 type DashboardResponse = {
@@ -39,11 +36,6 @@ type PropertiesResponse = {
 }
 
 const EMPTY_STATS: ManagedPropertyStats = {
-  active: 0,
-  pending: 0,
-  drafts: 0,
-  expired: 0,
-  sold: 0,
   total: 0,
 }
 
@@ -62,16 +54,59 @@ export async function fetchManagementProperties(
   params: {
     userId: string | number
     status?: string
+    keyword?: string
+    verifiedOnly?: boolean
+    propertyTypes?: string[]
+    provinceCodes?: string[]
+    wardCodes?: string[]
+    projectIds?: string[]
+    minPrice?: number
+    maxPrice?: number
+    minArea?: number
+    maxArea?: number
+    directions?: string[]
+    legalStatuses?: string[]
+    bedroomsList?: number[]
+    bathroomsList?: number[]
     page?: number
     limit?: number
   },
   config?: AxiosRequestConfig,
 ): Promise<{ properties: ManagedProperty[]; totalPages: number }> {
-  const where: Record<string, unknown> = { user: { equals: params.userId } }
+  const and: Record<string, unknown>[] = [{ user: { equals: params.userId } }]
 
   if (params.status) {
-    where.status = { equals: params.status }
+    and.push({ status: { equals: params.status } })
   }
+
+  const keyword = params.keyword?.trim()
+  if (keyword) {
+    const keywordOr: Record<string, unknown>[] = [
+      { title: { contains: keyword } },
+      { slug: { contains: keyword } },
+    ]
+    const numericId = Number(keyword)
+    if (Number.isInteger(numericId) && numericId > 0) {
+      keywordOr.unshift({ id: { equals: numericId } })
+    }
+    and.push({ or: keywordOr })
+  }
+
+  if (params.verifiedOnly) and.push({ isVerified: { equals: true } })
+  if (params.propertyTypes?.length) and.push({ propertyType: { in: params.propertyTypes } })
+  if (params.provinceCodes?.length) and.push({ provinceCode: { in: params.provinceCodes } })
+  if (params.wardCodes?.length) and.push({ wardCode: { in: params.wardCodes } })
+  if (params.projectIds?.length) and.push({ project: { in: params.projectIds } })
+  if (typeof params.minPrice === 'number') and.push({ price: { greater_than_equal: params.minPrice } })
+  if (typeof params.maxPrice === 'number') and.push({ price: { less_than_equal: params.maxPrice } })
+  if (typeof params.minArea === 'number') and.push({ area: { greater_than_equal: params.minArea } })
+  if (typeof params.maxArea === 'number') and.push({ area: { less_than_equal: params.maxArea } })
+  if (params.directions?.length) and.push({ direction: { in: params.directions } })
+  if (params.legalStatuses?.length) and.push({ legalStatus: { in: params.legalStatuses } })
+  if (params.bedroomsList?.length) and.push({ bedrooms: { in: params.bedroomsList } })
+  if (params.bathroomsList?.length) and.push({ bathrooms: { in: params.bathroomsList } })
+
+  const where = and.length === 1 ? and[0] : { and }
 
   const query = qs.stringify(
     {
