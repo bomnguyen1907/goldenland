@@ -53,7 +53,7 @@ import {
   countUnreadNotifications,
 } from './endpoints/notifications'
 import { myDashboard } from './endpoints/myDashboard'
-import { meProfile } from './endpoints/me'
+import { changeMyPassword, meProfile, updateMeProfile, uploadMyAvatar } from './endpoints/me'
 import { projectDetail, projects } from './endpoints/projects'
 import { adminDashboardStats } from './endpoints/adminDashboard'
 import { submitProperty } from './endpoints/submitProperty'
@@ -91,6 +91,9 @@ export default buildConfig({
     countUnreadNotifications,
     myDashboard,
     meProfile,
+    updateMeProfile,
+    uploadMyAvatar,
+    changeMyPassword,
     submitProperty,
     projects,
     projectDetail,

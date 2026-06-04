@@ -100,7 +100,18 @@ export const hydrateAuthThunk = createAsyncThunk(
 const authSlice = createSlice({
   name: 'auth',
   initialState,
-  reducers: {},
+  reducers: {
+    setAuthUser(state, action: { payload: UserState | null }) {
+      state.user = action.payload
+    },
+    setAuthProfile(state, action: { payload: ProfileState }) {
+      state.profile = action.payload
+    },
+    updateAuthUser(state, action: { payload: Partial<UserState> }) {
+      if (!state.user) return
+      state.user = { ...state.user, ...action.payload }
+    },
+  },
   extraReducers: (builder) => {
     builder
       // Sign In
@@ -166,6 +177,7 @@ const authSlice = createSlice({
 })
 
 export default authSlice.reducer
+export const { setAuthUser, setAuthProfile, updateAuthUser } = authSlice.actions
 
 // Selectors
 export const selectUser = (state: { auth: AuthState }) => state.auth.user

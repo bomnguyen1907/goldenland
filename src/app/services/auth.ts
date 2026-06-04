@@ -1,5 +1,5 @@
 import type { AxiosRequestConfig } from 'axios'
-import { postJSON, getJSON } from '@/app/lib/http'
+import { patchJSON, postJSON, getJSON } from '@/app/lib/http'
 
 export type SignInResponse = {
   user: {
@@ -8,7 +8,7 @@ export type SignInResponse = {
     role?: 'admin' | 'user'
     fullName?: string
     phone?: string
-    avatarUrl?: string
+    avatarUrl?: string | null
     activePackage?: string | number | { id?: string | number } | null
     active_package_id?: string | number | null
   }
@@ -24,6 +24,20 @@ export type ProfileResponse = {
   address?: string
   provinceCode?: string
   wardCode?: string
+}
+
+export type CurrentUserResponse = SignInResponse['user'] & {
+  avatar_id?: string | null
+}
+
+export type UpdateAccountPayload = {
+  fullName?: string
+  phone?: string
+  email?: string
+  profile?: {
+    displayName?: string
+    address?: string
+  }
 }
 
 export type RegisterPayload = {
@@ -59,4 +73,59 @@ export async function fetchMyProfile(config?: AxiosRequestConfig): Promise<Profi
   } catch {
     return null // Profile optional
   }
+}
+
+export async function fetchCurrentUser(config?: AxiosRequestConfig): Promise<CurrentUserResponse | null> {
+  try {
+    const response = await getJSON<{ user: CurrentUserResponse }>('/api/users/me?depth=0', config)
+    const user = response.user
+
+    return user
+      ? {
+          ...user,
+          avatarUrl: user.avatarUrl ?? user.avatar_id ?? null,
+        }
+      : null
+  } catch {
+    return null
+  }
+}
+
+export async function updateMyAccount(
+  data: UpdateAccountPayload,
+  config?: AxiosRequestConfig,
+): Promise<{ user: CurrentUserResponse; profile: ProfileResponse | null }> {
+  return patchJSON<{ user: CurrentUserResponse; profile: ProfileResponse | null }, UpdateAccountPayload>(
+    '/api/me/profile',
+    data,
+    config,
+  )
+}
+
+export async function uploadMyAvatar(
+  file: File,
+  config?: AxiosRequestConfig,
+): Promise<{ avatarUrl: string; displayAvatarUrl: string }> {
+  const formData = new FormData()
+  formData.append('avatar', file)
+
+  return postJSON<{ avatarUrl: string; displayAvatarUrl: string }, FormData>(
+    '/api/me/avatar',
+    formData,
+    config,
+  )
+}
+
+export async function changeMyPassword(
+  data: {
+    currentPassword: string
+    newPassword: string
+  },
+  config?: AxiosRequestConfig,
+): Promise<{ success: boolean }> {
+  return postJSON<{ success: boolean }, { currentPassword: string; newPassword: string }>(
+    '/api/me/change-password',
+    data,
+    config,
+  )
 }
