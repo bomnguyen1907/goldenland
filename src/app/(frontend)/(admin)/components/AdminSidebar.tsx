@@ -34,7 +34,6 @@ const sections: { title: string; items: NavItem[] }[] = [
   {
     title: 'Cấu hình',
     items: [
-      { href: '/quan-tri/banner', label: 'Banner', icon: 'view_carousel' },
       { href: '/admin', label: 'Payload Admin', icon: 'tune' },
     ],
   },

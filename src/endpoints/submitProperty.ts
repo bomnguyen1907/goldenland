@@ -321,7 +321,7 @@ export const submitProperty: Endpoint = {
       )
       const expiresAt = new Date(scheduledPublishAt)
       expiresAt.setDate(expiresAt.getDate() + durationDays)
-      const status = scheduledPublishAt > new Date() ? 'pending' : 'active'
+      const status = 'pending'
 
       if (imageFiles.length < MIN_IMAGES) {
         return Response.json(
