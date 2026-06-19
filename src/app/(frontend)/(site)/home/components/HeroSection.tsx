@@ -3,10 +3,10 @@
 import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useDispatch, useSelector } from 'react-redux'
-import { buildQuery } from '@/app/lib/query'
+import { buildAppQuery } from '@/app/lib/api/query'
 import { getSearchPlaceholder, parseSearch } from '../lib/search/parser'
 import type { SearchTab } from '../lib/search/types'
-import { searchNewsByParsed } from '../services/hybridSearch'
+import { searchNewsByParsed } from '@/app/services/hybridSearch'
 import type { AppDispatch } from '@/app/store'
 import {
   hydrateFromParsed,
@@ -66,7 +66,7 @@ export function HeroSection() {
         return
       }
 
-      const query = buildQuery({
+      const query = buildAppQuery({
         keyword: parsed.keyword || undefined,
         district: parsed.filters.district || undefined,
         provinceCode: parsed.filters.provinceCode || undefined,

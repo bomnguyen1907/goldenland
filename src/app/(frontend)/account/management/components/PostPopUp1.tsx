@@ -2,19 +2,12 @@
 
 import { useEffect, useMemo, useRef, useState, type Dispatch, type SetStateAction } from 'react'
 import type { PostDraft } from './postFlowTypes'
+import { fetchProvinces, fetchWards } from '@/app/services/location'
+import { buildGoogleMapsEmbedURL, geocodeVietnamAddress } from '@/app/services/maps'
+import { fetchProjectOptions, type ProjectOption } from '@/app/services/projects'
 
 type Province = { code: string; name: string }
 type Ward = { code: string; name: string }
-type ProjectOption = {
-  id: string
-  name: string
-  provinceCode?: string | null
-  wardCode?: string | null
-  address?: string | null
-  latitude?: number | null
-  longitude?: number | null
-}
-
 type PostPopUp1Props = {
   draft: PostDraft
   onChange: Dispatch<SetStateAction<PostDraft>>
@@ -173,8 +166,7 @@ export default function PostPopUp1({ draft, onChange, onClose, onNext }: PostPop
   const lastLocationLookupKeyRef = useRef('')
 
   useEffect(() => {
-    fetch('/api/divisions/provinces')
-      .then((r) => r.json())
+    fetchProvinces()
       .then((res) => setProvinces(Array.isArray(res) ? res : []))
       .catch(() => setProvinces([]))
   }, [])
@@ -185,41 +177,18 @@ export default function PostPopUp1({ draft, onChange, onClose, onNext }: PostPop
       return
     }
 
-    fetch(`/api/divisions/wards/${draft.provinceCode}`)
-      .then((r) => r.json())
+    fetchWards(draft.provinceCode)
       .then((res) => setWards(Array.isArray(res) ? res : []))
       .catch(() => setWards([]))
   }, [draft.provinceCode])
 
   useEffect(() => {
     setLoadingProjects(true)
-    const params = new URLSearchParams()
-    params.set('depth', '0')
-    params.set('limit', '100')
-    params.set('sort', 'name')
-
-    if (draft.provinceCode && draft.wardCode) {
-      params.set('where[and][0][provinceCode][equals]', draft.provinceCode)
-      params.set('where[and][1][wardCode][equals]', draft.wardCode)
-    } else if (draft.provinceCode) {
-      params.set('where[provinceCode][equals]', draft.provinceCode)
-    }
-
-    fetch(`/api/projects?${params.toString()}`)
-      .then((r) => r.json())
-      .then((res) => {
-        const docs: any[] = Array.isArray(res?.docs) ? res.docs : []
-        const mapped: ProjectOption[] = docs.map((project) => ({
-          id: String(project.id),
-          name: String(project.name || ''),
-          provinceCode: typeof project.provinceCode === 'string' ? project.provinceCode : null,
-          wardCode: typeof project.wardCode === 'string' ? project.wardCode : null,
-          address: typeof project.address === 'string' ? project.address : null,
-          latitude: typeof project.latitude === 'number' ? project.latitude : null,
-          longitude: typeof project.longitude === 'number' ? project.longitude : null,
-        }))
-        setProjects(mapped)
-      })
+    fetchProjectOptions({
+      provinceCode: draft.provinceCode || undefined,
+      wardCode: draft.wardCode || undefined,
+    })
+      .then(setProjects)
       .catch(() => setProjects([]))
       .finally(() => setLoadingProjects(false))
   }, [draft.provinceCode, draft.wardCode])
@@ -294,27 +263,13 @@ export default function PostPopUp1({ draft, onChange, onClose, onNext }: PostPop
 
     const timer = window.setTimeout(async () => {
       try {
-        const params = new URLSearchParams({
-          format: 'json',
-          limit: '1',
-          countrycodes: 'vn',
-          addressdetails: '1',
-          q: query,
-        })
-        const res = await fetch(`https://nominatim.openstreetmap.org/search?${params.toString()}`)
-        if (!res.ok) {
-          setStreetError('')
-          return
-        }
-
-        const data = await res.json()
-        const first = Array.isArray(data) ? data[0] : null
-        if (!first) {
+        const location = await geocodeVietnamAddress(query, { addressDetails: true })
+        if (!location) {
           setStreetError('')
           onChange((prev) => ({ ...prev, latitude: null, longitude: null }))
           return
         }
-        const details = first.address || {}
+        const details = location.address || {}
         const wardCandidate = String(
           details.suburb || details.city_district || details.quarter || details.neighbourhood || '',
         )
@@ -330,13 +285,11 @@ export default function PostPopUp1({ draft, onChange, onClose, onNext }: PostPop
           onChange((prev) => ({ ...prev, latitude: null, longitude: null }))
           return
         }
-        const latitude = first?.lat ? Number(first.lat) : null
-        const longitude = first?.lon ? Number(first.lon) : null
         setStreetError('')
         onChange((prev) => ({
           ...prev,
-          latitude: Number.isFinite(latitude as number) ? latitude : null,
-          longitude: Number.isFinite(longitude as number) ? longitude : null,
+          latitude: location.latitude,
+          longitude: location.longitude,
         }))
       } catch {
         setStreetError('')
@@ -454,7 +407,10 @@ export default function PostPopUp1({ draft, onChange, onClose, onNext }: PostPop
     if (draft.project) {
       if (typeof draft.latitude === 'number' && typeof draft.longitude === 'number') {
         setMapPreviewSrc(
-          `https://maps.google.com/maps?q=${draft.latitude},${draft.longitude}&z=15&output=embed`,
+          buildGoogleMapsEmbedURL({
+            latitude: draft.latitude,
+            longitude: draft.longitude,
+          }),
         )
       } else {
         setMapPreviewSrc('')
@@ -478,7 +434,9 @@ export default function PostPopUp1({ draft, onChange, onClose, onNext }: PostPop
 
     const timer = window.setTimeout(() => {
       setMapPreviewSrc(
-        `https://maps.google.com/maps?q=${encodeURIComponent(mapQuery)}&z=15&output=embed`,
+        buildGoogleMapsEmbedURL({
+          query: mapQuery,
+        }),
       )
     }, MAP_LOOKUP_DELAY_MS)
 

@@ -2,6 +2,8 @@
 
 import QRCode from 'qrcode'
 import { useEffect, useState } from 'react'
+import { fetchAccountDashboard } from '@/app/services/account'
+import { createTopUp, fetchTopUpStatus } from '@/app/services/billing'
 
 type PaymentInfo = {
   amount: number
@@ -22,12 +24,8 @@ export default function TopUpPage() {
 
   const loadBalance = async () => {
     try {
-      const res = await fetch('/api/my/dashboard')
-      const data = await res.json()
-      console.log('TOPUP STATUS:', data)
-      if (res.ok) {
-        setBalance(Number(data.balance || 0))
-      }
+      const data = await fetchAccountDashboard()
+      setBalance(Number(data.balance || 0))
     } catch {
       setBalance(null)
     }
@@ -42,15 +40,7 @@ export default function TopUpPage() {
 
     const intervalId = window.setInterval(async () => {
       try {
-        const res = await fetch(
-          `/api/top-up-status/${paymentInfo.orderId}`,
-          {
-            cache: 'no-store',
-          }
-        )
-        const data = await res.json()
-        console.log('TOPUP STATUS:', data)
-        if (!res.ok) return
+        const data = await fetchTopUpStatus(paymentInfo.orderId)
 
         if (String(data.status).toLowerCase() === 'paid') {
           setPaymentInfo((current) => (current ? { ...current, status: 'paid' } : current))
@@ -77,19 +67,10 @@ export default function TopUpPage() {
     setLoading(true)
 
     try {
-      const res = await fetch('/api/top-up', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          amount: Number(amount),
-          paymentMethod: 'bank_transfer',
-        }),
+      const data = await createTopUp({
+        amount: Number(amount),
+        paymentMethod: 'bank_transfer',
       })
-
-      const data = await res.json()
-      console.log('TOPUP STATUS:', data)
-
-      if (!res.ok) throw new Error(data.error || 'Khong tao duoc link thanh toan')
 
       const qrImageUrl = data.qrCode ? await QRCode.toDataURL(data.qrCode, { margin: 1, width: 320 }) : ''
 

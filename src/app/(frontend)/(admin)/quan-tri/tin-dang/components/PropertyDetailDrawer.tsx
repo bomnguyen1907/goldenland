@@ -1,8 +1,9 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import axios from 'axios'
+import type { Property } from '@/payload-types'
 
+import { fetchPropertyDetail } from '@/app/services/properties'
 import {
   formatVND,
   formatDateTime,
@@ -16,37 +17,6 @@ type Props = {
   onClose: () => void
   onApprove: () => void | Promise<void>
   onReject: () => void
-}
-
-type Property = {
-  id: string | number
-  title: string
-  description?: string
-  status?: string
-  propertyType?: string
-  postType?: string
-  price?: number
-  priceUnit?: string
-  area?: number
-  bedrooms?: number
-  bathrooms?: number
-  roadWidth?: number
-  facadeWidth?: number
-  direction?: string
-  legalStatus?: string
-  furnitureStatus?: string
-  address?: string
-  street?: string
-  latitude?: number
-  longitude?: number
-  images?: { image?: string }[]
-  videoUrl?: string
-  user?: { id?: string | number; fullName?: string; email?: string; phone?: string } | string | number
-  project?: { id?: string | number; name?: string } | string | number
-  isVerified?: boolean
-  rejectionReason?: string
-  createdAt?: string
-  updatedAt?: string
 }
 
 export default function PropertyDetailDrawer({
@@ -63,11 +33,10 @@ export default function PropertyDetailDrawer({
   useEffect(() => {
     let cancelled = false
     setLoading(true)
-    axios
-      .get(`/api/properties/${propertyId}?depth=2`, { withCredentials: true })
+    fetchPropertyDetail(String(propertyId), { withCredentials: true })
       .then((res) => {
         if (cancelled) return
-        setData(res.data)
+        setData(res.property)
         setError(null)
       })
       .catch((e) => {

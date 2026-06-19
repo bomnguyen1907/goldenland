@@ -85,6 +85,7 @@ lerna-debug.log*
 !.claudeignore
 CLAUDE.local.md
 AGENTS.local.md
+.codex*
 
 # ===== OS generated files =====
 .DS_Store

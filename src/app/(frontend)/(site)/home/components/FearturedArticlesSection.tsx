@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react'
 import {
   fetchFeaturedArticlesBasedOnCategoryId,
   fetchTopViewedRealEstateNews,
-} from '../services/articles'
+} from '@/app/services/articles'
 import { ArticleHeroItem, ArticleListItem, type Article } from './ArticleItems'
 
 type ArticlesCategory = {

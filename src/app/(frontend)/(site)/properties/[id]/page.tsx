@@ -15,9 +15,10 @@ import {
 } from './components/DetailSections'
 import { ForYouSection } from './components/ForYouSection'
 import { FavoriteActionButton } from './components/FavoriteActionButton'
+import { ReportActionButton } from './components/ReportActionButton'
 import type { PropertyItem } from '../../components/PropertyGridItem'
-import { fetchForYouProperties } from '../services/properties'
-import { fetchPropertyDetailData } from './services/propertyDetail'
+import { fetchForYouProperties } from '@/app/services/properties'
+import { fetchPropertyDetailData } from '@/app/services/properties.server'
 
 type PageProps = {
   params: Promise<{
@@ -259,15 +260,7 @@ export default async function PropertyDetailPage({ params }: PageProps) {
           share
         </span>
       </button>
-      <button
-        aria-label="Report"
-        className="p-2 rounded-full hover:bg-surface-container-high transition-colors text-on-surface-variant flex items-center justify-center w-10 h-10"
-        type="button"
-      >
-        <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 0" }}>
-          flag
-        </span>
-      </button>
+      <ReportActionButton propertyId={property.id} title={property.title} />
       <FavoriteActionButton propertyId={property.id} title={property.title} />
     </>
   )

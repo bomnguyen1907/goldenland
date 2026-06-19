@@ -14,6 +14,7 @@ export const refreshScheduledProperties = async (req: PayloadRequest) => {
       where: {
         and: [
           { status: { equals: 'pending' } },
+          { isVerified: { equals: true } },
           { scheduledPublishAt: { less_than_equal: now } },
         ],
       },

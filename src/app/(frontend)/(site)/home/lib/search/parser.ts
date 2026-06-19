@@ -92,8 +92,8 @@ export function parseSearch(input: string, tab: SearchTab): ParsedSearchResult {
   if (matchedWard) {
     keywordInput = removeAliasTokens(keywordInput, matchedWard.aliases)
   }
-  // Build keyword from normalized text so Vietnamese combining accents do not leave stray tokens.
-  const rawKeyword = buildKeyword(normalize(keywordInput), tab)
+  // Preserve the user's original accents in the final keyword; normalization is only for matching.
+  const rawKeyword = buildKeyword(keywordInput, tab)
   const keyword = normalize(rawKeyword).length >= 2 ? rawKeyword : ''
   const chips: SearchChip[] = []
 

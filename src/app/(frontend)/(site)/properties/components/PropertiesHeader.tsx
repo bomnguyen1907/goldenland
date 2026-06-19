@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
-import type { PropertySortValue } from '../services/properties'
+import type { PropertySortValue } from '@/app/services/properties'
 
 type PropertiesHeaderProps = {
   totalDocs: number

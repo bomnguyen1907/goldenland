@@ -1,5 +1,5 @@
 import type { AxiosRequestConfig } from 'axios'
-import { deleteJSON, getJSON, postJSON } from '@/app/lib/http'
+import { deleteJSON, getJSON, postJSON } from '@/app/lib/api/http'
 
 type FavoriteIdsResponse = {
   property_ids: number[]

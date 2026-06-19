@@ -1,5 +1,5 @@
 import type { AxiosRequestConfig } from 'axios'
-import { patchJSON, postJSON, getJSON } from '@/app/lib/http'
+import { patchJSON, postJSON, getJSON } from '@/app/lib/api/http'
 
 export type SignInResponse = {
   user: {
@@ -28,6 +28,12 @@ export type ProfileResponse = {
 
 export type CurrentUserResponse = SignInResponse['user'] & {
   avatar_id?: string | null
+  availableVouchers?: Array<{
+    id?: string | null
+    quantity?: number | null
+    discountValue?: number | null
+    appliedFor?: 'normal' | 'vip' | null
+  }>
 }
 
 export type UpdateAccountPayload = {

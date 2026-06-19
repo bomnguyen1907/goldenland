@@ -2,6 +2,11 @@
 
 import 'leaflet/dist/leaflet.css'
 import { useEffect, useRef, useState } from 'react'
+import {
+  fetchNearbyPlaces,
+  NEARBY_PLACE_CATEGORIES,
+  type NearbyPlace,
+} from '@/app/services/maps'
 
 type Props = {
   lat: number
@@ -9,38 +14,7 @@ type Props = {
   label: string
 }
 
-type Place = {
-  id: string
-  name: string
-  lat: number
-  lng: number
-  distance: number
-}
-
-type Tab = {
-  label: string
-  icon: string
-  query: string
-  value: string
-}
-
-const TABS: Tab[] = [
-  { label: 'Trường học', icon: '🏫', query: 'amenity=school', value: 'school' },
-  { label: 'Siêu thị', icon: '🛒', query: 'shop=supermarket', value: 'supermarket' },
-  { label: 'Công viên', icon: '🌳', query: 'leisure=park', value: 'park' },
-  { label: 'Bệnh viện', icon: '🏥', query: 'amenity=hospital', value: 'hospital' },
-  { label: 'Nhà hàng', icon: '🍜', query: 'amenity=restaurant', value: 'restaurant' },
-]
-
-function haversine(lat1: number, lng1: number, lat2: number, lng2: number): number {
-  const R = 6371000
-  const dLat = ((lat2 - lat1) * Math.PI) / 180
-  const dLng = ((lng2 - lng1) * Math.PI) / 180
-  const a =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLng / 2) ** 2
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
-}
+const TABS = NEARBY_PLACE_CATEGORIES
 
 function formatDist(m: number): string {
   return m >= 1000 ? `${(m / 1000).toFixed(1)} km` : `${Math.round(m)} m`
@@ -52,7 +26,7 @@ export default function PropertyLocationMap({ lat, lng, label }: Props) {
   const baseLayerRef = useRef<any>(null)
   const nearbyLayerRef = useRef<any>(null)
   const [activeTab, setActiveTab] = useState(0)
-  const [places, setPlaces] = useState<Place[]>([])
+  const [places, setPlaces] = useState<NearbyPlace[]>([])
   const [loadingPlaces, setLoadingPlaces] = useState(false)
 
   useEffect(() => {
@@ -105,51 +79,32 @@ export default function PropertyLocationMap({ lat, lng, label }: Props) {
 
   useEffect(() => {
     const tab = TABS[activeTab]
-    const [key, val] = tab.query.split('=')
     const controller = new AbortController()
+    let cancelled = false
     setLoadingPlaces(true)
     setPlaces([])
 
-    const overpassQuery = `[out:json][timeout:10];
-(
-node["${key}"="${val}"](around:2000,${lat},${lng});
-way["${key}"="${val}"](around:2000,${lat},${lng});
-);
-out center 8;`
-
-    fetch('https://overpass-api.de/api/interpreter', {
-      method: 'POST',
-      body: overpassQuery,
+    fetchNearbyPlaces({
+      lat,
+      lng,
+      query: tab.query,
       signal: controller.signal,
     })
-      .then((r) => r.json())
-      .then((data) => {
-        const results: Place[] = (data.elements || [])
-          .map((el: any) => {
-            const elLat = el.lat ?? el.center?.lat
-            const elLng = el.lon ?? el.center?.lon
-            if (!elLat || !elLng) return null
-            return {
-              id: String(el.id),
-              name: el.tags?.name || el.tags?.['name:vi'] || 'Không rõ tên',
-              lat: elLat,
-              lng: elLng,
-              distance: haversine(lat, lng, elLat, elLng),
-            }
-          })
-          .filter(Boolean)
-          .sort((a: Place, b: Place) => a.distance - b.distance)
-          .slice(0, 8)
-
-        setPlaces(results)
+      .then((results) => {
+        if (!cancelled) setPlaces(results)
       })
       .catch((error: unknown) => {
         if (error instanceof Error && error.name === 'AbortError') return
-        setPlaces([])
+        if (!cancelled) setPlaces([])
       })
-      .finally(() => setLoadingPlaces(false))
+      .finally(() => {
+        if (!cancelled) setLoadingPlaces(false)
+      })
 
-    return () => controller.abort()
+    return () => {
+      cancelled = true
+      controller.abort()
+    }
   }, [activeTab, lat, lng])
 
   useEffect(() => {

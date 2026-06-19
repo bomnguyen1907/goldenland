@@ -132,6 +132,10 @@ const extractPropertyImagePath = (imageUrl: unknown): string | null => {
     }
 }
 
+const isAdminUser = (user: unknown): boolean => {
+    return Boolean(user && typeof user === 'object' && 'role' in user && user.role === 'admin')
+}
+
 const deletePropertyImagesFromBucket = async (imageUrls: unknown[]) => {
     const supabaseUrl = process.env.SUPABASE_URL
     const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY
@@ -446,12 +450,18 @@ export const Properties: CollectionConfig = {
                                     defaultValue: 'draft',
                                     required: true,
                                     options: [...PROPERTY_STATUS_OPTIONS],
+                                    access: {
+                                        update: adminOnlyField,
+                                    },
                                 },
                                 {
                                     name: 'durationDays',
                                     type: 'number',
                                     defaultValue: 15,
                                     min: 1,
+                                    access: {
+                                        update: adminOnlyField,
+                                    },
                                     admin: { description: 'Số ngày hiển thị của tin đăng' },
                                 },
                             ],
@@ -468,6 +478,9 @@ export const Properties: CollectionConfig = {
                                         },
                                         description: 'Tin pending sẽ tự chuyển active khi tới thời điểm này',
                                     },
+                                    access: {
+                                        update: adminOnlyField,
+                                    },
                                 },
                                 {
                                     name: 'expiresAt',
@@ -478,6 +491,9 @@ export const Properties: CollectionConfig = {
                                         },
                                         description: 'Tin active sẽ tự chuyển expired khi quá thời điểm này',
                                     },
+                                    access: {
+                                        update: adminOnlyField,
+                                    },
                                 },
                             ],
                         },
@@ -485,12 +501,18 @@ export const Properties: CollectionConfig = {
                             name: 'isVerified',
                             type: 'checkbox',
                             defaultValue: false,
+                            access: {
+                                update: adminOnlyField,
+                            },
                             admin: { description: 'Tin đã xác thực' },
                         },
                         {
                             name: 'verifiedBy',
                             type: 'relationship',
                             relationTo: 'users',
+                            access: {
+                                update: adminOnlyField,
+                            },
                             admin: {
                                 description: 'Người duyệt tin',
                                 condition: (data) => data?.isVerified,
@@ -499,6 +521,9 @@ export const Properties: CollectionConfig = {
                         {
                             name: 'verifiedAt',
                             type: 'date',
+                            access: {
+                                update: adminOnlyField,
+                            },
                             admin: {
                                 condition: (data) => data?.isVerified,
                             },
@@ -506,6 +531,9 @@ export const Properties: CollectionConfig = {
                         {
                             name: 'rejectionReason',
                             type: 'textarea',
+                            access: {
+                                update: adminOnlyField,
+                            },
                             admin: {
                                 condition: (data) => data?.status === 'rejected',
                             },
@@ -596,6 +624,44 @@ export const Properties: CollectionConfig = {
         ],
         beforeChange: [
             async ({ data, operation, originalDoc, req }) => {
+                const currentUser = req.user
+                const isAdmin = isAdminUser(currentUser)
+
+                if (operation === 'create' && currentUser && !isAdmin) {
+                    data.user = currentUser.id
+                    data.status = 'pending'
+                    data.isVerified = false
+                    data.verifiedBy = null
+                    data.verifiedAt = null
+                    data.rejectionReason = null
+                }
+
+                if (operation === 'update' && currentUser && !isAdmin) {
+                    delete data.status
+                    delete data.durationDays
+                    delete data.scheduledPublishAt
+                    delete data.expiresAt
+                    delete data.isVerified
+                    delete data.verifiedBy
+                    delete data.verifiedAt
+                    delete data.rejectionReason
+                }
+
+                if (operation === 'update' && isAdmin && currentUser) {
+                    if (data.status === 'active' && originalDoc?.status !== 'active') {
+                        data.isVerified = true
+                        data.verifiedBy = currentUser.id
+                        data.verifiedAt = data.verifiedAt || new Date().toISOString()
+                        data.rejectionReason = null
+                    }
+
+                    if (data.status === 'rejected') {
+                        data.isVerified = false
+                        data.verifiedBy = null
+                        data.verifiedAt = null
+                    }
+                }
+
                 // Tự sinh slug từ title
                 if (data?.title && !data?.slug) {
                     data.slug = data.title

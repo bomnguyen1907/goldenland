@@ -20,19 +20,19 @@ import {
 import type { RootState } from '@/app/store'
 import { selectUser } from '@/app/store/slices/authSlice'
 import { PROPERTY_STATUS_LABELS, PROPERTY_STATUS_OPTIONS } from '@/lib/propertyStatus'
-import { fetchPropertyFilterOptions } from '../../(site)/properties/services/properties'
+import { fetchManagementDashboard } from '@/app/services/account'
+import {
+  deleteManagedProperty,
+  fetchManagementProperties,
+  fetchPropertyFilterOptions,
+  type ManagedProperty,
+} from '@/app/services/properties'
+import type { ManagedPropertyStats } from '@/app/services/account'
 import { formatLocationByCodes } from '../../(site)/properties/lib/utils'
 import {
   PropertiesAdvancedFilterPopup,
   type FilterState,
 } from '../../(site)/properties/components/PropertiesAdvancedFilterPopup'
-import {
-  deleteManagedProperty,
-  fetchManagementDashboard,
-  fetchManagementProperties,
-  type ManagedProperty,
-  type ManagedPropertyStats,
-} from '../services/accountManagement'
 
 type RangeOption = {
   id: string

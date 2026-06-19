@@ -3,6 +3,7 @@
 import { useState, useTransition, useEffect, useRef } from 'react'
 import { saveBanner, type BannerPosition } from '../actions'
 import type { BannerItem } from './BannersSection'
+import { uploadMedia } from '@/app/services/media'
 
 const POSITIONS: { value: BannerPosition; label: string }[] = [
   { value: 'home_hero', label: 'Trang chủ — Hero' },
@@ -87,19 +88,9 @@ export default function BannerFormDrawer({ banner, onClose, onSaved }: Props) {
     setError(null)
 
     try {
-      const fd = new FormData()
-      fd.append('file', file)
-      fd.append('alt', form.name || file.name)
-
-      const res = await fetch('/api/media', { method: 'POST', body: fd })
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}))
-        throw new Error(body?.message || 'Upload thất bại')
-      }
-      const data = await res.json()
-      const mediaId = Number(data?.doc?.id ?? data?.id)
-      if (!mediaId) throw new Error('Không lấy được ID ảnh')
-      setUploadedMediaId(mediaId)
+      const media = await uploadMedia(file, form.name || file.name)
+      if (!media.id) throw new Error('Không lấy được ID ảnh')
+      setUploadedMediaId(media.id)
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Lỗi upload ảnh')
       setPreviewUrl(existingImg?.url ?? null)

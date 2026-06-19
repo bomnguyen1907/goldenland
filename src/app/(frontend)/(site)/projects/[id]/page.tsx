@@ -8,6 +8,7 @@ import { formatPrice, formatDate, lexicalToHtml, PROPERTY_TYPES } from '../utils
 import { formatLocationByCodes } from '../../properties/lib/utils'
 import SectionTitle from '../components/SectionTitle'
 import ProjectCard from '../components/ProjectCard'
+import { fetchProjectById, fetchRelatedProjects, updateProject } from '@/app/services/projects'
 
 const MapSection = dynamic(() => import('./components/MapSection'), { ssr: false })
 
@@ -36,26 +37,14 @@ export default function ProjectDetailPage() {
         if (!id) return
         const fetchData = async () => {
             try {
-                const res = await fetch(`/api/projects/${id}?depth=2`)
-                const data = await res.json()
+                const data = await fetchProjectById(id, { depth: 2 })
                 setProject(data)
-                fetch(`/api/projects/${id}`, {
-                    method: 'PATCH',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ views: (data.views || 0) + 1 }),
-                }).catch(() => {})
+                updateProject(id, { views: (data.views || 0) + 1 }).catch(() => {})
 
                 // Fetch related projects (same province, exclude current)
                 if (data.provinceCode) {
-                    const params = new URLSearchParams({
-                        limit: '3',
-                        depth: '1',
-                        'where[and][0][provinceCode][equals]': data.provinceCode,
-                        'where[and][1][id][not_equals]': String(data.id),
-                    })
-                    fetch(`/api/projects?${params}`)
-                        .then((r) => r.json())
-                        .then((d) => setRelated(d.docs || []))
+                    fetchRelatedProjects(data)
+                        .then(setRelated)
                         .catch(() => {})
                 }
             } catch {
