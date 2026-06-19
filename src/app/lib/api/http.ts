@@ -20,11 +20,19 @@ export class ApiRequestError extends Error {
 }
 
 export function getServerBaseURL(): string {
-  return (
-    process.env.NEXT_PUBLIC_SERVER_URL ??
-    process.env.PAYLOAD_PUBLIC_SERVER_URL ??
-    'http://localhost:3000'
-  )
+  if (process.env.NEXT_PUBLIC_SERVER_URL) {
+    return process.env.NEXT_PUBLIC_SERVER_URL
+  }
+
+  if (process.env.PAYLOAD_PUBLIC_SERVER_URL) {
+    return process.env.PAYLOAD_PUBLIC_SERVER_URL
+  }
+
+  if (process.env.VERCEL_URL) {
+    return `https://${process.env.VERCEL_URL}`
+  }
+
+  return 'http://localhost:3000'
 }
 
 export function resolveRequestURL(url: string): string {
