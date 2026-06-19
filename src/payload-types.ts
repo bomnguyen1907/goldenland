@@ -75,7 +75,6 @@ export interface Config {
     investors: Investor;
     articles: Article;
     'article-categories': ArticleCategory;
-    banners: Banner;
     contacts: Contact;
     reports: Report;
     packages: Package;
@@ -102,7 +101,6 @@ export interface Config {
     investors: InvestorsSelect<false> | InvestorsSelect<true>;
     articles: ArticlesSelect<false> | ArticlesSelect<true>;
     'article-categories': ArticleCategoriesSelect<false> | ArticleCategoriesSelect<true>;
-    banners: BannersSelect<false> | BannersSelect<true>;
     contacts: ContactsSelect<false> | ContactsSelect<true>;
     reports: ReportsSelect<false> | ReportsSelect<true>;
     packages: PackagesSelect<false> | PackagesSelect<true>;
@@ -682,38 +680,6 @@ export interface ArticleCategory {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "banners".
- */
-export interface Banner {
-  id: number;
-  /**
-   * Tên nội bộ để phân biệt (không hiển thị ngoài)
-   */
-  name: string;
-  image: number | Media;
-  /**
-   * URL khi click vào banner
-   */
-  link?: string | null;
-  position: 'home_hero' | 'home_middle' | 'sidebar' | 'listing_list' | 'listing_detail' | 'popup';
-  /**
-   * Bắt đầu hiển thị
-   */
-  startDate?: string | null;
-  /**
-   * Kết thúc hiển thị
-   */
-  endDate?: string | null;
-  /**
-   * Thứ tự (nhỏ → trước)
-   */
-  sort?: number | null;
-  isActive?: boolean | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "contacts".
  */
 export interface Contact {
@@ -1053,10 +1019,6 @@ export interface PayloadLockedDocument {
         value: number | ArticleCategory;
       } | null)
     | ({
-        relationTo: 'banners';
-        value: number | Banner;
-      } | null)
-    | ({
         relationTo: 'contacts';
         value: number | Contact;
       } | null)
@@ -1369,22 +1331,6 @@ export interface ArticleCategoriesSelect<T extends boolean = true> {
   thumbnail?: T;
   isActive?: T;
   sort?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "banners_select".
- */
-export interface BannersSelect<T extends boolean = true> {
-  name?: T;
-  image?: T;
-  link?: T;
-  position?: T;
-  startDate?: T;
-  endDate?: T;
-  sort?: T;
-  isActive?: T;
   updatedAt?: T;
   createdAt?: T;
 }

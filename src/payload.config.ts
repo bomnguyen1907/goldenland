@@ -14,7 +14,6 @@ import { Media } from './collections/Media'
 import { Investors } from './collections/Investors'
 import { Articles } from './collections/Articles'
 import { ArticleCategories } from './collections/ArticleCategories'
-import { Banners } from './collections/Banners'
 import { Contacts } from './collections/Contacts'
 import { Reports } from './collections/Reports'
 import { Packages } from './collections/Packages'
@@ -52,7 +51,6 @@ export default buildConfig({
     Investors,
     Articles,
     ArticleCategories,
-    Banners,
     Contacts,
     Reports,
     Packages,
