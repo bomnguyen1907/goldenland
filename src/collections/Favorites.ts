@@ -47,6 +47,7 @@ export const Favorites: CollectionConfig = {
                             property: { equals: data.property },
                         },
                         limit: 1,
+                        req,
                     })
                     if (existing.docs.length > 0) {
                         throw new Error('Đã yêu thích tin này rồi')

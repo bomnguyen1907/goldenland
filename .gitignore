@@ -19,6 +19,8 @@ node_modules/
 # ===== Package manager stores =====
 /.pnpm-store
 .pnpm-debug.log*
+package-lock.json
+yarn.lock
 
 # ===== Next.js =====
 /.next/

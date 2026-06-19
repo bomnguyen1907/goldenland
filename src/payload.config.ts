@@ -27,7 +27,7 @@ import { ViewHistory } from './collections/ViewHistory'
 import { SpamBlacklist } from './collections/SpamBlacklist'
 import { Promotions } from './collections/Promotions'
 
-import { Settings } from './app/globals/Settings'
+import { Settings } from './globals/Settings'
 
 import { divisionEndpoints } from './endpoints/divisions'
 import { calculatePackagePrice } from './endpoints/calculatePackagePrice'
