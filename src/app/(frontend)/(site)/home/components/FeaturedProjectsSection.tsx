@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import type { Project } from '@/payload-types'
-import { fetchFeaturedProjects } from '../services/projects'
+import { fetchFeaturedProjects } from '@/app/services/projects'
 import { ProjectGridItem } from './ProjectGridItem'
 
 export function FeaturedProjectsSection() {

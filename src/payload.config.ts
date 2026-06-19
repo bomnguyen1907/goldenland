@@ -26,36 +26,9 @@ import { ViewHistory } from './collections/ViewHistory'
 import { SpamBlacklist } from './collections/SpamBlacklist'
 import { Promotions } from './collections/Promotions'
 
-import { Settings } from './app/globals/Settings'
+import { Settings } from './globals/Settings'
 
-import { divisionEndpoints } from './endpoints/divisions'
-import { calculatePackagePrice } from './endpoints/calculatePackagePrice'
-import { purchasePackage } from './endpoints/purchasePackage'
-import { topUp } from './endpoints/topUp'
-import { payosWebhook } from './endpoints/payosWebhook'
-import { topUpStatus } from './endpoints/topUpStatus'
-import { searchProperties } from './endpoints/searchProperties'
-import { propertyFilters } from './endpoints/propertyFilters'
-import { searchProjects } from './endpoints/searchProjects'
-import { searchNews } from './endpoints/searchNews'
-import {
-  bulkCreateFavorites,
-  createFavorite,
-  deleteFavorite,
-  getFavorites,
-} from './endpoints/favorites'
-import { toggleFavorite } from './endpoints/toggleFavorite'
-import { trackView } from './endpoints/trackView'
-import {
-  markNotificationRead,
-  markAllNotificationsRead,
-  countUnreadNotifications,
-} from './endpoints/notifications'
-import { myDashboard } from './endpoints/myDashboard'
-import { changeMyPassword, meProfile, updateMeProfile, uploadMyAvatar } from './endpoints/me'
-import { projectDetail, projects } from './endpoints/projects'
-import { adminDashboardStats } from './endpoints/adminDashboard'
-import { submitProperty } from './endpoints/submitProperty'
+import { endpoints } from './endpoints'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -68,38 +41,27 @@ export default buildConfig({
     },
   },
   globals: [Settings],
-  endpoints: [
-    ...divisionEndpoints,
-    calculatePackagePrice,
-    purchasePackage,
-    topUp,
-    payosWebhook,
-    topUpStatus,
-    searchProperties,
-    propertyFilters,
-    searchProjects,
-    searchNews,
-    getFavorites,
-    createFavorite,
-    deleteFavorite,
-    bulkCreateFavorites,
-    toggleFavorite,
-    trackView,
-    markNotificationRead,
-    markAllNotificationsRead,
-    countUnreadNotifications,
-    myDashboard,
-    meProfile,
-    updateMeProfile,
-    uploadMyAvatar,
-    changeMyPassword,
-    submitProperty,
-    projects,
-    projectDetail,
-    adminDashboardStats,
-  ],
-  collections: [Users, Profiles, Properties, Projects, Media, Investors, Articles, ArticleCategories, Contacts, Reports, Packages, PostingPrices, Vouchers, Orders,
-    Notifications, Favorites, ViewHistory, SpamBlacklist, Promotions
+  endpoints,
+  collections: [
+    Users,
+    Profiles,
+    Properties,
+    Projects,
+    Media,
+    Investors,
+    Articles,
+    ArticleCategories,
+    Contacts,
+    Reports,
+    Packages,
+    PostingPrices,
+    Vouchers,
+    Orders,
+    Notifications,
+    Favorites,
+    ViewHistory,
+    SpamBlacklist,
+    Promotions,
   ],
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || '',

@@ -3,6 +3,7 @@
 import { useState, useTransition, useEffect, useRef } from 'react'
 import { saveProject, type ProjectStatus, type ProjectSaleStatus } from '../actions'
 import type { ProjectItem, InvestorOption } from './ProjectsTable'
+import { uploadMedia } from '@/app/services/media'
 
 const PROPERTY_TYPES = [
   { value: 'house', label: 'Nhà riêng' },
@@ -117,15 +118,9 @@ export default function ProjectFormDrawer({ project, investors, onClose, onSaved
     setUploading(true)
     setError(null)
     try {
-      const fd = new FormData()
-      fd.append('file', file)
-      fd.append('alt', form.name || file.name)
-      const res = await fetch('/api/media', { method: 'POST', body: fd })
-      if (!res.ok) throw new Error('Upload thất bại')
-      const data = await res.json()
-      const id = Number(data?.doc?.id ?? data?.id)
-      if (!id) throw new Error('Không lấy được ID ảnh')
-      setThumbnailId(id)
+      const media = await uploadMedia(file, form.name || file.name)
+      if (!media.id) throw new Error('Không lấy được ID ảnh')
+      setThumbnailId(media.id)
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Lỗi upload')
       setPreviewUrl(existingThumb?.url ?? null)

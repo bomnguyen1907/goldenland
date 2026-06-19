@@ -9,7 +9,7 @@ import {
   fetchPropertyFilterOptions,
   type PropertyFiltersState,
   type PropertySortValue,
-} from './services/properties'
+} from '@/app/services/properties'
 import { PropertiesFilterBar } from './components/PropertiesFilterBar'
 import { PropertiesHeader } from './components/PropertiesHeader'
 import { PropertiesList } from './components/PropertiesList'

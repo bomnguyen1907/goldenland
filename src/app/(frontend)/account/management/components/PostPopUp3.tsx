@@ -4,6 +4,9 @@ import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { CalendarDays, CheckCircle2, ChevronDown, Clock3, Loader2 } from 'lucide-react'
 import { useSelector } from 'react-redux'
+import { ApiRequestError } from '@/app/lib/api/http'
+import { fetchCurrentUser } from '@/app/services/account'
+import { fetchActivePostingPrices, submitPostFlow } from '@/app/services/properties'
 import type { RootState } from '@/app/store'
 import { selectUser } from '@/app/store/slices/authSlice'
 import type { PostDraft } from './postFlowTypes'
@@ -267,16 +270,7 @@ export default function PostPopUp3({ draft, onBack, onClose }: PostPopUp3Props) 
       setPricingError('')
 
       try {
-        const params = new URLSearchParams()
-        params.set('depth', '0')
-        params.set('limit', '20')
-        params.set('sort', 'sort')
-        params.set('where[isActive][equals]', 'true')
-
-        const res = await fetch(`/api/posting-prices?${params.toString()}`)
-        if (!res.ok) throw new Error('Không thể tải bảng giá')
-
-        const data = await res.json()
+        const data = await fetchActivePostingPrices<PostingPriceDoc>()
         const docs: PostingPriceDoc[] = Array.isArray(data?.docs) ? data.docs : []
         const mapped = docs
           .map(mapPostingPriceToPostType)
@@ -334,11 +328,7 @@ export default function PostPopUp3({ draft, onBack, onClose }: PostPopUp3Props) 
 
     const run = async () => {
       try {
-        const res = await fetch('/api/users/me?depth=0')
-        if (!res.ok) return
-
-        const data = await res.json()
-        const me = data?.user ?? data
+        const me = await fetchCurrentUser()
         const packageID =
           getRelationshipID(me?.activePackage) || getRelationshipID(me?.active_package_id)
 
@@ -371,11 +361,8 @@ export default function PostPopUp3({ draft, onBack, onClose }: PostPopUp3Props) 
       setVoucherError('')
 
       try {
-        const res = await fetch('/api/users/me?depth=0')
-        if (!res.ok) throw new Error('Không thể tải voucher')
-
-        const data = await res.json()
-        const me = data?.user ?? data
+        const me = await fetchCurrentUser()
+        if (!me) throw new Error('Không thể tải voucher')
         const docs = Array.isArray(me?.availableVouchers) ? me.availableVouchers : []
         const availableVouchers: VoucherOption[] = docs
           .map((voucher: {
@@ -455,30 +442,25 @@ export default function PostPopUp3({ draft, onBack, onClose }: PostPopUp3Props) 
     })
 
     try {
-      const res = await fetch('/api/post-flow/submit', {
-        method: 'POST',
-        body,
-      })
-      const data = await res.json()
-
-      if (!res.ok) {
-        if (data?.error === 'Số dư không đủ') {
+      await submitPostFlow(body)
+      onClose()
+      router.push('/account/management?posted=1')
+    } catch (err) {
+      if (err instanceof ApiRequestError) {
+        if (err.payload?.error === 'Số dư không đủ') {
           setBalanceSnapshot({
-            required: Number(data?.required || 0),
-            balance: Number(data?.balance || 0),
+            required: Number(err.payload?.required || 0),
+            balance: Number(err.payload?.balance || 0),
           })
           setShowBalanceModal(true)
           setError('')
           return
         }
 
-        setError(data?.error || 'Không thể gửi tin đăng, vui lòng thử lại.')
+        setError(err.message || 'Không thể gửi tin đăng, vui lòng thử lại.')
         return
       }
 
-      onClose()
-      router.push('/account/management?posted=1')
-    } catch {
       setError('Không thể kết nối đến máy chủ, vui lòng thử lại.')
     } finally {
       setSubmitting(false)

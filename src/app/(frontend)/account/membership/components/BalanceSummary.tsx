@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
+import { fetchAccountDashboard } from '@/app/services/account'
 
 export default function BalanceSummary() {
   const [balance, setBalance] = useState<number | null>(null)
@@ -11,10 +12,8 @@ export default function BalanceSummary() {
 
     const loadBalance = async () => {
       try {
-        const res = await fetch('/api/my/dashboard')
-        const data = await res.json()
-
-        if (mounted && res.ok) {
+        const data = await fetchAccountDashboard()
+        if (mounted) {
           setBalance(Number(data.balance || 0))
         }
       } catch {

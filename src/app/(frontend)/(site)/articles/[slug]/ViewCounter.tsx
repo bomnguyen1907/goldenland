@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
+import { trackArticleView } from '@/app/services/articles'
 
 export function ViewCounter({ articleId }: { articleId: string }) {
   const hasFetched = useRef(false)
@@ -9,10 +10,8 @@ export function ViewCounter({ articleId }: { articleId: string }) {
     // Only fetch once per mount to prevent double-counting in strict mode
     if (!hasFetched.current) {
       hasFetched.current = true
-      
-      fetch(`/api/articles/${articleId}/view`, {
-        method: 'POST',
-      }).catch(console.error)
+
+      trackArticleView(articleId).catch(console.error)
     }
   }, [articleId])
 

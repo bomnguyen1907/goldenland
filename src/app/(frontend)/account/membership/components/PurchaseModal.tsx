@@ -1,6 +1,8 @@
 'use client'
 import React, { useState, useEffect } from 'react' // Thêm useEffect vào đây
 import { X, Tent, AlertTriangle, ChevronRight } from 'lucide-react'
+import { fetchAccountDashboard } from '@/app/services/account'
+import { calculatePackagePrice } from '@/app/services/billing'
 
 // Hàm format tiền
 const formatMoney = (amount: number) => new Intl.NumberFormat('vi-VN').format(amount) + ' đ'
@@ -54,28 +56,19 @@ export default function PurchaseModal({
   useEffect(() => {
     if (!pkg?.id) return
 
-    fetch('/api/calculate-package-price', {
-      method: 'POST',
+    let cancelled = false
 
-      headers: {
-        'Content-Type': 'application/json',
-      },
-
-      body: JSON.stringify({
+    calculatePackagePrice({
         packageId: pkg.id,
         selectedMonths,
         promotionId: selectedPromotionId || undefined,
-      }),
-    })
-      .then(async (res) => {
-        const data = await res.json()
-        if (!res.ok) throw new Error(data?.error || 'Khong ap dung duoc ma khuyen mai')
-        return data
       })
       .then((data) => {
+        if (cancelled) return
         setPricing(data)
       })
       .catch((error) => {
+        if (cancelled) return
         setPricing(null)
         if (selectedPromotionId) {
           alert(error.message)
@@ -85,6 +78,10 @@ export default function PurchaseModal({
           console.error(error)
         }
       })
+
+    return () => {
+      cancelled = true
+    }
   }, [pkg?.id, selectedMonths, selectedPromotionId, onPromotionIdChange])
   // Khởi tạo mốc tháng mặc định khi options thay đổi
   useEffect(() => {
@@ -94,13 +91,12 @@ export default function PurchaseModal({
     }
   }, [options])
 
-  // Giả lập số dư user (bạn có thể lấy từ API /api/users/me thực tế)
+  // Số dư hiện tại được lấy qua account service.
   const [userBalance, setUserBalance] = useState<number>(0)
   // Tự động gọi API lấy thông tin user khi mở Modal
   useEffect(() => {
     if (isOpen) {
-      fetch('/api/my/dashboard')
-        .then((res) => res.json())
+      fetchAccountDashboard()
         .then((data) => {
           if (data && typeof data.balance === 'number') {
             setUserBalance(data.balance)

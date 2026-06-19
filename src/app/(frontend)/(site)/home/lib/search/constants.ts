@@ -42,9 +42,9 @@ export const AREA_RANGE_REMOVE_RE =
 export const AREA_SINGLE_REMOVE_RE =
   /(?:dt|dien\s*tich|di[eệ]n\s*t[ií]ch)?\s*\d+(?:[.,]\d+)?\s*(?:m2|m²|m|met\s*vuong|m\s*vuong|sqm)\b/giu
 export const PRICE_RANGE_REMOVE_RE =
-  /(?:\btu\b\s*)?\d+(?:[.,]\d+)?\s*(?:ty|tỷ|t|trieu|triệu|tr|m|billion|million)\s*(?:-|–|—|đến|den|toi|tới|toi da|tối đa|~)\s*\d+(?:[.,]\d+)?\s*(?:ty|tỷ|t|trieu|triệu|tr|m|billion|million)?/giu
+  /(?:\btu\b\s*)?\d+(?:[.,]\d+)?\s*(?:billion|million|trieu|triệu|ty|tỷ|tr|m|t)\s*(?:-|–|—|đến|den|toi|tới|toi da|tối đa|~)\s*\d+(?:[.,]\d+)?\s*(?:billion|million|trieu|triệu|ty|tỷ|tr|m|t)?/giu
 export const PRICE_SINGLE_REMOVE_RE =
-  /\d+(?:[.,]\d+)?\s*(?:ty|tỷ|t|trieu|triệu|tr|m|billion|million)\b/giu
+  /\d+(?:[.,]\d+)?\s*(?:billion|million|trieu|triệu|ty|tỷ|tr|m|t)(?=$|\s)/giu
 export const PROPERTY_TYPE_REMOVE_RE =
   /\b(?:nha\s*rieng|nha\s*pho|chung\s*cu|can\s*ho|dat\s*nen|biet\s*thu|shophouse|penthouse|condotel|kho|xuong|mat\s*bang)\b/giu
 export const DIRECTION_REMOVE_RE =

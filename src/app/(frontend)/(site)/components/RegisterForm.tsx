@@ -31,9 +31,10 @@ type RegisterFormData = z.infer<typeof registerSchema>
 type RegisterFormProps = {
   onClose: () => void
   onSwitchToSignIn: () => void
+  onSuccess?: () => void
 }
 
-export function RegisterForm({ onClose, onSwitchToSignIn }: RegisterFormProps) {
+export function RegisterForm({ onClose, onSwitchToSignIn, onSuccess }: RegisterFormProps) {
   const router = useRouter()
   const dispatch = useDispatch<AppDispatch>()
   const loading = useSelector((state: RootState) => selectAuthLoading(state as any))
@@ -74,7 +75,11 @@ export function RegisterForm({ onClose, onSwitchToSignIn }: RegisterFormProps) {
     if (result.type.endsWith('/fulfilled')) {
       await dispatch(fetchFavoritesThunk())
       onClose()
-      router.refresh()
+      if (onSuccess) {
+        onSuccess()
+      } else {
+        router.refresh()
+      }
     }
   }
 

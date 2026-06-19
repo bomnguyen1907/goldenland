@@ -19,6 +19,8 @@ export const Articles: CollectionConfig = {
                         collection: 'articles',
                         id: id as string,
                         depth: 0,
+                        overrideAccess: false,
+                        req,
                     });
 
                     await req.payload.update({
@@ -27,6 +29,7 @@ export const Articles: CollectionConfig = {
                         data: {
                             viewCount: (article.viewCount || 0) + 1,
                         },
+                        overrideAccess: true,
                         req, // Maintain transaction safety
                     });
 

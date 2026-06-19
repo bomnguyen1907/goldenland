@@ -2,7 +2,7 @@
 
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useMemo, useState } from 'react'
-import axios from 'axios'
+import { updateProperty } from '@/app/services/properties'
 
 import {
   formatVND,
@@ -79,8 +79,8 @@ export default function PropertyApprovalTable({ items, page, totalPages, totalDo
     setBusyId(String(id))
     setError(null)
     try {
-      await axios.patch(
-        `/api/properties/${id}`,
+      await updateProperty(
+        id,
         {
           status: 'active',
           isVerified: true,
@@ -89,8 +89,8 @@ export default function PropertyApprovalTable({ items, page, totalPages, totalDo
         { withCredentials: true },
       )
       router.refresh()
-    } catch (e: any) {
-      setError(e?.response?.data?.errors?.[0]?.message || e.message || 'Lỗi khi duyệt tin')
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'Lỗi khi duyệt tin')
     } finally {
       setBusyId(null)
     }
@@ -103,8 +103,8 @@ export default function PropertyApprovalTable({ items, page, totalPages, totalDo
     try {
       await Promise.all(
         Array.from(selected).map((id) =>
-          axios.patch(
-            `/api/properties/${id}`,
+          updateProperty(
+            id,
             {
               status: 'active',
               isVerified: true,
@@ -116,8 +116,8 @@ export default function PropertyApprovalTable({ items, page, totalPages, totalDo
       )
       setSelected(new Set())
       router.refresh()
-    } catch (e: any) {
-      setError(e?.response?.data?.errors?.[0]?.message || e.message || 'Lỗi khi duyệt hàng loạt')
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'Lỗi khi duyệt hàng loạt')
     } finally {
       setBulkBusy(false)
     }
@@ -139,8 +139,8 @@ export default function PropertyApprovalTable({ items, page, totalPages, totalDo
     try {
       await Promise.all(
         rejectTarget.ids.map((id) =>
-          axios.patch(
-            `/api/properties/${id}`,
+          updateProperty(
+            id,
             { status: 'rejected', rejectionReason: reason },
             { withCredentials: true },
           ),
@@ -149,8 +149,8 @@ export default function PropertyApprovalTable({ items, page, totalPages, totalDo
       setRejectTarget(null)
       setSelected(new Set())
       router.refresh()
-    } catch (e: any) {
-      setError(e?.response?.data?.errors?.[0]?.message || e.message || 'Lỗi khi từ chối tin')
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'Lỗi khi từ chối tin')
     } finally {
       setBulkBusy(false)
     }

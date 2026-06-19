@@ -2,6 +2,7 @@
 import React, { useState } from 'react'
 import { Check, X, Ticket } from 'lucide-react'
 import PurchaseModal from './PurchaseModal'
+import { purchasePackage } from '@/app/services/billing'
 // Formatting helpers
 const formatMoney = (amount: number) => new Intl.NumberFormat('vi-VN').format(amount) + ' đ'
 export default function PricingCard({ pkg }: { pkg: any }) {
@@ -21,26 +22,15 @@ export default function PricingCard({ pkg }: { pkg: any }) {
   const handleConfirmPurchase = async (months: number) => {
     setLoading(true)
     try {
-      // Gọi API mua với thời hạn được chọn
-      const res = await fetch('/api/purchase-package', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          packageId: pkg.id,
-          selectedMonths: months,
-          promotionId: promotionId || undefined,
-        }),
+      await purchasePackage({
+        packageId: pkg.id,
+        selectedMonths: months,
+        promotionId: promotionId || undefined,
       })
-      const data = await res.json()
-
-      if (!res.ok) {
-        alert(data.error)
-        return
-      }
       alert('Mua gói thành công!')
       window.location.reload()
-    } catch (error) {
-      alert('Đã có lỗi xảy ra khi mua gói')
+    } catch (error: unknown) {
+      alert(error instanceof Error ? error.message : 'Đã có lỗi xảy ra khi mua gói')
     } finally {
       setLoading(false)
       setIsModalOpen(false) // Đóng modal khi xong

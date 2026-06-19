@@ -7,6 +7,7 @@ export const dynamic = 'force-dynamic'
 
 const STATUS_OPTIONS = ['paid', 'cancelled', 'refunded'] as const
 const ORDER_TYPE_OPTIONS = ['package', 'single_post', 'top_up'] as const
+const MS_PER_DAY = 86_400_000
 
 const statusLabels: Record<string, string> = {
   paid: 'Đã thanh toán',
@@ -19,6 +20,10 @@ function pickStr(v: string | string[] | undefined) {
   return Array.isArray(v) ? v[0] : v
 }
 
+function getSinceISO(range: string) {
+  return new Date(Date.now() - (parseInt(range, 10) || 30) * MS_PER_DAY).toISOString()
+}
+
 export default async function DonHangPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const sp = await searchParams
   const status = pickStr(sp.status) || ''
@@ -29,9 +34,7 @@ export default async function DonHangPage({ searchParams }: { searchParams: Prom
 
   const payload = await getPayload({ config: await config })
 
-  const since = range !== 'all'
-    ? new Date(Date.now() - (parseInt(range, 10) || 30) * 86_400_000).toISOString()
-    : null
+  const since = range !== 'all' ? getSinceISO(range) : null
 
   const whereAnd: any[] = []
   if (STATUS_OPTIONS.includes(status as any)) {

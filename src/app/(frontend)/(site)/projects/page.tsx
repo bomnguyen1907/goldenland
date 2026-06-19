@@ -2,11 +2,11 @@
 
 import { useEffect, useCallback, useState, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
-import qs from 'qs'
 import ProjectCard from './components/ProjectCard'
 import ProjectFilters from './components/ProjectFilters'
 import Pagination from './components/Pagination'
 import { SORT_OPTIONS } from './utils'
+import { fetchProjects } from '@/app/services/projects'
 
 type Project = {
     id: number
@@ -100,19 +100,14 @@ function ProjectsPageInner() {
             if (f.minPrice) conditions.push({ priceTo: { greater_than_equal: Number(f.minPrice) } })
             if (f.maxPrice) conditions.push({ priceFrom: { less_than_equal: Number(f.maxPrice) } })
 
-            const query = qs.stringify(
-                {
-                    limit: 9,
-                    page: f.page,
-                    depth: 2,
-                    sort: f.sort,
-                    ...(conditions.length > 0 && { where: { and: conditions } }),
-                },
-                { encodeValuesOnly: true },
-            )
-            const res = await fetch(`/api/projects?${query}`)
-            const data = await res.json()
-            setProjects(data.docs || [])
+            const data = await fetchProjects({
+                limit: 9,
+                page: f.page,
+                depth: 2,
+                sort: f.sort,
+                ...(conditions.length > 0 && { where: { and: conditions } }),
+            })
+            setProjects((data.docs || []) as Project[])
             setTotalPages(data.totalPages || 1)
             setTotalDocs(data.totalDocs || 0)
         } catch {

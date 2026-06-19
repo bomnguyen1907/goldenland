@@ -11,9 +11,15 @@ type SignInFormProps = {
   onClose: () => void
   onSwitchToRegister: () => void
   onSuccess?: () => void
+  redirectAdmin?: boolean
 }
 
-export function SignInForm({ onClose, onSwitchToRegister, onSuccess }: SignInFormProps) {
+export function SignInForm({
+  onClose,
+  onSwitchToRegister,
+  onSuccess,
+  redirectAdmin = true,
+}: SignInFormProps) {
   const router = useRouter()
   const dispatch = useDispatch<AppDispatch>()
   const loading = useSelector((state: RootState) => selectAuthLoading(state as any))
@@ -33,7 +39,7 @@ export function SignInForm({ onClose, onSwitchToRegister, onSuccess }: SignInFor
       onClose()
 
       const role = result.payload.user?.role
-      if (role === 'admin') {
+      if (redirectAdmin && role === 'admin') {
         router.push('/quan-tri')
         return
       }
