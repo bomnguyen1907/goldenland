@@ -8,10 +8,19 @@ import { createClient } from '@supabase/supabase-js'
 // ============================================================
 // SUPABASE CLIENT CHO STORAGE
 // ============================================================
-const supabase = createClient(
-  process.env.SUPABASE_URL || '',
-  process.env.SUPABASE_SERVICE_ROLE_KEY || '',
-)
+// Lazy init: chỉ tạo client khi request chạy, KHÔNG tạo lúc import/build.
+// Nếu tạo ở top-level, Next.js sẽ gọi lúc "Collecting page data" khi build
+// → createClient('') ném lỗi "supabaseUrl is required" làm hỏng build trên Vercel.
+let _supabase: ReturnType<typeof createClient> | null = null
+function getSupabase() {
+  if (!_supabase) {
+    _supabase = createClient(
+      process.env.SUPABASE_URL || '',
+      process.env.SUPABASE_SERVICE_ROLE_KEY || '',
+    )
+  }
+  return _supabase
+}
 const SUPABASE_BUCKET = 'Thumbnail'
 const SUPABASE_BUCKET2 = 'ImagesOfContent'
 
@@ -151,7 +160,7 @@ async function uploadImageToSupabase(
 
     const filePath = `news/${folderName}/${finalName}`
 
-    const { error } = await supabase.storage
+    const { error } = await getSupabase().storage
       .from(SUPABASE_BUCKET2)
       .upload(filePath, img.buffer, {
         contentType: img.contentType,
@@ -163,7 +172,7 @@ async function uploadImageToSupabase(
       return null
     }
 
-    const { data } = supabase.storage
+    const { data } = getSupabase().storage
       .from(SUPABASE_BUCKET2)
       .getPublicUrl(filePath)
 
@@ -180,9 +189,9 @@ async function uploadThumbnailToSupabase(imageUrl: string, folderName: string): 
   try {
     const ext = img.contentType.includes('png') ? 'png' : img.contentType.includes('webp') ? 'webp' : 'jpg'
     const filePath = `${folderName}/thumbnail.${ext}`
-    const { error } = await supabase.storage.from(SUPABASE_BUCKET).upload(filePath, img.buffer, { contentType: img.contentType, upsert: true })
+    const { error } = await getSupabase().storage.from(SUPABASE_BUCKET).upload(filePath, img.buffer, { contentType: img.contentType, upsert: true })
     if (error) { console.error(`[Crawl] ❌ Upload Supabase lỗi: ${error.message}`); return null }
-    const { data } = supabase.storage.from(SUPABASE_BUCKET).getPublicUrl(filePath)
+    const { data } = getSupabase().storage.from(SUPABASE_BUCKET).getPublicUrl(filePath)
     console.log(`[Crawl] ✅ Thumbnail → ${data.publicUrl}`)
     return data.publicUrl
   } catch (e) {

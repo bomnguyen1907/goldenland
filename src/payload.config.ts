@@ -74,6 +74,7 @@ export default buildConfig({
       // Giới hạn pool để không vượt quá server limit (Neon/Supabase free = 15 sessions)
       // Dành ít nhất 3 connection cho Payload Admin, còn lại cho app
       max: 8,
+      idleTimeoutMillis: 10000,
       ssl: {
         rejectUnauthorized: false,
       },
